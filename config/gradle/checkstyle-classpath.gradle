@@ -1,0 +1,101 @@
+// Run each Checkstyle task with the module's classpath (im-ee7.17).
+//
+// Checkstyle 7.8.1's JavadocMethod check loads the exception classes named in `@throws` tags and
+// `throws` clauses, from the classpath of its Ant task, to compare them and to tell unchecked
+// exceptions apart. Gradle 6 passed the Checkstyle task's `classpath` (main output plus compile
+// classpath) to that Ant task. Gradle 7 runs Checkstyle in a worker process and passes no
+// classpath at all, so every lookup of an InterMine class fails with "Unable to get class
+// information for @throws tag" (41 sites), and the checks that depend on the lookup silently
+// change. The Checkstyle task's own `classpath` property is now only a task input, and adding the
+// classes to `checkstyleClasspath` does not help either: the Ant task's class loader is a child of
+// the worker's Ant loader, not of the tool class path.
+//
+// So this replaces the action of each Checkstyle task with the Ant call Gradle 6.9 made, in the
+// build process, with the classpath. The task's inputs, outputs and settings (config file,
+// configProperties, maxErrors, maxWarnings, ignoreFailures, showViolations, xml and html reports)
+// are used as before. Remove this file when checkstyle is bumped (risk R7 in
+// decisions/gradle-upgrade-path.md): from 8.28 on, JavadocMethod no longer loads classes.
+//
+// Applied from the `subprojects` block of each root build, after `apply plugin: 'checkstyle'`.
+
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.stream.StreamResult
+import javax.xml.transform.stream.StreamSource
+
+// The JDK, plus Ant from the build's Ant class loader and the logging APIs from Gradle's own loader:
+// the packages Gradle 6.9's isolated Ant builder showed (checkstyle logs through commons-logging,
+// which Gradle routes to its own logging).
+class AntApiClassLoader extends ClassLoader {
+    private static final List<String> LOGGING = ['org.apache.commons.logging.', 'org.apache.log4j.', 'org.slf4j.']
+    private final ClassLoader antLoader
+    private final ClassLoader gradleLoader
+
+    AntApiClassLoader(ClassLoader antLoader, ClassLoader gradleLoader) {
+        super(ClassLoader.systemClassLoader.parent)
+        this.antLoader = antLoader
+        this.gradleLoader = gradleLoader
+    }
+
+    @Override
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        if (name.startsWith('org.apache.tools.ant.')) {
+            return antLoader.loadClass(name)
+        }
+        if (LOGGING.any { name.startsWith(it) }) {
+            return gradleLoader.loadClass(name)
+        }
+        return super.loadClass(name, resolve)
+    }
+}
+
+tasks.withType(Checkstyle).configureEach { Checkstyle task ->
+    task.actions.clear()
+    task.doLast {
+        def xmlFile = task.reports.xml.required.get() ?
+            task.reports.xml.outputLocation.get().asFile : new File(task.temporaryDir, "${task.name}.xml")
+        xmlFile.parentFile.mkdirs()
+        def failureProperty = "checkstyle.failure.${task.path}"
+        def antBuilder = task.ant
+        // Checkstyle finds its own modules by scanning the URLs of its class loader, so it needs a
+        // URLClassLoader (the loader of an Ant `taskdef classpath` is not one). Its parent shows only
+        // the JDK, Ant and logging, as Gradle 6.9's isolated Ant builder did, so the tool's own
+        // dependencies win.
+        def toolLoader = new URLClassLoader(task.checkstyleClasspath.files.collect { it.toURI().toURL() } as URL[],
+            new AntApiClassLoader(antBuilder.project.class.classLoader, Project.classLoader))
+        try {
+            antBuilder.project.addTaskDefinition('checkstyle',
+                toolLoader.loadClass('com.puppycrawl.tools.checkstyle.ant.CheckstyleAntTask'))
+            antBuilder.checkstyle(config: task.configFile, failOnViolation: false, maxErrors: task.maxErrors,
+                    maxWarnings: task.maxWarnings, failureProperty: failureProperty) {
+                task.source.addToAntBuilder(antBuilder, 'fileset', FileCollection.AntType.FileSet)
+                classpath(path: task.classpath.asPath)
+                if (task.showViolations) {
+                    formatter(type: 'plain', useFile: false)
+                }
+                formatter(type: 'xml', toFile: xmlFile)
+                task.configProperties.each { key, value -> property(key: key, value: value.toString()) }
+                property(key: 'config_loc', value: task.configDirectory.get().asFile.absolutePath)
+            }
+        } finally {
+            toolLoader.close()
+        }
+
+        if (task.reports.html.required.get()) {
+            def htmlFile = task.reports.html.outputLocation.get().asFile
+            htmlFile.parentFile.mkdirs()
+            def style = task.reports.html.stylesheet != null ? task.reports.html.stylesheet.asString() :
+                Checkstyle.classLoader.getResource('checkstyle-noframes-sorted.xsl').text
+            TransformerFactory.newInstance().newTransformer(new StreamSource(new StringReader(style)))
+                .transform(new StreamSource(xmlFile), new StreamResult(htmlFile))
+        }
+
+        if (antBuilder.project.properties[failureProperty] && !task.ignoreFailures) {
+            def errors = new XmlSlurper().parse(xmlFile).'**'.findAll { it.name() == 'error' }
+            def bySeverity = errors.countBy { it.@severity.text() }
+            def report = task.reports.html.required.get() ? task.reports.html.outputLocation.get().asFile : xmlFile
+            throw new GradleException("Checkstyle rule violations were found. See the report at: ${report.toURI()}\n" +
+                "Checkstyle files with violations: ${errors.collect { it.parent().@name.text() }.unique().size()}\n" +
+                "Checkstyle violations by severity: ${bySeverity}")
+        }
+    }
+}
