@@ -47,8 +47,16 @@ dependencies {
     // implementation: used inside method bodies only
     implementation group: 'commons-io', name: 'commons-io', version: '1.2'
     implementation group: 'psidev.psi.mi.jami.bridges', name: 'bridges-core', version: '3.2.12'
-    implementation group: 'psidev.psi.mi.jami.bridges', name: 'jami-ols', version: '3.2.12'
-    implementation group: 'psidev.psi.mi.jami', name: 'jami-interactionviewer-json', version: '3.2.12'
+    // ols-client also declares spring-test 4.2.5 as a compile dependency, though only spring-web and spring-http
+    // classes are used (no class of ols-client or jami references org.springframework.test).
+    implementation(group: 'psidev.psi.mi.jami.bridges', name: 'jami-ols', version: '3.2.12') {
+        exclude group: 'org.springframework', module: 'spring-test'
+    }
+    // json-simple 1.1.1 (a runtime need of the jami JSON writers: org.json.simple.JSONValue) declares junit 4.10 and,
+    // through it, hamcrest-core 1.1 as compile dependencies, which would be in the war.
+    implementation(group: 'psidev.psi.mi.jami', name: 'jami-interactionviewer-json', version: '3.2.12') {
+        exclude group: 'junit', module: 'junit'
+    }
     implementation group: "org.biojava", name: "biojava-ontology", version: "4.2.0"
     implementation group: 'org.json', name: 'json', version: '20260814'
 
