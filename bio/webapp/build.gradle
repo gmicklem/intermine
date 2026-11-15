@@ -40,7 +40,6 @@ dependencies {
     compile group: 'psidev.psi.mi.jami', name: 'jami-core', version: '3.2.12'
     compile group: 'psidev.psi.mi.jami', name: 'jami-interactionviewer-json', version: '3.2.12'
     compile group: "org.biojava", name: "biojava-core", version: "4.2.0"
-    compile group: "org.biojava", name: "biojava-genome", version: "4.2.0"
     compile group: "org.biojava", name: "biojava-ontology", version: "4.2.0"
     compile group: 'org.json', name: 'json', version: '20170516'
 
