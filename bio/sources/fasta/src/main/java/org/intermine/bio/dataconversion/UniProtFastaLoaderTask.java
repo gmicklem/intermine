@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 import org.biojava.nbio.core.sequence.ProteinSequence;
 import org.intermine.model.bio.Organism;
 import org.intermine.objectstore.ObjectStoreException;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Code for loading fasta for uniprot proteins.

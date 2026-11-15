@@ -18,7 +18,7 @@ import org.intermine.model.bio.DataSource;
 import org.intermine.model.bio.BioEntity;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.intermine.metadata.FieldDescriptor;
 import org.intermine.metadata.AttributeDescriptor;
 import org.intermine.metadata.ReferenceDescriptor;
