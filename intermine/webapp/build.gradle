@@ -39,12 +39,6 @@ dependencies {
     api libs.everit.json.schema // formerly org.everit.json:org.everit.json.schema (same library, groupId moved)
     api libs.oltu.client
     api libs.jackson.databind
-    api libs.jackson.jaxrs.json.provider // align jersey-media-json-jackson's 2.8.4 Jackson modules
-    // Jersey's hk2 packages javax.inject twice: javax.inject:javax.inject:1 and its repackaging
-    // org.glassfish.hk2.external:javax.inject:2.5.0-b30 (same classes); keep the first only
-    api(libs.jersey.media.json.jackson) { exclude group: 'org.glassfish.hk2.external', module: 'javax.inject' }
-    api libs.javax.ws.rs.api
-    api(libs.jersey.client) { exclude group: 'org.glassfish.hk2.external', module: 'javax.inject' }
     api libs.jena.core
     api libs.javax.servlet.api
 
