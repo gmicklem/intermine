@@ -33,8 +33,8 @@ dependencies {
 
     compile group: 'net.iharder', name: 'base64', version: '2.3.8' //not clear wich version is currently used
     compile group: 'au.com.bytecode', name: 'opencsv', version: '2.4' //version 2.3 not available in maven
-    compile group: 'mockobjects', name: 'mockobjects-core', version: '0.09'
-    compile group: 'mockobjects', name: 'mockobjects-jdk1.3', version: '0.09'
+    testCompile group: 'mockobjects', name: 'mockobjects-core', version: '0.09'
+    testCompile group: 'mockobjects', name: 'mockobjects-jdk1.3', version: '0.09'
     provided fileTree(dir: 'libs', include: '*.jar') // eventually replace torque
     testCompile project(path: ':intermine-testresources', configuration: 'testArtifacts')
     antlr name: 'antlr-2.7.6-caching'
