@@ -1,16 +1,17 @@
+// providers.exec (Gradle 7.5+) replaces Project.exec, which is deprecated in 8.11 and removed in 9.0. It runs the
+// command when its output is read, and does not take streams: stdout and stderr come back separately.
+String psqlOutput(execOutput) {
+    (execOutput.standardOutput.asText.get() + execOutput.standardError.asText.get()).trim()
+}
+
 void createDbInternal(dbName) {
     println 'Creating database ' + dbName
-    def resultStream = new ByteArrayOutputStream()
-    exec {
-        ignoreExitValue true
+    def result = psqlOutput(providers.exec {
+        ignoreExitValue = true
         // Admin connection without sudo (newer sudo ignores -E): PGUSER/PGPASSWORD, default postgres/postgres
         environment PGPASSWORD: (System.getenv('PGPASSWORD') ?: 'postgres')
         commandLine 'psql', '-w', '-h', 'localhost', '-U', (System.getenv('PGUSER') ?: 'postgres'), '-c', "create database \"" + dbName + "\";"
-        standardOutput = resultStream
-        errorOutput = resultStream
-    }
-
-    def result = resultStream.toString().trim()
+    })
 
     if (result.contains('database "' + dbName + '" already exists')) {
         println 'Already exists.'
@@ -23,17 +24,12 @@ void createDbInternal(dbName) {
 
 void grantPrivileges(dbName) {
     println 'Grant privileges on database ' + dbName
-    def resultStream = new ByteArrayOutputStream()
-    exec {
-        ignoreExitValue true
+    def result = psqlOutput(providers.exec {
+        ignoreExitValue = true
         // Admin connection without sudo (newer sudo ignores -E): PGUSER/PGPASSWORD, default postgres/postgres
         environment PGPASSWORD: (System.getenv('PGPASSWORD') ?: 'postgres')
         commandLine 'psql', '-w', '-h', 'localhost', '-U', (System.getenv('PGUSER') ?: 'postgres'), '-c', "grant all privileges on database \"" + dbName + "\" to test;"
-        standardOutput = resultStream
-        errorOutput = resultStream
-    }
-
-    def result = resultStream.toString().trim()
+    })
 
     if (result.contains("GRANT")) {
         println 'Granted.'
@@ -43,15 +39,11 @@ void grantPrivileges(dbName) {
 
     // PostgreSQL 15 and later: only the database owner may create objects in the public schema, so a
     // non-superuser test user needs an explicit grant (the superuser used locally does not).
-    def schemaStream = new ByteArrayOutputStream()
-    exec {
-        ignoreExitValue true
+    def schemaResult = psqlOutput(providers.exec {
+        ignoreExitValue = true
         environment PGPASSWORD: (System.getenv('PGPASSWORD') ?: 'postgres')
         commandLine 'psql', '-w', '-h', 'localhost', '-U', (System.getenv('PGUSER') ?: 'postgres'), '-d', dbName, '-c', "grant all on schema public to test;"
-        standardOutput = schemaStream
-        errorOutput = schemaStream
-    }
-    def schemaResult = schemaStream.toString().trim()
+    })
     if (!schemaResult.contains("GRANT")) {
         throw new GradleException("FAILED:\n${schemaResult}")
     }
@@ -59,7 +51,7 @@ void grantPrivileges(dbName) {
 }
 
 task createUnitTestDatabases {
-    description "create databases needed for unit tests"
+    description = "create databases needed for unit tests"
     doLast {
         // fail if DB is already there. Instead we could read in the list of DBs and only
         // create ones that aren't there
