@@ -59,7 +59,6 @@ dependencies {
     runtime group: 'commons-lang', name: 'commons-lang', version: '2.6'
     runtime group: 'commons-codec', name: 'commons-codec', version: '1.15'
     runtime 'taglibs:string:1.1.0'
-    runtime group: 'fastutil', name: 'fastutil', version: '5.0.9'
     runtime group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
     runtime group: 'org.json', name: 'json', version: '20170516'
 
