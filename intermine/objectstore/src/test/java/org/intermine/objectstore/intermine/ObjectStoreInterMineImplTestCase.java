@@ -897,7 +897,11 @@ public abstract class ObjectStoreInterMineImplTestCase extends ObjectStoreAbstra
     public void testBatchesCache() throws Exception {
         Query q = new Query();
         QueryClass qc = new QueryClass(Employee.class);
-        q.addFrom(qc);
+        // The os is shared by every test in the class, and its results and batches caches are
+        // keyed on the query text. A unique alias makes sure no other test (for example
+        // testFailFast2, which runs "SELECT a1_ FROM Employee AS a1_" and reads it) has already
+        // filled the batch this test expects to start empty, whatever order the tests run in.
+        q.addFrom(qc, "testbatchescache_emp");
         q.addToSelect(qc);
         Results r1 = os.execute(q, 1000, true, true, true);
         Results r2 = os.execute(q, 1000, true, true, true);
@@ -939,7 +943,8 @@ public abstract class ObjectStoreInterMineImplTestCase extends ObjectStoreAbstra
     public void testBatchesFavourFilled() throws Exception {
         Query q = new Query();
         QueryClass qc = new QueryClass(CEO.class);
-        q.addFrom(qc);
+        // Unique alias so the caches start cold whatever ran before (see testBatchesCache)
+        q.addFrom(qc, "testbatchesfavourfilled_ceo");
         q.addToSelect(qc);
         Results r1 = os.execute(q, 100, false, false, false);
         Results r2 = os.execute(q, 101, false, false, false);
