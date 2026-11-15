@@ -80,4 +80,9 @@ Smoke build on Gradle 8.14.6 (a copy of flymine at `a507ed84`, JDK 8, the plugin
 - The plugin's internal configurations were renamed (`api` to `imApiJar`, `antlr` to `imAntlr`, `plugin` to `imPlugin`). Mines do not use them (checked in humanmine and flymine).
 - The Ant tasks that the plugin runs (integrate, buildDB, postprocess) now take their classpath from `runtimeClasspath` instead of `compile`; this is a superset (it also contains `runtimeOnly` dependencies), and the order of the jars can differ.
 
+## Removed from the webapp
+
+- **OpenID 2.0 login (5.1.1).** The `/openid` servlet (`OpenIDAuthenticator`), its `openid-providers.properties` list, the "using OpenID" block of the login page and the `JOpenId` library are gone. OpenID 2.0 providers shut the protocol down years ago (Google in 2015), and the shipped provider list was empty, so the login page never offered it. OAuth2 / OpenID Connect login (`oauth2.*` properties) is unchanged, including the migration of old Google OpenID accounts. A mine that has its own `openid-providers.properties` or an `openid-auth` servlet entry in its `web.xml` can delete them; the `openid.allowed` web property is no longer read.
+- **Bouncy Castle (5.1.1).** `bcprov-jdk15on` is no longer a dependency; the certificate that `KeyStoreBuilder` stores for each `security.publickey.*` entry is written with the JDK classes. The signing algorithms are the SHA-1/224/256/384/512 variants of RSA and ECDSA.
+
 See [BUILDING.md](BUILDING.md) for how the InterMine builds themselves are set up.

@@ -156,7 +156,6 @@ public class InitialiserPlugin implements PlugIn
         // read in additional webapp specific information and put in servletContext
         loadAspectsConfig(servletContext);
         loadClassDescriptions(servletContext);
-        loadOpenIDProviders(servletContext);
         loadOAuth2Providers(servletContext, webProperties);
 
         // web properties
@@ -664,42 +663,6 @@ public class InitialiserPlugin implements PlugIn
             trimProperties.put(property.getKey(), ((String) property.getValue()).trim());
         }
         return trimProperties;
-    }
-
-    private void loadOpenIDProviders(ServletContext context) {
-        Set<String> providers = new HashSet<String>();
-        Properties providerProps = new Properties();
-
-        InputStream is = getClass().getClassLoader()
-            .getResourceAsStream("openid-providers.properties");
-        if (is == null) {
-            LOG.debug("couldn't find openid providers, using system class-loader");
-            is = ClassLoader.getSystemClassLoader()
-                .getResourceAsStream("openid-properties.properties");
-        }
-        if (is != null) {
-            try {
-                providerProps.load(is);
-            } catch (IOException e) {
-                LOG.error("Could not load openid-providers.properties", e);
-                blockingErrorKeys.put("errors.init.openidprovidersloading", null);
-                return;
-            }
-        } else {
-            LOG.error("Could not find openid-providers.properties");
-            blockingErrorKeys.put("errors.init.openidproviders", null);
-            return;
-        }
-
-        for (Object key: providerProps.keySet()) {
-            String keyString = (String) key;
-            if (!keyString.endsWith(".alias")) {
-                providers.add(keyString);
-                LOG.debug("Added " + keyString);
-            }
-        }
-
-        SessionMethods.setOpenIdProviders(context, providers);
     }
 
     private void loadOAuth2Providers(ServletContext context, Properties webProperties) {

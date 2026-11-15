@@ -1178,26 +1178,6 @@ public final class SessionMethods
     }
 
     /**
-     * Set the set of supported Open-ID providers to use.
-     * @param ctx The Servlet-Context
-     * @param providers The providers we accept.
-     */
-    public static void setOpenIdProviders(ServletContext ctx, Set<String> providers) {
-        ctx.setAttribute(Constants.OPENID_PROVIDERS, providers);
-    }
-
-    /**
-     * Get the set of accepted Open-ID providers.
-     * @param session The session to use for lookups
-     * @return The set of open-id providers.
-     */
-    @SuppressWarnings("unchecked")
-    public static Set<String> getOpenIdProviders(HttpSession session) {
-        ServletContext ctx = session.getServletContext();
-        return (Set<String>) ctx.getAttribute(Constants.OPENID_PROVIDERS);
-    }
-
-    /**
      * Set the set of supported OAuth2 providers to use.
      * @param ctx The Servlet-Context
      * @param providers The providers we accept.
