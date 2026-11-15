@@ -29,19 +29,22 @@ dependencies {
     api libs.lucene.core
     api libs.solr.solrj
     api libs.javax.mail
-    api libs.struts.core
-    api libs.struts.taglib
-    api libs.struts.extras
-    api libs.struts.tiles
+    // Struts 1.3.10 asks for antlr 2.7.2, which would sit in WEB-INF/lib next to the antlr 2.7.6 that every mine's
+    // dbmodel brings (the parser of the InterMine query language); the antlr classes are the same library
+    [libs.struts.core, libs.struts.taglib, libs.struts.extras, libs.struts.tiles].each {
+        api(it) { exclude group: 'antlr', module: 'antlr' }
+    }
     api libs.jstl
     api libs.commons.fileupload
     api libs.everit.json.schema // formerly org.everit.json:org.everit.json.schema (same library, groupId moved)
     api libs.oltu.client
     api libs.jackson.databind
     api libs.jackson.jaxrs.json.provider // align jersey-media-json-jackson's 2.8.4 Jackson modules
-    api libs.jersey.media.json.jackson
+    // Jersey's hk2 packages javax.inject twice: javax.inject:javax.inject:1 and its repackaging
+    // org.glassfish.hk2.external:javax.inject:2.5.0-b30 (same classes); keep the first only
+    api(libs.jersey.media.json.jackson) { exclude group: 'org.glassfish.hk2.external', module: 'javax.inject' }
     api libs.javax.ws.rs.api
-    api libs.jersey.client
+    api(libs.jersey.client) { exclude group: 'org.glassfish.hk2.external', module: 'javax.inject' }
     api libs.jena.core
     api libs.javax.servlet.api
 
