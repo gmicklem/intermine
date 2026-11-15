@@ -48,8 +48,8 @@ dependencies {
     implementation libs.commons.io
     implementation libs.jami.bridges.core
     // jami-ols brings ols-client, which pins old versions of libraries that intermine-webapp (unwarred into this war)
-    // and every mine's dbmodel already bring in current ones: Jackson 2.7.x (2.18 here), commons-lang3 3.4 (3.10 with
-    // Jena), and through the pom-only pride-logging artifact jcl-over-slf4j 1.7.19 and logback (a second SLF4J
+    // and every mine's dbmodel already bring in current ones: Jackson 2.7.x (2.18 here), commons-lang3 3.4 (3.21 here,
+    // from intermine-model), and through the pom-only pride-logging artifact jcl-over-slf4j 1.7.19 and logback (a second SLF4J
     // binding next to slf4j-reload4j). Two versions of one library in WEB-INF/lib are loaded in file order.
     // ols-client also declares spring-test 4.2.5 as a compile dependency, though only spring-web and spring-http
     // classes are used (no class of ols-client or jami references org.springframework.test).

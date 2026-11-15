@@ -12,7 +12,7 @@ package org.intermine.bio.dataconversion;
 
 
 import java.io.IOException;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.intermine.bio.util.BioConverterUtil;
 import org.intermine.dataconversion.DataConverter;
 import org.intermine.dataconversion.DataConverterStoreHook;

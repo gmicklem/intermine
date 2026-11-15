@@ -65,7 +65,10 @@ dependencies {
     api group: "org.intermine", name: "intermine-pathquery", version: System.getProperty("imVersion")
     api libs.ant // org.apache.tools.ant.Task is a superclass in the public API
     api libs.reload4j
-    api libs.commons.lang
+    api libs.commons.lang3
+    // commons-lang 2.6: run time only, for the bundled torque jars of intermine-objectstore (they extend
+    // lang.enum.Enum and use lang.exception.NestableException); this build does not take objectstore's own dependencies
+    runtimeOnly libs.commons.lang
     api libs.commons.collections
     api libs.commons.io
 

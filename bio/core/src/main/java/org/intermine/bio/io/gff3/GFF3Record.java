@@ -23,7 +23,7 @@ import java.util.StringTokenizer;
 
 import org.intermine.metadata.StringUtil;
 import org.intermine.util.XmlUtil;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * A class that represents one line of a GFF3 file.  Some of this code is

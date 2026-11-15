@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
@@ -76,7 +76,7 @@ public class GenomicRegionSearchOptionsController extends TilesAction
                 // Escape javascript for newline breaks
                 //galaxyInput = galaxyInput.replaceAll("\\s+", "\t"); // replace all space
                 galaxyInput = galaxyInput.replaceAll("( )+", "\t"); // replace space except newline
-                galaxyInput = StringEscapeUtils.escapeJavaScript(galaxyInput);
+                galaxyInput = StringEscapeUtils.escapeEcmaScript(galaxyInput);
 
                 request.setAttribute("galaxyIntervalData", galaxyInput);
                 request.setAttribute("galaxyIntervalDataGenomeBuild", genomeBuild);
@@ -85,7 +85,7 @@ public class GenomicRegionSearchOptionsController extends TilesAction
                 // Success message sent to options page
                 String successMsg = GALAXY_SERVER_CONNECTION_SUCCESSFUL + ": "
                         + galaxyDataUrl + "<br>Genome Build: " + genomeBuild + "<br>Format: bed";
-//                successMsg = StringEscapeUtils.escapeJavaScript(successMsg);
+//                successMsg = StringEscapeUtils.escapeEcmaScript(successMsg);
                 request.setAttribute("galaxyFetchDataSuccess", successMsg);
             }
         }

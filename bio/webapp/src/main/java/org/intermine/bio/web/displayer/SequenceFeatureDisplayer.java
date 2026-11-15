@@ -16,7 +16,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.intermine.api.InterMineAPI;
 import org.intermine.model.InterMineObject;
 import org.intermine.util.DynamicUtil;
