@@ -75,7 +75,9 @@ fi
 echo "------> Creating databases..."
 for db in $USERPROFILEDB $PRODDB; do
     dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists ${db}
-    createdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" ${db}
+    # Owned by the mine's database user: since PostgreSQL 15 only the owner can create
+    # tables in the public schema.
+    createdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" -O "$PSQL_USER" ${db}
 done
 
 ##########

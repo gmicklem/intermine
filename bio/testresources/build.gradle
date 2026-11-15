@@ -41,6 +41,21 @@ void grantPrivileges(dbName) {
         throw new GradleException("FAILED:\n${result}")
     }
 
+    // PostgreSQL 15 and later: only the database owner may create objects in the public schema, so a
+    // non-superuser test user needs an explicit grant (the superuser used locally does not).
+    def schemaStream = new ByteArrayOutputStream()
+    exec {
+        ignoreExitValue true
+        environment PGPASSWORD: (System.getenv('PGPASSWORD') ?: 'postgres')
+        commandLine 'psql', '-w', '-h', 'localhost', '-U', (System.getenv('PGUSER') ?: 'postgres'), '-d', dbName, '-c', "grant all on schema public to test;"
+        standardOutput = schemaStream
+        errorOutput = schemaStream
+    }
+    def schemaResult = schemaStream.toString().trim()
+    if (!schemaResult.contains("GRANT")) {
+        throw new GradleException("FAILED:\n${schemaResult}")
+    }
+
 }
 
 task createUnitTestDatabases {
