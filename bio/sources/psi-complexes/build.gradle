@@ -18,19 +18,22 @@ sourceSets {
 }
 
 configurations {
-    provided
-    compile.extendsFrom provided
+    // Local jars (libs/chebiWS-client-2.4.jar) that are not resolved from a repository. They are on the
+    // compile and runtime classpath of this module, but are neither packed into the jar nor listed in the
+    // POM (same as before the conversion; the old name 'provided' was misleading).
+    localJars
+    implementation.extendsFrom localJars
 }
 
 dependencies {
-    compile group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
-    compile group: 'org.intermine', name: 'intermine-integrate', version: imVersion
+    implementation group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
+    api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
     //compile group: 'uk.ac.ebi.chebi.webapps.chebiWS.client', name: 'chebiWS-client', version: '2.4'
-    provided fileTree(dir: 'libs', include: '*.jar')
-    compile group: 'psidev.psi.mi.jami', name: 'jami-commons', version: '3.0.0'
-    compile group: 'psidev.psi.mi.jami', name: 'jami-core', version: '3.0.0'
-    compile group: 'psidev.psi.mi.jami', name: 'jami-mitab', version: '3.0.0'
-    compile group: 'psidev.psi.mi.jami', name: 'jami-xml', version: '3.0.0'
+    localJars fileTree(dir: 'libs', include: '*.jar')
+    implementation group: 'psidev.psi.mi.jami', name: 'jami-commons', version: '3.0.0'
+    implementation group: 'psidev.psi.mi.jami', name: 'jami-core', version: '3.0.0'
+    implementation group: 'psidev.psi.mi.jami', name: 'jami-mitab', version: '3.0.0'
+    implementation group: 'psidev.psi.mi.jami', name: 'jami-xml', version: '3.0.0'
     bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
 }
 

@@ -7,7 +7,7 @@ ext {
 }
 
 subprojects {
-    apply plugin: 'java'
+    apply plugin: 'java-library'
 
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
@@ -34,7 +34,7 @@ subprojects {
         localDirs.each { dir ->
             ivy {
                 url "file://" + dir
-                layout "pattern", {
+                patternLayout {
                     artifact  "[artifact]-[revision](-[classifier]).[ext]"
                 }
                 metadataSources {
@@ -58,9 +58,10 @@ subprojects {
     }
 
     dependencies {
-        compile group: 'org.apache.ant', name: 'ant', version: '1.7.0'
-        compile group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
-        compile group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
+        // api, not implementation: webapp compiles against dbmodel and has always seen these through it
+        api group: 'org.apache.ant', name: 'ant', version: '1.7.0'
+        api group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
+        api group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
         commonResources group: "org.intermine", name: "intermine-resources", version: imVersion
     }
 
