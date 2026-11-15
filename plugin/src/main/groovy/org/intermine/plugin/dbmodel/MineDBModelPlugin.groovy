@@ -1,5 +1,6 @@
 package org.intermine.plugin.dbmodel
 
+import groovy.ant.AntBuilder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -13,14 +14,14 @@ class MineDBModelPlugin implements Plugin<Project> {
         // Resolvable only. The plugin jar on the build script class path cannot be used instead:
         // Gradle 6+ instruments build script jars, and the copy it loads refers to Gradle internals
         // that Ant's class loader cannot see (NoClassDefFoundError org/gradle/internal/classpath/Instrumented).
-        project.configurations.maybeCreate(IM_PLUGIN).canBeConsumed = false
+        DBModelUtils.resolvableConfiguration(project, IM_PLUGIN)
         //added this dependecy otherwise ant doesn't find MergeSourceModelsTask at runtime
         DBModelPlugin.addDependency(project, IM_PLUGIN) {
             [group: "org.intermine", name: "plugin", version: System.getProperty("imVersion")]
         }
 
         project.tasks.register('mergeModels') {
-            description "Merges defferent source model files into an intermine XML model"
+            description = "Merges defferent source model files into an intermine XML model"
             onlyIf { DBModelPlugin.regenerateModel(project) }
             // Merges, in place, into the genomic model copied by copyGenomicModel; the additions come
             // from the mine's resources, the bio-source jars (mergeSource, resolved only when this
@@ -40,7 +41,7 @@ class MineDBModelPlugin implements Plugin<Project> {
                         pathelement(path: project.configurations.getByName(IM_PLUGIN).asPath)
                         pathelement(path: project.configurations.getByName("mergeSource").asPath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                     }
                 }
                 ant.mergeSourceModels(projectXmlPath: projectXmlFilePath,
