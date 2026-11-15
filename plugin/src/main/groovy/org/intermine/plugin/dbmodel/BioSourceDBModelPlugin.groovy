@@ -1,5 +1,6 @@
 package org.intermine.plugin.dbmodel
 
+import groovy.ant.AntBuilder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
