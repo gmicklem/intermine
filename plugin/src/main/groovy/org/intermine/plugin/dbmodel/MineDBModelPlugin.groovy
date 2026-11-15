@@ -53,15 +53,11 @@ class MineDBModelPlugin implements Plugin<Project> {
     }
 
     /**
-     * Where createSoModel writes so_additions.xml. A relative path is taken from the mine's root
-     * directory, which is where deployers run the build from (Ant resolves it against the working
-     * directory).
+     * Where createSoModel writes so_additions.xml. A relative path is taken from the mine's root directory
+     * (DBModelUtils.rootPath), as the task itself does.
      */
     static File soAdditionsFile(Project project, DBModelConfig config) {
-        if (config.soAdditionFilePath == null) {
-            return null
-        }
-        File file = new File(config.soAdditionFilePath)
-        file.isAbsolute() ? file : new File(project.rootDir, config.soAdditionFilePath)
+        String path = DBModelUtils.rootPath(project, config.soAdditionFilePath)
+        path == null ? null : new File(path)
     }
 }

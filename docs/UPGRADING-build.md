@@ -79,7 +79,7 @@ This repository's `bio/sources` build publishes 44 `bio-source-*` modules. The o
    - `compile` to `implementation`, `testCompile` to `testImplementation`; `url '...'` to `url = '...'`, `description "..."` to `description = "..."`;
    - delete `compile('ant:ant:1.6.5')`: it is a 2005 Ant that ends up in `WEB-INF/lib` next to `ant-1.10.x`, and nothing in the mine needs it;
    - `copyMineProperties` writes into a directory of its own and `processResources` picks it up (explained below the example).
-4. **`dbmodel/build.gradle`.** `compile` to `implementation` (`bioModel` stays as it is); keep `srcDirs = ['build/gen']`. Make the two paths in `dbModelConfig` absolute: `soTermListFilePath = "$rootDir/dbmodel/resources/so_terms"` and `soAdditionFilePath = "$rootDir/dbmodel/build/so_additions.xml"` (the plugin hands these strings to Ant, which resolves them against the working directory of the JVM, and a Gradle 8 daemon's working directory is its own `daemon/8.14.6` directory: the symptom is `Could not find file containing SO terms to add to the model ... Property was: <gradle user home>/daemon/8.14.6/dbmodel/resources/so_terms`).
+4. **`dbmodel/build.gradle`.** `compile` to `implementation` (`bioModel` stays as it is); keep `srcDirs = ['build/gen']`. Leave the two paths in `dbModelConfig` (`soTermListFilePath = "dbmodel/resources/so_terms"`, `soAdditionFilePath = "dbmodel/build/so_additions.xml"`) as they are: the plugin resolves a relative path against the mine's root directory, absolute paths still work, and nothing needs `$rootDir` any more. (Plugins before this fix (the 5.1.1 builds of this branch included) handed the string to Ant, which resolves it against the working directory of the JVM, and a Gradle 8 daemon on JDK 9 or later has its own `daemon/8.14.6` directory as working directory: `Could not find file containing SO terms to add to the model ... Property was: <gradle user home>/daemon/8.14.6/dbmodel/resources/so_terms`. A mine that was converted with the `$rootDir/...` form keeps working.)
 5. **`webapp/build.gradle`.**
    - Delete the `apply from: "https://raw.githubusercontent.com/akhikhl/gretty/..."` line and the `gretty { }` block. The script resolves gretty 2.0.0 from jcenter, which now answers 403. The cargo plugin deploys. Gretty also passed `-Dorg.apache.el.parser.SKIP_IDENTIFIER_CHECK=true` to its Tomcat; your own Tomcat needs it too (`CATALINA_OPTS`, or `jvmArgs` in a cargo `local { }` block).
    - `compile` to `implementation`. Keep `implementation (project(":dbmodel")) {transitive = false}`; there is no need for `java-library` or `api`, because the webapp lists what it needs itself.
@@ -174,10 +174,6 @@ The commit `build: convert HumanMine build files to the InterMine 6.0 line` of t
 --- dbmodel/build.gradle
 -    compile group: "org.intermine", name: "intermine-integrate", ...      # also intermine-resources, bio-core, fileTree(libs)
 +    implementation group: "org.intermine", name: "intermine-integrate", ...
--    soTermListFilePath = "dbmodel/resources/so_terms"
--    soAdditionFilePath = "dbmodel/build/so_additions.xml"
-+    soTermListFilePath = "$rootDir/dbmodel/resources/so_terms"
-+    soAdditionFilePath = "$rootDir/dbmodel/build/so_additions.xml"
 
 --- webapp/build.gradle
  apply plugin: "war"
@@ -224,7 +220,7 @@ The messages below were produced by running HumanMine at its upstream master on 
 | `No signature of method: ...TaskInputUnionFileCollection.stopExecutionIfEmpty() is applicable for argument types: () values: []` | delete the line (Gradle 5.0 removed the method); an empty `Copy` is skipped as `NO-SOURCE` by itself |
 | `Could not resolve org.akhikhl.gretty:gretty:2.0.0 ... Could not GET 'https://jcenter.bintray.com/...' Received status code 403` (line 2 of `webapp/build.gradle`) | the gretty `apply from`; delete it and the `gretty { }` block (step 5) |
 | `Could not find com.bmuschko:gradle-cargo-plugin:2.9.0 ... Searched in ... repo.maven.apache.org` | add `gradlePluginPortal()` to the `buildscript` repositories, or stay on 2.8.0 |
-| `Could not find file containing SO terms to add to the model, check the dbmodel/build.gradle file. Property was: <gradle home>/daemon/8.14.6/dbmodel/resources/so_terms` | relative `soTermListFilePath` / `soAdditionFilePath`; make them `$rootDir/...` (step 4) |
+| `Could not find file containing SO terms to add to the model, check the dbmodel/build.gradle file. Property was: <gradle home>/daemon/8.14.6/dbmodel/resources/so_terms` | relative `soTermListFilePath` / `soAdditionFilePath` with a plugin from before the fix of im-ee7.47: use the current plugin, or write the paths as `"$rootDir/dbmodel/..."` (step 4) |
 | `A problem was found with the configuration of task ':webapp:jar' ... uses this output of task ':webapp:copyMineProperties' without declaring an explicit or implicit dependency` (also `:webapp:mergeProperties` ... `:webapp:processResources`) | the old `copyMineProperties`; see the paragraph after the example |
 | `Entry model/images/favicon.ico is a duplicate but no duplicate handling strategy has been set` (task `:webapp:warWebApp`) | `duplicatesStrategy = DuplicatesStrategy.EXCLUDE` on `warWebApp` (step 5) |
 | a war of 46 MB without `WEB-INF/web.xml`, `struts-config.xml` or the bio-webapp libraries, and no error; `build/explodedWebApp` holding only the mine's own files | `copyWebappContent` emptied the directory on its first run: delete the task (step 5) |
