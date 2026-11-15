@@ -17,19 +17,9 @@ sourceSets {
     }
 }
 
-configurations {
-    // Local jars (libs/chebiWS-client-2.4.jar) that are not resolved from a repository. They are on the
-    // compile and runtime classpath of this module, but are neither packed into the jar nor listed in the
-    // POM (same as before the conversion; the old name 'provided' was misleading).
-    localJars
-    implementation.extendsFrom localJars
-}
-
 dependencies {
     implementation group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
     api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
-    //compile group: 'uk.ac.ebi.chebi.webapps.chebiWS.client', name: 'chebiWS-client', version: '2.4'
-    localJars fileTree(dir: 'libs', include: '*.jar')
     implementation libs.jami.commons
     implementation libs.jami.core
     implementation libs.jami.mitab

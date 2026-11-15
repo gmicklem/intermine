@@ -14,7 +14,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import com.mockobjects.sql.MockMultiRowResultSet;
+import org.intermine.sql.RowsResultSet;
 
 /**
  * Test data for ChadoCVFactoryTest
@@ -56,10 +56,7 @@ public class TestChadoCVFactory extends ChadoCVFactory
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     @Override
@@ -92,9 +89,6 @@ public class TestChadoCVFactory extends ChadoCVFactory
             },
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 }

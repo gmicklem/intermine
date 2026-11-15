@@ -49,7 +49,7 @@ import org.intermine.objectstore.query.ObjectStoreBag;
 import org.intermine.metadata.StringUtil;
 import org.intermine.web.logic.WebUtil;
 import org.intermine.web.logic.session.SessionMethods;
-import org.stringtree.json.JSONWriter;
+import org.json.JSONObject;
 
 /**
  * Controller for webSearchableList.tile
@@ -152,8 +152,7 @@ public class WebSearchableListController extends TilesAction
             }
             request.setAttribute("sharedBagWebSearchables", sharedBagsByOwner);
         }
-        JSONWriter jsonWriter = new JSONWriter();
-        request.setAttribute("wsNames", jsonWriter.write(wsMapForJS));
+        request.setAttribute("wsNames", new JSONObject(wsMapForJS).toString());
         return null;
     }
 

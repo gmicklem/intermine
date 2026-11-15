@@ -111,8 +111,6 @@ subprojects {
         // bodies are implementation (POM scope compile -> runtime). The leaf builds also use implementation for
         // bio-model, which has no classes (only properties read at runtime): the old maven plugin does not map
         // runtimeOnly into the POM, so runtimeOnly would drop it from the published dependencies.
-        testImplementation libs.mockobjects.core
-        testImplementation libs.mockobjects.jdk13
         implementation(libs.hikaricp) { transitive = false }
         api libs.ant
         api group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false
@@ -137,7 +135,7 @@ subprojects {
         mergeModel group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
         mergeModel libs.commons.lang
 
-        // JAXB, which JDK 11 removed: psi-complexes binds XML with it (jami-xml, the ChEBI client); the other sources do not
+        // JAXB, which JDK 11 removed: psi-complexes binds XML with it (jami-xml); the other sources do not
         // need it. (javax.annotation-api was here too, but no source and no jar on these classpaths uses it.)
         implementation libs.jakarta.xml.bind.api
         implementation libs.jaxb.runtime

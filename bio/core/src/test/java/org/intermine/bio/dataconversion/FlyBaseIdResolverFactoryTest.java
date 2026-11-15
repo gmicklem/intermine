@@ -8,10 +8,8 @@ import java.util.List;
 import junit.framework.TestCase;
 
 import org.intermine.bio.util.OrganismRepository;
+import org.intermine.sql.RowsResultSet;
 
-import com.mockrunner.jdbc.StatementResultSetHandler;
-import com.mockrunner.mock.jdbc.MockConnection;
-import com.mockrunner.mock.jdbc.MockResultSet;
 
 /**
  * FlyBaseIdResolverFactory Unit Tests
@@ -80,14 +78,9 @@ public class FlyBaseIdResolverFactoryTest extends TestCase {
     */
    public ResultSet mockResultSet(List<String> headers, List<List<Object>> data) throws Exception {
 
-       // empty set (not perfectly represent the case though)
+       // empty set
        if (headers == null || data == null) {
-           MockConnection connection = new MockConnection();
-           StatementResultSetHandler statementHandler = connection
-                   .getStatementResultSetHandler();
-           MockResultSet result = statementHandler.createResultSet();
-           statementHandler.prepareGlobalResultSet(result);
-           return result;
+           return RowsResultSet.create(new String[0], new Object[0][]);
        }
 
        // validation
@@ -95,20 +88,11 @@ public class FlyBaseIdResolverFactoryTest extends TestCase {
            throw new Exception("column sizes are not equal");
        }
 
-       // create a mock result set
-       MockResultSet mockResultSet = new MockResultSet("aMockedResultSet");
-
-       // add header
-       for (String string : headers) {
-           mockResultSet.addColumn(string);
+       Object[][] rows = new Object[data.size()][];
+       for (int i = 0; i < rows.length; i++) {
+           rows[i] = data.get(i).toArray();
        }
-
-       // add data
-       for (List<Object> list : data) {
-           mockResultSet.addRow(list);
-       }
-
-       return mockResultSet;
+       return RowsResultSet.create(headers.toArray(new String[0]), rows);
    }
 
     public void testAddIdsFromResultSet() throws Exception {

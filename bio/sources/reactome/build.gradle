@@ -20,7 +20,6 @@ sourceSets {
 dependencies {
     implementation group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
     api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
-    runtimeOnly fileTree(dir: 'libs', include: '*.jar') //antlr-2.7.6-caching.jar
     bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
 }
 

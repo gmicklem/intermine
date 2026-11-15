@@ -69,13 +69,8 @@ public abstract class DatabaseTestCase extends TestCase
 
             // Names and types of columns should be the same
             for (int i = 1; i <= rsmd1.getColumnCount(); i++) {
-                try {
-                    assertEquals(msg + "(difference in column names)",
-                            rsmd1.getColumnLabel(i), rsmd2.getColumnLabel(i));
-                } catch (com.mockobjects.util.NotImplementedException e) {
-                    assertEquals(msg + "(difference in column names)",
-                            rsmd1.getColumnName(i), rsmd2.getColumnName(i));
-                }
+                assertEquals(msg + "(difference in column names)",
+                        rsmd1.getColumnLabel(i), rsmd2.getColumnLabel(i));
                 assertEquals(msg + "(difference in column types)",
                         rsmd1.getColumnType(i), rsmd2.getColumnType(i));
             }

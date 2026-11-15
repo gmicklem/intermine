@@ -49,8 +49,6 @@ dependencies {
     // the generated model classes extend and use the types of these two
     api group: "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
     api group: "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
-    // obo and bbop: on the classpath of the Ant tasks that read the SO model (not part of the API)
-    implementation fileTree(dir: 'libs', include: '*.jar')
     api libs.commons.lang
     api libs.reload4j
     implementation libs.slf4j.reload4j // logging binding (runtime scope in the POM)

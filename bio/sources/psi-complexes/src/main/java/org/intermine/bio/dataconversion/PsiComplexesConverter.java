@@ -45,8 +45,6 @@ import psidev.psi.mi.jami.model.Position;
 import psidev.psi.mi.jami.model.Range;
 import psidev.psi.mi.jami.model.Stoichiometry;
 import psidev.psi.mi.jami.model.Xref;
-import uk.ac.ebi.chebi.webapps.chebiWS.client.ChebiWebServiceClient;
-import uk.ac.ebi.chebi.webapps.chebiWS.model.Entity;
 
 
 /**
@@ -64,7 +62,6 @@ public class PsiComplexesConverter extends BioFileConverter
     private static final String DEFAULT_INTERACTOR_TYPE = "BioEntity";
     // TODO put this in config file instead
     private static final String PROTEIN = "MI:0326";
-    private static final String SMALL_MOLECULE = "MI:0328";
     private static final String BINDING_SITE = "binding region";
     private static final String DIRECT_BINDING = "direct binding";
     private static final String GENE_ONTOLOGY = "go";
@@ -79,8 +76,6 @@ public class PsiComplexesConverter extends BioFileConverter
     // accession to stored object ID
     private Map<String, String> interactors = new HashMap<String, String>();
     private Map<String, String> publications = new HashMap<String, String>();
-    // set once the ChEBI client has failed to load; small molecules then get no name
-    private boolean chebiClientMissing = false;
 
     // See #1168
     static {
@@ -347,11 +342,6 @@ public class PsiComplexesConverter extends BioFileConverter
             protein.setAttribute("primaryIdentifier", primaryIdentifier);
             if (PROTEIN.equals(typeTermIdentifier)) {
                 protein.setAttribute("primaryAccession", accession);
-            } else if (SMALL_MOLECULE.equals(typeTermIdentifier)) {
-                String smallMolecule = getChebiName(primaryIdentifier);
-                if (StringUtils.isNotEmpty(smallMolecule)) {
-                    protein.setAttribute("name", smallMolecule);
-                }
             }
             Organism organism = participant.getOrganism();
             if (organism != null) {
@@ -372,26 +362,6 @@ public class PsiComplexesConverter extends BioFileConverter
             createSynonym(refId, proIdentifier, true);
         }
         return refId;
-    }
-
-    private String getChebiName(String identifier) {
-        if (chebiClientMissing) {
-            return null;
-        }
-        try {
-            ChebiWebServiceClient client = new ChebiWebServiceClient();
-            Entity entity = client.getCompleteEntity(identifier);
-            return entity.getChebiAsciiName();
-        } catch (NoClassDefFoundError e) {
-            // The ChEBI client is a JAX-WS (javax.xml.ws) client, and JDK 11+ no longer includes
-            // JAX-WS. Leave the names out, as when the web service cannot be reached.
-            chebiClientMissing = true;
-            LOG.warn("Small molecules get no ChEBI name: the ChEBI web service client could not be"
-                    + " loaded (" + e.getMessage() + ")");
-        } catch (Exception e) {
-            LOG.warn(e.getMessage());
-        }
-        return null;
     }
 
     private void processStoichiometry(ModelledParticipant modelledParticipant, Item interactor)

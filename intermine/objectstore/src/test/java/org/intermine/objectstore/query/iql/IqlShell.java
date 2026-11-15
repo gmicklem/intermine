@@ -10,16 +10,14 @@ package org.intermine.objectstore.query.iql;
  *
  */
 
-import java.io.File;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.gnu.readline.Readline;
-import org.gnu.readline.ReadlineLibrary;
-import org.gnu.readline.ReadlineCompleter;
 
 import org.intermine.metadata.ClassDescriptor;
 import org.intermine.objectstore.ObjectStore;
@@ -84,65 +82,23 @@ public class IqlShell
      */
     private static void doShell(ObjectStore os) throws Exception {
         PrintStream out = System.out;
-        try {
-            Readline.load(ReadlineLibrary.GnuReadline);
-        } catch (UnsatisfiedLinkError ignoreMe) {
-            try {
-                Readline.load(ReadlineLibrary.Editline);
-            } catch (UnsatisfiedLinkError ignoreMe2) {
-                try {
-                    Readline.load(ReadlineLibrary.Getline);
-                } catch (UnsatisfiedLinkError ignoreMe3) {
-                    out.println("couldn't load readline lib. Using simple stdin.");
-                }
-            }
-        }
-        Readline.initReadline("IQLShell");
-        try {
-            Readline.readHistoryFile(System.getProperty("user.home") + File.separator
-                    + ".iqlshell_history");
-        } catch (RuntimeException e) {
-            // Doesn't matter.
-        }
-        Readline.setCompleter(new ReadlineCompleter() {
-            public String completer(String text, int state) {
-                return null;
-            }
-        });
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                try {
-                    Readline.writeHistoryFile(System.getProperty("user.home") + File.separator
-                        + ".iqlshell_history");
-                } catch (Exception e) {
-                    // Don't mind
-                }
-                PrintStream out = System.out;
-                out.println("\n");
-                Readline.cleanup();
-            }
-        });
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
         out.println("\nInterMine Query shell. Type in an IQL query, or \"quit;\" to exit.");
         out.println("End your query with \";\" then a newline. Other newlines are ignored");
         out.flush();
         String currentQuery = "";
-        String lastQuery = null;
-        if (Readline.getHistorySize() > 0) {
-            lastQuery = Readline.getHistoryLine(Readline.getHistorySize() - 1);
-        }
-        //BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         do {
-            //currentQuery += in.readLine();
-            String line = Readline.readline("".equals(currentQuery) ? "> " : ": ", false);
-            currentQuery += (line == null ? "" : line);
+            out.print("".equals(currentQuery) ? "> " : ": ");
+            out.flush();
+            String line = in.readLine();
+            if (line == null) {
+                // end of input: leave the shell
+                break;
+            }
+            currentQuery += line;
             if (!("".equals(currentQuery) || currentQuery.equals("quit;"))) {
                 if (currentQuery.endsWith(";")) {
-                    if (!currentQuery.equals(lastQuery)) {
-                        Readline.addToHistory(currentQuery);
-                        lastQuery = currentQuery;
-                    }
                     currentQuery = currentQuery.substring(0, currentQuery.length() - 1);
                     try {
                         if (currentQuery.toUpperCase().startsWith("DESCRIBE ")) {

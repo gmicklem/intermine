@@ -33,7 +33,8 @@ commons-lang = "2.6"
 commons-logging = "1.3.5"
 commons-math3 = "3.2"
 dwr = "2.0.11-RELEASE"
-easymock = "3.2"
+# 5.x runs on Java 8 and brings its own objenesis (3.x) and byte-buddy
+easymock = "5.7.0"
 everit-json-schema = "1.14.6"
 hikaricp = "4.0.3"
 jackson = "2.18.12"
@@ -52,10 +53,8 @@ json = "20260814"
 jsonassert = "1.2.3"
 jsp-api = "2.3.1"
 jstl = "1.2"
-junit = "4.8.2"
+junit = "4.13.2"
 lucene = "3.0.2"
-mockobjects = "0.09"
-objenesis = "2.1"
 oltu-client = "1.0.2"
 opencsv = "2.4"
 postgresql = "42.7.14"
@@ -113,9 +112,6 @@ junit = { module = "junit:junit", version.ref = "junit" }
 lucene-core = { module = "org.apache.lucene:lucene-core", version.ref = "lucene" }
 lucene-highlighter = { module = "org.apache.lucene:lucene-highlighter", version.ref = "lucene" }
 lucene-snowball = { module = "org.apache.lucene:lucene-snowball", version.ref = "lucene" }
-mockobjects-core = { module = "mockobjects:mockobjects-core", version.ref = "mockobjects" }
-mockobjects-jdk13 = { module = "mockobjects:mockobjects-jdk1.3", version.ref = "mockobjects" }
-objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
 oltu-client = { module = "org.apache.oltu.oauth2:org.apache.oltu.oauth2.client", version.ref = "oltu-client" }
 opencsv = { module = "au.com.bytecode:opencsv", version.ref = "opencsv" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
