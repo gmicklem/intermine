@@ -9,6 +9,7 @@ package org.intermine.web.fair;
  * information or http://www.gnu.org/copyleft/lesser.html.
  *
  */
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.intermine.api.InterMineAPI;
@@ -42,9 +43,12 @@ import org.json.JSONObject;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Response;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -89,30 +93,67 @@ public final class SemanticMarkupFormatter
         }
 
         String mineURL = new URLGenerator(request).getPermanentBaseURL();
-        Client client = ClientBuilder.newClient();
         try {
-            Response response = client.target(INTERMINE_REGISTRY
-                    + "service/namespace?url=" + mineURL).request().get();
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                JSONObject result = new JSONObject(response.readEntity(String.class));
-                String namespace = result.getString("namespace");
-                LOG.info("Namespace is: " + namespace);
-                response = client.target(INTERMINE_REGISTRY
-                        + "service/instances/" + namespace).request().get();
-                if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                    RegistryResponse registryRes = response.readEntity(RegistryResponse.class);
-                    imInstance = registryRes.getInstance();
-                }
-                if (!(request instanceof SessionlessRequest)) {
-                    SessionMethods.setBasicInstanceInfo(request.getSession().getServletContext(),
-                            imInstance);
-                }
+            imInstance = lookUpInstance(INTERMINE_REGISTRY, mineURL);
+            if (imInstance != null && !(request instanceof SessionlessRequest)) {
+                SessionMethods.setBasicInstanceInfo(request.getSession().getServletContext(),
+                        imInstance);
             }
-        } catch (RuntimeException ex) {
-            LOG.error("Problems connecting to InterMine registry");
+        } catch (IOException | RuntimeException ex) {
+            LOG.error("Problems connecting to InterMine registry", ex);
             return null;
         }
         return imInstance;
+    }
+
+    /**
+     * Ask the InterMine registry for the instance registered under the given mine URL: the
+     * namespace of the mine first, then the instance of that namespace.
+     * @param registryURL the base URL of the registry, with the trailing slash
+     * @param mineURL the permanent base URL of this mine
+     * @return the instance, or null if the registry answered either request with another status
+     * than 200 OK
+     * @throws IOException if the registry cannot be reached
+     */
+    static Instance lookUpInstance(String registryURL, String mineURL) throws IOException {
+        String namespaceJson = httpGet(registryURL + "service/namespace?url=" + mineURL);
+        if (namespaceJson == null) {
+            return null;
+        }
+        String namespace = new JSONObject(namespaceJson).getString("namespace");
+        LOG.info("Namespace is: " + namespace);
+        String instanceJson = httpGet(registryURL + "service/instances/" + namespace);
+        if (instanceJson == null) {
+            return null;
+        }
+        return new ObjectMapper().readValue(instanceJson, RegistryResponse.class).getInstance();
+    }
+
+    /**
+     * Send a GET request, with the default connection settings of the JDK (no timeouts, redirects
+     * followed).
+     * @param url the URL
+     * @return the body of the response decoded as UTF-8, or null if the status is not 200 OK
+     * @throws IOException if the connection fails
+     */
+    private static String httpGet(String url) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        try {
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                return null;
+            }
+            try (InputStream in = connection.getInputStream()) {
+                ByteArrayOutputStream body = new ByteArrayOutputStream();
+                byte[] buffer = new byte[4096];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    body.write(buffer, 0, read);
+                }
+                return new String(body.toByteArray(), StandardCharsets.UTF_8);
+            }
+        } finally {
+            connection.disconnect();
+        }
     }
 
     /**

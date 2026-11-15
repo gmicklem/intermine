@@ -23,6 +23,13 @@ def explodedWebAppDir = layout.buildDirectory.dir("explodedWebApp")
 
 configurations {
     imWebApp
+
+    all {
+        // biojava-core and biojava-ontology 4.2.0 depend on log4j-core, log4j-api and log4j-slf4j-impl 2.5 (Log4Shell,
+        // CVE-2021-44228), and the last one is a second SLF4J binding next to slf4j-reload4j. InterMine logs through
+        // the log4j 1.x API (reload4j); nothing needs log4j 2. Same exclusion as bio-core and bio-sources.
+        exclude group: 'org.apache.logging.log4j'
+    }
 }
 
 dependencies {
@@ -44,12 +51,19 @@ dependencies {
     // and every mine's dbmodel already bring in current ones: Jackson 2.7.x (2.18 here), commons-lang3 3.4 (3.10 with
     // Jena), and through the pom-only pride-logging artifact jcl-over-slf4j 1.7.19 and logback (a second SLF4J
     // binding next to slf4j-reload4j). Two versions of one library in WEB-INF/lib are loaded in file order.
+    // ols-client also declares spring-test 4.2.5 as a compile dependency, though only spring-web and spring-http
+    // classes are used (no class of ols-client or jami references org.springframework.test).
     implementation(libs.jami.ols) {
         exclude group: 'com.fasterxml.jackson.core'
         exclude group: 'org.apache.commons', module: 'commons-lang3'
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging'
+        exclude group: 'org.springframework', module: 'spring-test'
     }
-    implementation libs.jami.interactionviewer.json
+    // json-simple 1.1.1 (a runtime need of the jami JSON writers: org.json.simple.JSONValue) declares junit 4.10 and,
+    // through it, hamcrest-core 1.1 as compile dependencies, which would be in the war.
+    implementation(libs.jami.interactionviewer.json) {
+        exclude group: 'junit', module: 'junit'
+    }
     implementation libs.biojava.ontology
     implementation libs.json
 

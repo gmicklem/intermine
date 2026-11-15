@@ -29,6 +29,11 @@ dependencies {
     api libs.commons.collections
     api libs.commons.io
     api libs.commons.lang
+    // the testmine war then has two jars for org.apache.commons.logging: this one and jcl-over-slf4j, which
+    // solr-solrj brings. Both end in reload4j (commons-logging finds log4j 1.x itself, jcl-over-slf4j goes
+    // through slf4j-reload4j), so which one the class loader finds first does not matter. jcl-over-slf4j is the one to
+    // keep if one is dropped (it is the logging path of solrj and of its HTTP clients); the vendored torque jar
+    // of intermine-objectstore only needs the API.
     api libs.commons.logging
     api(libs.hikaricp) { transitive = false }
     api libs.base64
