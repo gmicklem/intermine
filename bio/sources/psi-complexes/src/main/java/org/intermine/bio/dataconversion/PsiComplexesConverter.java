@@ -79,6 +79,8 @@ public class PsiComplexesConverter extends BioFileConverter
     // accession to stored object ID
     private Map<String, String> interactors = new HashMap<String, String>();
     private Map<String, String> publications = new HashMap<String, String>();
+    // set once the ChEBI client has failed to load; small molecules then get no name
+    private boolean chebiClientMissing = false;
 
     // See #1168
     static {
@@ -373,10 +375,19 @@ public class PsiComplexesConverter extends BioFileConverter
     }
 
     private String getChebiName(String identifier) {
+        if (chebiClientMissing) {
+            return null;
+        }
         try {
             ChebiWebServiceClient client = new ChebiWebServiceClient();
             Entity entity = client.getCompleteEntity(identifier);
             return entity.getChebiAsciiName();
+        } catch (NoClassDefFoundError e) {
+            // The ChEBI client is a JAX-WS (javax.xml.ws) client, and JDK 11+ no longer includes
+            // JAX-WS. Leave the names out, as when the web service cannot be reached.
+            chebiClientMissing = true;
+            LOG.warn("Small molecules get no ChEBI name: the ChEBI web service client could not be"
+                    + " loaded (" + e.getMessage() + ")");
         } catch (Exception e) {
             LOG.warn(e.getMessage());
         }

@@ -1,0 +1,28 @@
+// Java version settings shared by every InterMine build (applied after the java or java-library plugin). See docs/BUILDING.md.
+//
+// The JDK that runs Gradle (JAVA_HOME) compiles and runs the tests, and the plugin's Ant tasks (integrate, buildDB, ...) run
+// inside the Gradle daemon on that JDK too. Supported: JDK 17 (CI), 21 (verified) and 8 (CI, until 6.0.0 is released).
+// No toolchain is declared: it would compile and test on one JDK while the daemon runs InterMine code on another, and a
+// machine with only JDK 8 could no longer build.
+//
+// Whatever the build JDK, the artefacts are Java 8 bytecode (class file version 52), so a 6.x mine still runs on a JDK 8 Tomcat.
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+if (JavaVersion.current().isJava9Compatible()) {
+    // --release 8 also compiles against the Java 8 API: a call to a 9+ method fails here rather than with NoSuchMethodError
+    // on a JDK 8 Tomcat. (javac 8 has no --release, and on JDK 8 sourceCompatibility already means the Java 8 API.)
+    tasks.withType(JavaCompile).configureEach {
+        options.release = 8
+    }
+
+    // cglib 3.1 (org.intermine.util.DynamicBean, the proxies for objects of more than one model class) defines its generated
+    // classes by calling ClassLoader.defineClass through reflection, which JDK 16+ refuses unless java.base opens java.lang.
+    // The Gradle daemon and Tomcat 9's catalina.sh already pass this option; Gradle's test workers do not. Any other JVM that
+    // runs InterMine code on JDK 16+ needs it too. Delete this when cglib is replaced.
+    tasks.withType(Test).configureEach {
+        jvmArgs '--add-opens=java.base/java.lang=ALL-UNNAMED'
+    }
+}

@@ -10,7 +10,7 @@ The sources are the maintainers' planning notes (`decisions/gradle-upgrade-path.
 |---|---|---|---|
 | 5.0.x, 5.1.0 | 4.9 | 8 | the current mines |
 | 5.1.1 | 4.9 still works (the plugin is built to stay compatible); **6.9.4 is recommended** | 8 | on this branch; not yet released |
-| 6.0.0 | 8.14.x (planned: 8.14.6) | **To be confirmed when 6.0.0 is cut** (the InterMine builds move to JDK 17 in the same effort) | planned |
+| 6.0.0 | 8.14.x (planned: 8.14.6) | build: 17 (8 still works, 21 checked); run: 8, 17 or 21, see [JDK](#jdk-for-600) | planned |
 
 Plugin 6.0.0 needs Gradle 8.14 in the mine: the plugin is compiled against Gradle's own Groovy, and a plugin built for a newer Groovy fails on an older Gradle. Plugin 5.1.1 is built so that it still runs on Gradle 4.9. A mine that pins `imVersion=5.1.+` (flymine does) picks up any 5.1.x plugin automatically, and cannot pick up 6.0.0 by accident; a mine that pins `5.0.+` stays on 5.0.x.
 
@@ -29,6 +29,15 @@ Nothing is required: 5.1.1 runs on Gradle 4.9. To also move the mine to Gradle 6
 | `maven` plugin | `build.gradle:22` | delete `apply plugin: 'maven'` |
 | `jcenter()` repository (removed in Gradle 8) | `build.gradle:30` | delete it |
 | `compile` / `testCompile` | `build.gradle:38,40`, and `dbmodel/` and `webapp/` build files | `implementation` / `testImplementation` (see below) |
+
+## JDK for 6.0.0
+
+InterMine 6.0.0 is built and tested on JDK 17, and its jars are still Java 8 bytecode (class file version 52), so a mine can keep a JDK 8 Tomcat. To move a mine to JDK 17 (or 21):
+
+- **Build JDK.** The JDK that runs Gradle (`JAVA_HOME`) is the one that compiles the mine, and the plugin's tasks (`integrate`, `buildDB`, `postprocess`, ...) run inside the Gradle daemon on it. Set `JAVA_HOME` before `./gradlew`; no toolchain setting is needed. Gradle 8.14 runs on JDK 8 to 24.
+- **If Tomcat stays on JDK 8 but the mine is built on 17**, add `tasks.withType(JavaCompile).configureEach { options.release = 8 }` to the mine's Java projects, so that its own code is compiled against the Java 8 API (`sourceCompatibility = 1.8` alone does not do that).
+- **JVM option on JDK 16+.** InterMine uses cglib 3.1 to build objects that belong to more than one model class, and on JDK 16+ cglib needs `--add-opens=java.base/java.lang=ALL-UNNAMED`. Where it is already set: the Gradle daemon (Gradle adds it), and Tomcat 9 started with `bin/catalina.sh` or `startup.sh` (`catalina.sh` adds it to `JDK_JAVA_OPTIONS`). Where the mine must add it: a Tomcat started another way (Cargo's local container: `cargo { local { jvmArgs = '... --add-opens=java.base/java.lang=ALL-UNNAMED' } }`; jsvc, systemd units that call `java` directly, embedded Tomcat), the `test` tasks of a mine that has its own tests (`test { jvmArgs '--add-opens=java.base/java.lang=ALL-UNNAMED' }`), and any script that runs InterMine code with a plain `java`. JDK 8 rejects the option, so add it only for JDK 9+ (`if (JavaVersion.current().isJava9Compatible())`).
+- **psi-complexes on JDK 11+:** small molecules get no name. The ChEBI client it uses is a JAX-WS client (JDK 11 removed JAX-WS), and the ChEBI SOAP service it calls answers HTTP 500 anyway (Nov 2026), so on JDK 8 the names are missing too.
 
 ## 5.1.1 to 6.0.0 (Gradle 8.14)
 

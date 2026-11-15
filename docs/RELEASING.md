@@ -63,7 +63,7 @@ Check that nothing was missed: `grep -rn "5\.1\.1" --include=*.gradle --include=
 
 ## 2. Build and verify locally
 
-Use JDK 8 and the wrapper of each build. Build in this order, because later builds resolve the jars of earlier builds from `build/libs`: plugin, intermine, bio, bio/sources, bio/postprocess.
+Use the wrapper of each build, with JDK 17 for 6.0.0 (JDK 8 for 5.1.1: its Gradle 6.9.4 does not run on JDK 17). The jars are Java 8 bytecode with either JDK; to check, `unzip -p <jar> <some>.class | head -c 8 | od -An -j6 -N2 -tu1` prints `0 52`. Build in this order, because later builds resolve the jars of earlier builds from `build/libs`: plugin, intermine, bio, bio/sources, bio/postprocess.
 
 ```bash
 export LANG=C.UTF-8 LC_ALL=C.UTF-8        # javadoc fails on non-ASCII sources under an ASCII locale
@@ -129,7 +129,7 @@ done
 6.0.0 ships the Gradle 8.14 build and plugin (steps 2 and 3 of `decisions/gradle-upgrade-path.md`). The publishing scripts are written for Gradle 6.9.4 and also work unchanged on 7.x and 8.x (tested on 8.14.6 with JDK 17 against a sample multi-project build with a war module), so the procedure is the same as for 5.1.1:
 
 - Run the five `centralBundle` builds with the Gradle 8.14 wrappers, then upload with the same `curl` calls (use the new version in `name=`).
-- The Portal plugin `com.gradleup.nmcp` was evaluated and vetted (`decisions/package-vetting.md`). It is safe but is not used: it needs JDK 17 and Gradle 8.2+ to run, the builds still run on JDK 8, and it would only replace the zip and the `curl` call above. Revisit it when the builds move to JDK 17 and become one composite build, where a single aggregated deployment (`com.gradleup.nmcp.aggregation`, credentials from `CENTRAL_USERNAME` / `CENTRAL_PASSWORD`, `nmcpAggregation { centralPortal { username = ...; password = ...; publishingType = 'USER_MANAGED' } }`) is worth the extra dependency.
+- The Portal plugin `com.gradleup.nmcp` was evaluated and vetted (`decisions/package-vetting.md`). It is safe but is not used: it needs JDK 17 and Gradle 8.2+ to run, the builds must still work on JDK 8 until 6.0.0 is out, and it would only replace the zip and the `curl` call above. Revisit it when JDK 8 is dropped and the builds become one composite build, where a single aggregated deployment (`com.gradleup.nmcp.aggregation`, credentials from `CENTRAL_USERNAME` / `CENTRAL_PASSWORD`, `nmcpAggregation { centralPortal { username = ...; password = ...; publishingType = 'USER_MANAGED' } }`) is worth the extra dependency.
 - Gradle 9 is not covered yet: re-run the publishing scripts with `--warning-mode all` when that step is done (`afterEvaluate` publication, `signing.useInMemoryPgpKeys`).
 - Mines must move to Gradle 8.14 together with the 6.0.0 plugin; their upgrade steps belong in the deployer guide, not here.
 

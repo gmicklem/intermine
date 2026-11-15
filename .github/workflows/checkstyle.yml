@@ -40,8 +40,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # B4 will add 17 and 21 here once the builds support them: java: [8, 17, 21]
-        java: [8]
+        # checkstyle 7.8.1 gives the same result on any JDK; use the build JDK
+        java: [17]
     steps:
       - uses: actions/checkout@v7
       - name: Set up JDK ${{ matrix.java }}

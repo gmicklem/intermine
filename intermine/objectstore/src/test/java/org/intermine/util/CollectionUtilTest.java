@@ -183,6 +183,16 @@ public class CollectionUtilTest extends TestCase
         expected.put(Number.class, lNumbers);
         expected.put(Serializable.class, lSerialisables);
         expected.put(Comparable.class, lSerialisables);
+        // JDK 12+ also gives Integer, Float and String the java.lang.constant interfaces (named by
+        // string: the tests compile against the Java 8 API)
+        for (String name : new String[] {"java.lang.constant.Constable",
+                "java.lang.constant.ConstantDesc"}) {
+            try {
+                expected.put(Class.forName(name), lSerialisables);
+            } catch (ClassNotFoundException e) {
+                // JDK 8 to 11
+            }
+        }
 
         assertEquals(expected, CollectionUtil.groupByClass(c, true));
     }

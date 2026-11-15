@@ -40,10 +40,8 @@ subprojects {
     apply plugin: 'biosource-dbmodel'
     apply plugin: "checkstyle"
 
-    java {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
+    // Java 8 bytecode whatever the build JDK; --release 8 and the test JVM options on JDK 9+
+    apply from: "${rootDir}/../../config/gradle/java-target.gradle"
 
     // -------------------------
     // Build localDirs list
@@ -139,10 +137,10 @@ subprojects {
         mergeModel group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
         mergeModel libs.commons.lang
 
-        // JAX-B dependencies for JDK 9+
+        // JAXB, which JDK 11 removed: psi-complexes binds XML with it (jami-xml, the ChEBI client); the other sources do not
+        // need it. (javax.annotation-api was here too, but no source and no jar on these classpaths uses it.)
         implementation libs.jakarta.xml.bind.api
         implementation libs.jaxb.runtime
-        implementation libs.javax.annotation.api
     }
 
     dbModelConfig {
