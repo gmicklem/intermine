@@ -3,10 +3,10 @@ apply plugin: "war"
 buildscript {
     repositories {
         maven {
-            url project.getProperty("intermine.maven.central")
+            url = project.getProperty("intermine.maven.central")
         }
         maven {
-            url project.getProperty("intermine.maven.plugins")
+            url = project.getProperty("intermine.maven.plugins")
         }
     }
 
@@ -16,8 +16,8 @@ buildscript {
 }
 apply plugin: "com.bmuschko.cargo"
 
-def explodedWebAppDir = "$buildDir/explodedWebApp"
-def mergePropsDir = "$buildDir/props"
+def explodedWebAppDir = layout.buildDirectory.dir("explodedWebApp").get().asFile
+def mergePropsDir = layout.buildDirectory.dir("props").get().asFile
 
 ext {
     minePropertyFileName = "testmodel.properties"
@@ -70,40 +70,37 @@ processResources {
     exclude "main/"
 }
 
-task copyModelProperties(type: Copy) {
-    description "Copies mine specific intermine.properties file into resources output to be included in the war."
-    dependsOn 'processResources'
-    from project.parent.project(':dbmodel').sourceSets.main.output.resourcesDir.absolutePath + "/intermine.properties"
-    into sourceSets.main.output.resourcesDir
-}
-
 war {
     dependsOn 'mergeProperties', 'summariseTestObjectStore', 'unwarIMWebApp'
     finalizedBy 'warTestModelWebApp'
 }
 
+// intermine.properties is this project's own copy (processResources, see the root build file); until 2026-11 a
+// copyModelProperties task copied dbmodel's copy of the same file into the resources output, with no dependency on
+// the task that wrote it.
+def intermineProperties = new File(sourceSets.main.output.resourcesDir, "intermine.properties")
 task mergeProperties(type: Copy) {
-    description "Appends intermine.properties to web.properties file"
-    dependsOn 'copyModelProperties'
-    from "${webAppDirName}/WEB-INF/web.properties"
-    into "${mergePropsDir}"
+    description = "Appends intermine.properties to web.properties file"
+    inputs.files(tasks.named('processResources'))
+    from war.webAppDirectory.file("WEB-INF/web.properties")
+    into mergePropsDir
     doLast {
-        def intermineProperties = project.parent.project(':dbmodel').sourceSets.main.output.resourcesDir.absolutePath + "/intermine.properties"
-        (new File("$mergePropsDir/web.properties")).append( (new File("$intermineProperties")).getText())
+        new File(mergePropsDir, "web.properties").append(intermineProperties.getText())
     }
 }
 
 // this task requires a database to exist and be populated. However this task is run at compile time, not runtime.
 // We have no guarantee there will be a database. Hence the try/catch
 task summariseTestObjectStore {
-    description "Summarise Test model ObjectStore into objectstoresummary.properties file"
-    dependsOn 'copyDefaultProperties'
+    description = "Summarise Test model ObjectStore into objectstoresummary.properties file"
+    // the Ant task reads default.intermine.properties from build/resources/main
+    inputs.files(tasks.named('processResources'))
 
     doLast {
         try {
             ant.taskdef(name: "summarizeObjectStoreTask", classname: "org.intermine.task.SummariseObjectStoreTask") {
                 classpath {
-                    dirset(dir: "$buildDir")
+                    dirset(dir: layout.buildDirectory.get().asFile)
                     pathelement(path: configurations.runtimeClasspath.asPath)
                 }
             }
@@ -116,13 +113,13 @@ task summariseTestObjectStore {
 
 
 task unwarIMWebApp(type: Copy) {
-    description "Unwar intermine-webapp under the build/explodedWebAppDir directory"
+    description = "Unwar intermine-webapp under the build/explodedWebAppDir directory"
     from { zipTree(configurations.imWebApp.singleFile) }
     destinationDir = new File("$explodedWebAppDir")
 }
 
 task warTestModelWebApp(type: War) {
-    description "Create the war from the build/explodedWebAppDir directory"
+    description = "Create the war from the build/explodedWebAppDir directory"
     from "${explodedWebAppDir}"
     exclude "WEB-INF/web.properties"
     // intermine-webapp's WEB-INF/lib (exploded above) and this project's own libraries share 12 jars
@@ -146,11 +143,15 @@ cargo {
     local {
         installer {
             installConfiguration = configurations.tomcat
-            downloadDir= file("$buildDir/downloads")
-            extractDir = file("$buildDir/extracts")
+            downloadDir = layout.buildDirectory.dir("downloads").get().asFile
+            extractDir = layout.buildDirectory.dir("extracts").get().asFile
         }
         jvmArgs = '-Dorg.apache.el.parser.SKIP_IDENTIFIER_CHECK=true'
     }
 }
 
-cargoRunLocal.dependsOn war
+// lifecycle: cargo deploys build/libs/webapp.war, and the last task to write that file is warTestModelWebApp, the
+// finalizer of war (so it runs after war). Gradle 8 fails a task that reads another task's output without depending on it.
+['cargoRunLocal', 'cargoStartLocal'].each { name ->
+    tasks.named(name) { dependsOn 'war', 'warTestModelWebApp' }
+}
