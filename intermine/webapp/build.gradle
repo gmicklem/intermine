@@ -39,7 +39,8 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-math3', version: '3.0'
     compile group: 'org.everit.json', name: 'org.everit.json.schema', version: '1.5.1'
     compile 'org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:1.0.1'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.18.12'
+    compile 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.18.12' // align jersey-media-json-jackson's 2.8.4 Jackson modules
     compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: '2.25'
     compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.0.1'
     compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: '2.25'
