@@ -13,7 +13,7 @@ dependencies {
      // We need this dependency because the pre-generated userprofile classes and model XML are here, which is necessary to build the userprofile-test db
     testImplementation project(':intermine-api')
     testImplementation project(':intermine-objectstore')
-    testImplementation 'commons-lang:commons-lang:2.6'
+    testImplementation libs.commons.lang
 }
 
 void generateModel(model, destination, type) {
@@ -28,14 +28,26 @@ void generateModel(model, destination, type) {
     ant.modelOutputTask(model: model, destDir: destination, type: type)
 }
 
-task generateTestModel {
-    description "generate the testmodel Java files from the data model, eg. Employee.java"
+// The generated test model sources (eg. Employee.java) go to a declared output directory under build/, not into
+// the source tree. Registering the task as a test source directory makes compileTestJava (and everything that
+// needs the test classes) depend on it without an explicit dependsOn.
+def testModelSourceDir = layout.buildDirectory.dir('generated/sources/testmodel')
+def generateTestModel = tasks.register('generateTestModel') {
+    description = "generate the testmodel Java files from the data model, eg. Employee.java"
     // the Ant task classpath is resolved when the task runs: declare it as an input so that the jars are built first
     inputs.files(configurations.testRuntimeClasspath)
+    // the model (testmodel_model.xml) is read from this directory, which is on the Ant task classpath
+    inputs.dir('src/test/resources')
+    outputs.dir(testModelSourceDir)
     doLast {
-        generateModel('testmodel', 'src/test/java', 'java')
+        def destination = testModelSourceDir.get().asFile
+        // classes of a removed model class must not survive
+        project.delete(destination)
+        destination.mkdirs()
+        generateModel('testmodel', destination.path, 'java')
     }
 }
+sourceSets.test.java.srcDir(generateTestModel)
 
 void insertDataModel(model, osname) {
     ant.taskdef(name: 'insertModelTask', classname: 'org.intermine.task.StoreMetadataTask') {
@@ -51,7 +63,7 @@ void insertDataModel(model, osname) {
 }
 
 task insertModel (dependsOn: 'buildDB') {
-    description "put the generated model file into the intermine_metadata table"
+    description = "put the generated model file into the intermine_metadata table"
     inputs.files(configurations.testRuntimeClasspath)
 
     doLast {
@@ -89,22 +101,24 @@ processTestResources {
 }
 
 task buildTestModelJar(type: Jar) {
+    // the test output carries the dependency on compileTestJava and processTestResources
     from(sourceSets.test.output)
+}
+
+// providers.exec (Gradle 7.5+) replaces Project.exec, which is deprecated in 8.11 and removed in 9.0. It runs the
+// command when its output is read, and does not take streams: stdout and stderr come back separately.
+String psqlOutput(execOutput) {
+    (execOutput.standardOutput.asText.get() + execOutput.standardError.asText.get()).trim()
 }
 
 void createDbInternal(dbName) {
     println 'Creating database ' + dbName
-    def resultStream = new ByteArrayOutputStream()
-    exec {
-        ignoreExitValue true
+    def result = psqlOutput(providers.exec {
+        ignoreExitValue = true
         // Admin connection without sudo (newer sudo ignores -E): PGUSER/PGPASSWORD, default postgres/postgres
         environment PGPASSWORD: (System.getenv('PGPASSWORD') ?: 'postgres')
         commandLine 'psql', '-w', '-h', 'localhost', '-U', (System.getenv('PGUSER') ?: 'postgres'), '-c', "create database \"" + dbName + "\";"
-        standardOutput = resultStream
-        errorOutput = resultStream
-    }
-
-    def result = resultStream.toString().trim()
+    })
 
     if (result.contains('database "' + dbName + '" already exists')) {
         println 'Already exists.'
@@ -117,17 +131,12 @@ void createDbInternal(dbName) {
 
 void grantPrivileges(dbName) {
     println 'Grant privileges on database ' + dbName
-    def resultStream = new ByteArrayOutputStream()
-    exec {
-        ignoreExitValue true
+    def result = psqlOutput(providers.exec {
+        ignoreExitValue = true
         // Admin connection without sudo (newer sudo ignores -E): PGUSER/PGPASSWORD, default postgres/postgres
         environment PGPASSWORD: (System.getenv('PGPASSWORD') ?: 'postgres')
         commandLine 'psql', '-w', '-h', 'localhost', '-U', (System.getenv('PGUSER') ?: 'postgres'), '-c', "grant all privileges on database \"" + dbName + "\" to test;"
-        standardOutput = resultStream
-        errorOutput = resultStream
-    }
-
-    def result = resultStream.toString().trim()
+    })
 
     if (result.contains("GRANT")) {
         println 'Granted.'
@@ -137,22 +146,18 @@ void grantPrivileges(dbName) {
 
     // PostgreSQL 15 and later: only the database owner may create objects in the public schema, so a
     // non-superuser test user needs an explicit grant (the superuser used locally does not).
-    def schemaStream = new ByteArrayOutputStream()
-    exec {
-        ignoreExitValue true
+    def schemaResult = psqlOutput(providers.exec {
+        ignoreExitValue = true
         environment PGPASSWORD: (System.getenv('PGPASSWORD') ?: 'postgres')
         commandLine 'psql', '-w', '-h', 'localhost', '-U', (System.getenv('PGUSER') ?: 'postgres'), '-d', dbName, '-c', "grant all on schema public to test;"
-        standardOutput = schemaStream
-        errorOutput = schemaStream
-    }
-    def schemaResult = schemaStream.toString().trim()
+    })
     if (!schemaResult.contains("GRANT")) {
         throw new GradleException("FAILED:\n${schemaResult}")
     }
 }
 
 task createUnitTestDatabases {
-    description "create databases needed for unit tests"
+    description = "create databases needed for unit tests"
     doLast {
         // just fail silently if DB is already there. Instead we could read in the list of DBs and only
         // create ones that aren't there
@@ -174,41 +179,15 @@ task createUnitTestDatabases {
 // this only works correctly after you stop the gradlew process. --stop. otherwise it keeps the connection to unittest
 // this is incorrect as the tests should drop the database connections themselves
 task dropDBs {
-    description "drop all the test databases. used for debugging only."
+    description = "drop all the test databases. used for debugging only."
     doLast {
-        exec {
-            // just fail silently if DB is already there. Instead we could read in the list of DBs and only
-            // create ones that aren't there
-            ignoreExitValue true
-            commandLine 'psql', '-d', 'postgres', '-c', "drop database notxmltest;"
-        }
-        exec {
-            ignoreExitValue true
-            commandLine 'psql', '-d', 'postgres', '-c', "drop database truncunittest;"
-        }
-        exec {
-            ignoreExitValue true
-            commandLine 'psql', '-d', 'postgres', '-c', "drop database flatmodetest;"
-        }
-        exec {
-            ignoreExitValue true
-            commandLine 'psql', '-d', 'postgres', '-c', "drop database fulldatatest;"
-        }
-        exec {
-            ignoreExitValue true
-            commandLine 'psql', '-d', 'postgres', '-c', "drop database \"userprofile-test\";"
-        }
-        exec {
-            ignoreExitValue true
-            commandLine 'psql', '-d', 'postgres', '-c', "drop database unittest;"
-        }
-        exec {
-            ignoreExitValue true
-            commandLine 'psql', '-d', 'postgres', '-c', "drop database \"bio-test\";"
-        }
-        exec {
-            ignoreExitValue true
-            commandLine 'psql', '-d', 'postgres', '-c', "drop database \"bio-fulldata-test\";"
+        // fail silently if a database is not there
+        ['notxmltest', 'truncunittest', 'flatmodetest', 'fulldatatest', 'userprofile-test', 'unittest', 'bio-test',
+         'bio-fulldata-test'].each { dbName ->
+            println psqlOutput(providers.exec {
+                ignoreExitValue = true
+                commandLine 'psql', '-d', 'postgres', '-c', "drop database \"" + dbName + "\";"
+            })
         }
     }
 }
@@ -223,7 +202,7 @@ void createTables(osname, model) {
             dirset(dir: 'src/test/resources/') // testmodel classes and schemas
         }
     }
-    ant.buildDBUnittest(osname: "os.$osname", model: "$model", schemafile:"os.$osname-schema.xml", tempDir: "$buildDir/tmp")
+    ant.buildDBUnittest(osname: "os.$osname", model: "$model", schemafile:"os.$osname-schema.xml", tempDir: layout.buildDirectory.dir("tmp").get().asFile.path)
     ant.taskdef(name: 'insertModel', classname: 'org.intermine.task.StoreMetadataTask') {
         classpath {
             pathelement(path: configurations.testRuntimeClasspath.asPath)
@@ -244,14 +223,14 @@ void generateSchema(osname, model) {
             dirset(dir: 'src/test/resources') // testmodel_model.xml
         }
     }
-    ant.torque(osname: "os.$osname", destFile:"$buildDir/os.$osname-schema.xml")
+    ant.torque(osname: "os.$osname", destFile: layout.buildDirectory.file("os.${osname}-schema.xml").get().asFile.path)
 }
 
 task buildDB {
+    // the Ant tasks load the test model classes from build/ (not a declared input) and need the databases
     dependsOn 'compileTestJava'
     dependsOn 'createUnitTestDatabases'
-    dependsOn 'generateTestModel'
-    description "Create tables for database for intermine tests"
+    description = "Create tables for database for intermine tests"
     inputs.files(configurations.testRuntimeClasspath)
     doLast {
         generateSchema('unittest', 'testmodel')
@@ -273,9 +252,6 @@ task buildDB {
         createTables('fulldatatest', 'fulldata')
     }
 }
-
-tasks.compileTestJava.dependsOn('generateTestModel')
-tasks.buildTestModelJar.dependsOn 'testClasses'
 
 artifacts {
     testArtifacts buildTestModelJar

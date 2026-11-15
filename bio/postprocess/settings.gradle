@@ -33,3 +33,12 @@ project(':bio-postprocess-create-attribute-indexes').projectDir = new File(setti
 project(':bio-postprocess-create-gene-flanking-features').projectDir = new File(settingsDir, './create-gene-flanking-features')
 project(':bio-postprocess-create-intron-features').projectDir = new File(settingsDir, './create-intron-features')
 project(':bio-postprocess-create-R2RML-mapping').projectDir = new File(settingsDir, './create-R2RML-mapping')
+
+// one version catalog for all seven builds, at the repository root (Gradle 7.4+)
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from(files('../../gradle/libs.versions.toml'))
+        }
+    }
+}

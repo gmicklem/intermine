@@ -1,5 +1,5 @@
 ext {
-    imVersion = "5.1.1"
+    imVersion = libs.versions.intermine.get()
     taskGroup = "InterMine"
     minePropertyFileName = "testmodel.properties"
     minePropertyFile = "${System.env.HOME}/.intermine/$minePropertyFileName"
@@ -9,8 +9,10 @@ ext {
 subprojects {
     apply plugin: 'java-library'
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
 
     // -------------------------
     // Build localDirs list
@@ -33,7 +35,7 @@ subprojects {
         // Prefer locally-built InterMine artifacts
         localDirs.each { dir ->
             ivy {
-                url "file://" + dir
+                url = "file://" + dir
                 patternLayout {
                     artifact  "[artifact]-[revision](-[classifier]).[ext]"
                 }
@@ -43,13 +45,13 @@ subprojects {
             }
         }
         maven {
-            url project.getProperty("intermine.maven.central")
+            url = project.getProperty("intermine.maven.central")
         }
         maven {
-            url project.getProperty("intermine.maven.ebi")
+            url = project.getProperty("intermine.maven.ebi")
         }
         maven {
-            url project.getProperty("intermine.maven.clojars")
+            url = project.getProperty("intermine.maven.clojars")
         }
     }
 
@@ -59,14 +61,14 @@ subprojects {
 
     dependencies {
         // api, not implementation: webapp compiles against dbmodel and has always seen these through it
-        api group: 'org.apache.ant', name: 'ant', version: '1.7.0'
-        api group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
-        api group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
+        api libs.ant
+        api libs.reload4j
+        api libs.slf4j.reload4j
         commonResources group: "org.intermine", name: "intermine-resources", version: imVersion
     }
 
     task copyMineProperties(type: Copy) {
-        description "Copies mine specific intermine.properties file (from .intermine directory) into resources output to be included in the war"
+        description = "Copies mine specific intermine.properties file (from .intermine directory) into resources output to be included in the war"
         from minePropertyFile
         into sourceSets.main.output.resourcesDir
         rename { fileName -> fileName.replace("testmodel.properties", "intermine.properties") }
@@ -75,7 +77,7 @@ subprojects {
     }
 
     task copyDefaultProperties(type: Copy) {
-        description "Copies default.intermine.properties file (from resources project) into resources output to be included in the war"
+        description = "Copies default.intermine.properties file (from resources project) into resources output to be included in the war"
         // kept: writes into processResources' output dir, so it must run after it. To be folded
         // into processResources together with its users in dbmodel/ and webapp/ (Gradle Step 2a).
         dependsOn 'processResources'

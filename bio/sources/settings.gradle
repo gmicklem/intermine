@@ -95,4 +95,11 @@ project(':bio-source-wormbase-identifiers').projectDir = new File(settingsDir, '
 //project(':bio-source-kegg-identifiers').projectDir = new File(settingsDir, './example-sources/kegg-identifiers')
 project(':bio-source-malaria-gff').projectDir = new File(settingsDir, './example-sources/malaria-gff')
 
-
+// one version catalog for all seven builds, at the repository root (Gradle 7.4+)
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from(files('../../gradle/libs.versions.toml'))
+        }
+    }
+}
