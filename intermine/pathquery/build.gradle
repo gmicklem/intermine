@@ -2,9 +2,7 @@ apply plugin: 'antlr'
 
 sourceSets {
     main {
-        java {
-            srcDirs = ['src/main/java', 'build/generated-src/antlr/main']
-        }
+        // no java srcDirs override: the antlr plugin adds build/generated-src/antlr/main itself
         resources {
             srcDirs = ['src/main/resources']
         }
@@ -22,10 +20,11 @@ sourceSets {
     }
 }
 
+// the unit tests need the databases that testresources:buildDB creates (a side effect, so there is no file to wire as an input)
 tasks.test.dependsOn(':intermine-testresources:buildDB')
 
 dependencies {
-    compile project(':intermine-model')
-    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+    api project(':intermine-model')
+    api group: 'commons-lang', name: 'commons-lang', version: '2.6'
     antlr name: 'antlr-2.7.6-caching'
 }
