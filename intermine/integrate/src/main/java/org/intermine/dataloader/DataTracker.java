@@ -110,21 +110,39 @@ public class DataTracker
     }
 
     /**
-     * Clears the data tracker of all entries. This method may only be called immediately after
-     * construction.
+     * Clears the data tracker of all entries, in memory and in the tracker table.
+     *
+     * This may be called at any time. It holds the same locks as flush() (and so as the
+     * CacheStorer thread's doWrite()), so no batch can be written to the tracker table while it
+     * is dropped and re-created; previously a background write landing between the DROP and the
+     * CREATE failed with "relation tracker does not exist" and left the tracker broken. The DROP
+     * and CREATE run in one transaction, so other connections never see the table missing.
      *
      * @throws SQLException sometimes
      */
     public void clear() throws SQLException {
-        Statement s = conn.createStatement();
-        try {
-            s.executeQuery("drop table tracker");
-        } catch (SQLException e) {
+        // Synchronise in the same order as flush() to prevent deadlocks.
+        synchronized (writeBack) {
+            synchronized (this) {
+                cache.clear();
+                writeBack.clear();
+                boolean autoCommit = conn.getAutoCommit();
+                conn.setAutoCommit(false);
+                try {
+                    Statement s = conn.createStatement();
+                    s.execute("DROP TABLE IF EXISTS tracker");
+                    s.execute("create table tracker (objectid int, fieldname text,"
+                            + " sourcename text, version int)");
+                    s.execute("create index tracker_objectid on tracker (objectid)");
+                    conn.commit();
+                } catch (SQLException e) {
+                    conn.rollback();
+                    throw e;
+                } finally {
+                    conn.setAutoCommit(autoCommit);
+                }
+            }
         }
-        s = conn.createStatement();
-        s.execute("create table tracker (objectid int, fieldname text, sourcename text,"
-                + " version int)");
-        s.execute("create index tracker_objectid on tracker (objectid)");
     }
 
     /**
