@@ -1,0 +1,46 @@
+---
+# Dependabot version updates (security updates are enabled in the repository
+# settings and do not need this file).
+#
+# The Gradle builds are separate, not one multi-project build: plugin, intermine,
+# bio, bio/sources, bio/postprocess, bio/postprocess-test and testmine. Dependabot
+# reads each directory's settings.gradle to find its subprojects.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directories:
+      - /plugin
+      - /intermine
+      - /bio
+      - /bio/sources
+      - /bio/postprocess
+      - /bio/postprocess-test
+      - /testmine
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # One pull request per directory and week for the safe updates.
+      gradle-minor-patch:
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Tier 2 libraries: replacing them is a planned migration, not a version
+      # bump (Struts 1 -> a new web layer, DWR 2 -> removal, Lucene 3 -> the
+      # Solr based search). Do not propose major upgrades.
+      - dependency-name: 'org.apache.struts:*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'org.directwebremoting:*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'org.apache.lucene:*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - '*'
