@@ -79,6 +79,9 @@ dependencies {
     implementation libs.commons.logging
 
     bundled fileTree(dir: 'libs', include: '*.jar') // obo and bbop not available in the public maven repo
+    // the patched antlr that intermine/libs holds (one copy for all builds); it is packed into this jar, so the bio
+    // sources get it through bio-core and do not carry a copy of their own
+    bundled files("${rootDir}/../intermine/libs/antlr-2.7.6-caching.jar")
     testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion"), classifier: "testClasses"
     testImplementation group: "org.intermine", name: "bio-source-flymine-static", version: System.getProperty("flymineVersion"), transitive: false
     bioModel group: "org.intermine", name: "bio-source-flymine-static", version: System.getProperty("flymineVersion"), transitive: false
