@@ -240,8 +240,8 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
             if ("dna".equalsIgnoreCase(sequenceType)) {
                 FastaReader<DNASequence, NucleotideCompound> aFastaReader
                         = new FastaReader<DNASequence, NucleotideCompound>(file,
-                        new PlainFastaHeaderParser<DNASequence, NucleotideCompound>(),
-                        new DNASequenceCreator(AmbiguityDNACompoundSet.getDNACompoundSet()));
+                            new PlainFastaHeaderParser<DNASequence, NucleotideCompound>(),
+                            new DNASequenceCreator(AmbiguityDNACompoundSet.getDNACompoundSet()));
 
                 LinkedHashMap<String, DNASequence> b = aFastaReader.process();
                 for (Entry<String, DNASequence> entry : b.entrySet()) {

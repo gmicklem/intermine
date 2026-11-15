@@ -997,7 +997,7 @@ public class UniprotConverter extends BioDirectoryConverter
                         + uniprotEntry.getPrimaryAccession());
                 return;
             }
-            boolean hasMultipleGenes = (geneIdentifiers.size() == 1 ? false : true);
+            boolean hasMultipleGenes = geneIdentifiers.size() != 1;
             Item gene = null;
             for (String identifier : geneIdentifiers) {
                 if (StringUtils.isEmpty(identifier)) {

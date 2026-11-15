@@ -1402,8 +1402,7 @@ public class AjaxServices
      */
     public void updateTemplate(String field, String value) {
         HttpSession session = WebContextFactory.get().getSession();
-        boolean isNewTemplate = (session.getAttribute(Constants.NEW_TEMPLATE) != null)
-                                ? true : false;
+        boolean isNewTemplate = session.getAttribute(Constants.NEW_TEMPLATE) != null;
         TemplateQuery templateQuery = (TemplateQuery) SessionMethods.getQuery(session);
         if (!isNewTemplate && session.getAttribute(Constants.PREV_TEMPLATE_NAME) == null) {
             session.setAttribute(Constants.PREV_TEMPLATE_NAME, templateQuery.getName());

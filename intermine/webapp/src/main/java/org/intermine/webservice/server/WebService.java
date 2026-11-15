@@ -802,7 +802,7 @@ public abstract class WebService
      * @return Whether or not this request wants to export data package.
      */
     protected boolean wantsDataPackage() {
-        return request.getParameter(EXPORT_DATAPACKAGE) == null ? false : true;
+        return request.getParameter(EXPORT_DATAPACKAGE) != null;
     }
 
     /**
