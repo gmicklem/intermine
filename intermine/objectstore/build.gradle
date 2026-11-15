@@ -40,8 +40,6 @@ dependencies {
 
     api libs.base64 //not clear wich version is currently used
     implementation libs.opencsv //version 2.3 not available in maven
-    testImplementation libs.mockobjects.core
-    testImplementation libs.mockobjects.jdk13
     bundled fileTree(dir: 'libs', include: '*.jar') // eventually replace torque
     testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')
     antlr name: 'antlr-2.7.6-caching'

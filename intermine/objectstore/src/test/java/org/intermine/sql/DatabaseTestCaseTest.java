@@ -12,11 +12,9 @@ package org.intermine.sql;
 
 import junit.framework.AssertionFailedError;
 
+import java.sql.ResultSet;
 import java.sql.Types;
 
-import com.mockobjects.sql.MockSingleRowResultSet;
-import com.mockobjects.sql.MockMultiRowResultSet;
-import com.mockobjects.sql.MockResultSetMetaData;
 
 public class DatabaseTestCaseTest extends DatabaseTestCase
 {
@@ -29,60 +27,33 @@ public class DatabaseTestCaseTest extends DatabaseTestCase
     }
 
     private boolean failed;
-    private MockSingleRowResultSet mrs1, mrs2, mrs3, mrs4;
-    private MockMultiRowResultSet mrs11, mrs12, mrs13, mrs14;
+    private ResultSet mrs1, mrs2, mrs3, mrs4;
+    private ResultSet mrs11, mrs12, mrs13, mrs14;
 
     public void setUp() throws Exception {
         super.setUp();
         failed = false;
-        MockResultSetMetaData mrsmd1 = new MockResultSetMetaData();
-        MockResultSetMetaData mrsmd3 = new MockResultSetMetaData();
-        MockResultSetMetaData mrsmd2 = new MockResultSetMetaData();
+        String[] cols1 = new String[] {"field1", "field2", "field3", "field4"};
+        String[] cols3 = new String[] {"field1", "field2", "field3", "field5"};
+        int[] types = new int[] {Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR};
 
-        mrsmd1.setupAddColumnNames(new String[] {"field1", "field2", "field3", "field4"});
-        mrsmd1.setupAddColumnTypes(new int[] {Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR});
-        mrsmd1.setupGetColumnCount(4);
-        mrsmd2.setupAddColumnNames(new String[] {"field1", "field2", "field3", "field4"});
-        mrsmd2.setupAddColumnTypes(new int[] {Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR});
-        mrsmd2.setupGetColumnCount(4);
-        mrsmd3.setupAddColumnNames(new String[] {"field1", "field2", "field3", "field5"});
-        mrsmd3.setupAddColumnTypes(new int[] {Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR});
-        mrsmd3.setupGetColumnCount(4);
+        mrs1 = RowsResultSet.create(cols1, types,
+                new Object[][] {{"test1", "test2", "test3", "test4"}});
+        mrs2 = RowsResultSet.create(cols1, types,
+                new Object[][] {{"test1", "test2", "test3", "test4"}});
+        mrs3 = RowsResultSet.create(cols1, types,
+                new Object[][] {{"test1", "test2", "test3", "test5"}});
+        mrs4 = RowsResultSet.create(cols3, types,
+                new Object[][] {{"test1", "test2", "test3", "test4"}});
 
-        mrs1 = new MockSingleRowResultSet();
-        mrs1.setupMetaData(mrsmd1);
-        mrs1.addExpectedIndexedValues(new Object[] { "test1", "test2", "test3", "test4" });
-
-        mrs2 = new MockSingleRowResultSet();
-        mrs2.setupMetaData(mrsmd2);
-        mrs2.addExpectedIndexedValues(new Object[] { "test1", "test2", "test3", "test4" });
-
-        mrs3 = new MockSingleRowResultSet();
-        mrs3.setupMetaData(mrsmd2);
-        mrs3.addExpectedIndexedValues(new Object[] { "test1", "test2", "test3", "test5" });
-
-        mrs4 = new MockSingleRowResultSet();
-        mrs4.setupMetaData(mrsmd3);
-        mrs4.addExpectedIndexedValues(new Object[] { "test1", "test2", "test3", "test4" });
-
-        mrs11 = new MockMultiRowResultSet();
-        mrs11.setupMetaData(mrsmd1);
-        mrs11.setupRows(new Object[][] { new Object [] {"test1", "test2", "test3", "test4"},
-                                         new Object [] {"test5", "test6", "test7", "test8"}});
-        mrs12 = new MockMultiRowResultSet();
-        mrs12.setupMetaData(mrsmd2);
-        mrs12.setupRows(new Object[][] { new Object [] {"test1", "test2", "test3", "test4"},
-                                         new Object [] {"test5", "test6", "test7", "test8"}});
-
-        mrs13 = new MockMultiRowResultSet();
-        mrs13.setupMetaData(mrsmd2);
-        mrs13.setupRows(new Object[][] { new Object [] {"test1", "test2", "test3", "test4"},
-                                         new Object [] {"test5", "TEST6", "test7", "test8"}});
-
-        mrs14 = new MockMultiRowResultSet();
-        mrs14.setupMetaData(mrsmd3);
-        mrs14.setupRows(new Object[][] { new Object [] {"test1", "test2", "test3", "test4"},
-                                        new Object [] {"test5", "test6", "test7", "test8"}});
+        mrs11 = RowsResultSet.create(cols1, types, new Object[][] {
+            {"test1", "test2", "test3", "test4"}, {"test5", "test6", "test7", "test8"}});
+        mrs12 = RowsResultSet.create(cols1, types, new Object[][] {
+            {"test1", "test2", "test3", "test4"}, {"test5", "test6", "test7", "test8"}});
+        mrs13 = RowsResultSet.create(cols1, types, new Object[][] {
+            {"test1", "test2", "test3", "test4"}, {"test5", "TEST6", "test7", "test8"}});
+        mrs14 = RowsResultSet.create(cols3, types, new Object[][] {
+            {"test1", "test2", "test3", "test4"}, {"test5", "test6", "test7", "test8"}});
     }
 
     public void testEqualsSingleRow() throws Exception {

@@ -54,7 +54,6 @@ jsp-api = "2.3.1"
 jstl = "1.2"
 junit = "4.13.2"
 lucene = "3.0.2"
-mockobjects = "0.09"
 objenesis = "2.1"
 oltu-client = "1.0.2"
 opencsv = "2.4"
@@ -113,8 +112,6 @@ junit = { module = "junit:junit", version.ref = "junit" }
 lucene-core = { module = "org.apache.lucene:lucene-core", version.ref = "lucene" }
 lucene-highlighter = { module = "org.apache.lucene:lucene-highlighter", version.ref = "lucene" }
 lucene-snowball = { module = "org.apache.lucene:lucene-snowball", version.ref = "lucene" }
-mockobjects-core = { module = "mockobjects:mockobjects-core", version.ref = "mockobjects" }
-mockobjects-jdk13 = { module = "mockobjects:mockobjects-jdk1.3", version.ref = "mockobjects" }
 objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
 oltu-client = { module = "org.apache.oltu.oauth2:org.apache.oltu.oauth2.client", version.ref = "oltu-client" }
 opencsv = { module = "au.com.bytecode:opencsv", version.ref = "opencsv" }

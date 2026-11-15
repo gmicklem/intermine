@@ -19,7 +19,7 @@ import java.util.Comparator;
 import org.intermine.bio.chado.ChadoCV;
 import org.intermine.bio.chado.ChadoCVTerm;
 
-import com.mockobjects.sql.MockMultiRowResultSet;
+import org.intermine.sql.RowsResultSet;
 
 /**
  * An implementation of FlyBaseProcessor for testing.
@@ -215,10 +215,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
                 "cDNA_clone", null, null, null, 1
             }
         };
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     private Object[][] featureRelationshipTestHelper(boolean subjectIsFirst) {
@@ -296,10 +293,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
         };
         // results must be ordered by subject_id
         Object[][] resObjects = featureRelationshipTestHelper(subjectIsFirst);
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -325,10 +319,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
                 3117509, "FBgn0036461_dbxref4", "FlyBase", false
             },
         };
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -376,10 +367,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -400,10 +388,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -424,10 +409,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -445,10 +427,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -460,9 +439,8 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             "featureloc_id", "feature_id", "srcfeature_id", "fmin", "is_fmin_partial",
             "fmax", "is_fmax_partial", "strand"
         };
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
 
-        res.setupRows(new Object[][] {
+        Object[][] resObjects = new Object[][] {
             {
                 23774567, 3117509, 11494725, 14985571, false, 14990594, false, 1
             },
@@ -478,9 +456,8 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             {
                 3201100, 3175412, 11494726, 24577165, false, 24577313, false, -1
             }
-        });
-        res.setupColumnNames(columnNames);
-        return res;
+        };
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -492,13 +469,11 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             "featureloc_id", "feature_id", "srcfeature_id", "fmin", "is_fmin_partial",
             "fmax", "is_fmax_partial", "strand"
         };
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
 
-        res.setupRows(new Object[][] {
+        Object[][] resObjects = new Object[][] {
 
-        });
-        res.setupColumnNames(columnNames);
-        return res;
+        };
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -509,7 +484,6 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
         String[] columnNames = new String[] {
             "feature_id", "synonym_name", "type_name", "is_current"
         };
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
         Object[][] resObjects = new Object[][] {
             {
                 23269151, "FBgn0000001_fullname_synonym", "fullname", true
@@ -530,9 +504,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
                 413, "CG10000-RC", "symbol", true
             },
         };
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -566,10 +538,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
                 2345000, "7772020"
             }
         };
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -590,10 +559,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -637,10 +603,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -663,10 +626,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -717,10 +677,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -751,10 +708,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
 
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -780,10 +734,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -806,10 +757,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -824,10 +772,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
 
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
 
@@ -853,10 +798,7 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
 
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 
     /**
@@ -876,9 +818,6 @@ public class TestFlyBaseProcessor extends FlyBaseProcessor
             }
         };
 
-        MockMultiRowResultSet res = new MockMultiRowResultSet();
-        res.setupRows(resObjects);
-        res.setupColumnNames(columnNames);
-        return res;
+        return RowsResultSet.create(columnNames, resObjects);
     }
 }

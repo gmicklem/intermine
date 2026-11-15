@@ -12,6 +12,10 @@ dependencies {
 task testClassesJar(type: Jar) {
     archiveClassifier.set('testClasses')
     from sourceSets.test.output
+    // the in-memory ResultSet that the bio source tests use (it replaced the mockobjects result sets)
+    from(project(':intermine-objectstore').sourceSets.test.output) {
+        include 'org/intermine/sql/RowsResultSet*.class'
+    }
 }
 
 // published next to the jar, as the 'testClasses' classifier (deployers' tests use it)

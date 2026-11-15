@@ -111,8 +111,6 @@ subprojects {
         // bodies are implementation (POM scope compile -> runtime). The leaf builds also use implementation for
         // bio-model, which has no classes (only properties read at runtime): the old maven plugin does not map
         // runtimeOnly into the POM, so runtimeOnly would drop it from the published dependencies.
-        testImplementation libs.mockobjects.core
-        testImplementation libs.mockobjects.jdk13
         implementation(libs.hikaricp) { transitive = false }
         api libs.ant
         api group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false
