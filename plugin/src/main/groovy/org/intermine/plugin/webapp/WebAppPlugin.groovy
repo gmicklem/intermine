@@ -32,7 +32,7 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('copyDefaultInterMineProperties') {
-            description "Copies default.intermine.properties file into resources output"
+            description = "Copies default.intermine.properties file into resources output"
             // ordering only: it writes into processResources' output directory.
             mustRunAfter 'processResources'
 
@@ -42,7 +42,7 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('mergeProperties') {
-            description "Append intermine.properties to web.properties file"
+            description = "Append intermine.properties to web.properties file"
             String webPropertiesPath = project.projectDir.absolutePath + File.separator + "src" + File.separator + "main" +
                     File.separator + "webapp" + File.separator + "WEB-INF" + File.separator + "web.properties"
             inputs.files(webPropertiesPath)
@@ -62,7 +62,7 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('addStrutsConfig') {
-            description "Append the struts config modifications to the webapp"
+            description = "Append the struts config modifications to the webapp"
             // Edits, in place, the files unwarBioWebApp unpacks, so it must run right after it every
             // time (neither declares outputs). The struts and tiles fragments come from the resources.
             // A single Sync task with filters should replace the pair once the plugin composes the war.
@@ -112,7 +112,7 @@ class WebAppPlugin implements Plugin<Project> {
         // this plugin requires a database to exist and be populated. However this plugin is run at compile time, not runtime.
         // We have no guarantee there will be a database. Hence the try/catch
         project.tasks.register('summariseObjectStore') {
-            description "Summarise ObjectStore into objectstoresummary.properties file"
+            description = "Summarise ObjectStore into objectstoresummary.properties file"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
@@ -133,7 +133,7 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('unwarBioWebApp') {
-            description "Unwar bio-webapp under the build/explodedWebAppDir directory"
+            description = "Unwar bio-webapp under the build/explodedWebAppDir directory"
 
             doLast {
                 String bioWebAppWar = project.configurations.getByName("bioWebApp").singleFile.absolutePath;
@@ -144,8 +144,8 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('loadDefaultTemplates') {
-            group TaskConstants.TASK_GROUP
-            description "Loads default template queries from an XML file into a given user profile"
+            group = TaskConstants.TASK_GROUP
+            description = "Loads default template queries from an XML file into a given user profile"
             // the runtime classpath builds the dbmodel jar (in case a clean has been run), which holds
             // class_keys.properties
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
@@ -176,8 +176,8 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('dropPrecomputedTables') {
-            group TaskConstants.TASK_GROUP
-            description "Drops all precomputed tables from the database"
+            group = TaskConstants.TASK_GROUP
+            description = "Drops all precomputed tables from the database"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
@@ -193,8 +193,8 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('precomputeQueries') {
-            group TaskConstants.TASK_GROUP
-            description "Creates temporary tables to make querying faster -- uses 'genomic_precompute.properties'"
+            group = TaskConstants.TASK_GROUP
+            description = "Creates temporary tables to make querying faster -- uses 'genomic_precompute.properties'"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
@@ -211,8 +211,8 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('precomputeTemplates') {
-            group TaskConstants.TASK_GROUP
-            description "Creates temporary tables to make querying faster -- uses the results of your template queries"
+            group = TaskConstants.TASK_GROUP
+            description = "Creates temporary tables to make querying faster -- uses the results of your template queries"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {

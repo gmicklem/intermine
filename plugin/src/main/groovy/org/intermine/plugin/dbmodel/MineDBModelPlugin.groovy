@@ -21,7 +21,7 @@ class MineDBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('mergeModels') {
-            description "Merges defferent source model files into an intermine XML model"
+            description = "Merges defferent source model files into an intermine XML model"
             onlyIf { DBModelPlugin.regenerateModel(project) }
             // Merges, in place, into the genomic model copied by copyGenomicModel; the additions come
             // from the mine's resources, the bio-source jars (mergeSource, resolved only when this

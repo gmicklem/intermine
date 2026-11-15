@@ -21,7 +21,7 @@ class BioSourceDBModelPlugin implements Plugin<Project>{
         }
 
         project.tasks.register('createTestPrioritiesFile') {
-            description "Creates a blank genomic_priorities file for unit tests. When building, the mine's priority file will be used."
+            description = "Creates a blank genomic_priorities file for unit tests. When building, the mine's priority file will be used."
             // ordering only: it writes into processResources' output directory.
             mustRunAfter 'processResources'
 
@@ -42,7 +42,7 @@ class BioSourceDBModelPlugin implements Plugin<Project>{
         // on every build). With the merged model as its declared output it is up to date when
         // nothing changed.
         project.tasks.register('mergeModels') {
-            description "Merges the bio-source specific additions.xml into an intermine XML model"
+            description = "Merges the bio-source specific additions.xml into an intermine XML model"
             // If both run, merge after dbmodel's copyGenomicModel (unit tests), which would otherwise
             // overwrite the merged model with bio-model's.
             mustRunAfter 'copyGenomicModel'

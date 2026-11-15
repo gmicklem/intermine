@@ -8,7 +8,7 @@ class BioCoreDBModelPlugin implements Plugin<Project>{
     void apply(Project project) {
         DBModelConfig config = project.extensions.getByType(DBModelConfig)
         project.tasks.register('mergeModels') {
-            description "bio-core gets its model from bio-model. Skip this step. MERGE NOTHING!"
+            description = "bio-core gets its model from bio-model. Skip this step. MERGE NOTHING!"
             // The model generateModel reads is the one copyGenomicModel copies from bio-model.
             inputs.files(DBModelUtils.resource(project, 'copyGenomicModel') { config.modelName + "_model.xml" })
             // do nothing

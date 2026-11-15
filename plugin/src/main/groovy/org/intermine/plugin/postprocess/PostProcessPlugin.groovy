@@ -77,8 +77,8 @@ class PostProcessPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('postProcess') {
-            group TaskConstants.TASK_GROUP
-            description "Post processes. Optional input parameters: process (process name) and source(if process=do-sources). E.g. postprocess -Pprocess=create-references"
+            group = TaskConstants.TASK_GROUP
+            description = "Post processes. Optional input parameters: process (process name) and source(if process=do-sources). E.g. postprocess -Pprocess=create-references"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast{
