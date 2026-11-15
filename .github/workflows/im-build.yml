@@ -39,7 +39,7 @@ jobs:
   unit-tests:
     name: unit tests (${{ matrix.testSuite }}, Java ${{ matrix.java }}, PostgreSQL ${{ matrix.postgres }})
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
 
     services:
       # Label used to access the service container
@@ -96,6 +96,12 @@ jobs:
           set -euo pipefail
           sudo apt-get update -y
           sudo apt-get install -y libpq-dev postgresql-client
+      # Fail in seconds, with a clear message, if the service container is not
+      # reachable with the credentials config/ci/init.sh uses (no sudo, no prompt).
+      - name: Check PostgreSQL connection
+        env:
+          PGPASSWORD: postgres
+        run: psql -w -h localhost -U postgres -c 'select version()'
       - name: Run unit tests
         run: |
           set -euo pipefail
@@ -124,7 +130,7 @@ jobs:
   ws-tests:
     name: web service tests (${{ matrix.client }} client)
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 45
 
     services:
       # Label used to access the service container
@@ -188,6 +194,12 @@ jobs:
           set -euo pipefail
           sudo apt-get update -y
           sudo apt-get install -y libpq-dev postgresql-client wait-for-it
+      # Fail in seconds, with a clear message, if the service container is not
+      # reachable with the credentials config/ci/init.sh uses (no sudo, no prompt).
+      - name: Check PostgreSQL connection
+        env:
+          PGPASSWORD: postgres
+        run: psql -w -h localhost -U postgres -c 'select version()'
       # Official Solr image instead of unpacking the tarball from
       # archive.apache.org (the idea from the speed-up-solr-in-workflow branch,
       # without its third-party action).

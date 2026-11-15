@@ -27,6 +27,12 @@ PSQL_PWD=${PSQL_PWD:-$USER}
 TOMCAT_USER=${TOMCAT_USER:-manager}
 TOMCAT_PWD=${TOMCAT_PWD:-manager}
 
+# Database administrator used to (re)create the databases, connecting directly
+# (no sudo). The password comes from PGPASSWORD; libpq reads it, PGPORT etc.
+PG_ADMIN_USER=${PGUSER:-postgres}
+export PGPASSWORD=${PGPASSWORD:-postgres}
+PSQL_HOST=${PSQL_HOST:-localhost}
+
 DEBUG=${DEBUG:-0}
 
 for dep in psql createdb; do
@@ -68,8 +74,8 @@ fi
 
 echo "------> Creating databases..."
 for db in $USERPROFILEDB $PRODDB; do
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists ${db}
-    sudo -E -u postgres createdb -h "$PSQL_HOST" ${db}
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists ${db}
+    createdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" ${db}
 done
 
 ##########
