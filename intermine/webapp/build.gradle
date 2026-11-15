@@ -36,7 +36,6 @@ dependencies {
     compile group: 'org.apache.taglibs', name: 'taglibs-standard', version: '1.2.5'
     compile group: 'commons-fileupload', name: 'commons-fileupload', version: '1.2.2'
     compile group: 'commons-httpclient', name: 'commons-httpclient', version: '3.0'
-    compile group: 'org.apache.commons', name: 'commons-math3', version: '3.0'
     compile group: 'com.github.erosb', name: 'everit-json-schema', version: '1.14.6' // formerly org.everit.json:org.everit.json.schema (same library, groupId moved)
     compile 'org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:1.0.1'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.18.12'
