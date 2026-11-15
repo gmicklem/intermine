@@ -49,7 +49,7 @@ subprojects {
     }
 
     dependencies {
-        compile group: 'ant', name: 'ant', version: '1.6.5'
+        compile group: 'org.apache.ant', name: 'ant', version: '1.7.0'
         compile group: "org.intermine", name: "intermine-webtasks", version: System.getProperty("imVersion")
         testCompile group: 'org.apache.lucene', name: 'lucene-analyzers', version: '3.0.2'
         testCompile group: 'au.com.bytecode', name: 'opencsv', version: '2.4'
