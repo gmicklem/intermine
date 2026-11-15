@@ -1,14 +1,17 @@
 apply plugin: 'groovy'
 apply plugin: 'java'
 
-group 'org.intermine'
-version '5.1.1'
+group = 'org.intermine'
+version = '5.1.1'
 
-sourceCompatibility = 1.8
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 repositories {
     maven {
-        url project.getProperty("intermine.maven.central")
+        url = project.getProperty("intermine.maven.central")
     }
 }
 
