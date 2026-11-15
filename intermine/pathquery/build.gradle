@@ -25,6 +25,6 @@ tasks.test.dependsOn(':intermine-testresources:buildDB')
 
 dependencies {
     api project(':intermine-model')
-    api group: 'commons-lang', name: 'commons-lang', version: '2.6'
+    api libs.commons.lang
     antlr name: 'antlr-2.7.6-caching'
 }

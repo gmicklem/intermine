@@ -41,21 +41,28 @@ dependencies {
     implementation group: "org.intermine", name: "intermine-webapp", version: imVersion, classifier: "classes"
     implementation group: "org.intermine", name: "intermine-api", version: imVersion
     implementation group: "org.intermine", name: "intermine-webtasks", version: imVersion
-    implementation group: "javax.servlet", name: "jstl", version: "1.2"
-    implementation group: "org.apache.struts", name: "struts-core", version: "1.3.10"
-    implementation group: 'org.apache.struts', name: 'struts-taglib', version: '1.3.10'
-    implementation group: 'org.apache.struts', name: 'struts-extras', version: '1.3.10'
-    implementation group: 'org.apache.struts', name: 'struts-tiles', version: '1.3.10'
-    implementation group: 'javax.mail', name: 'mail', version: '1.4'
-    implementation group: 'org.directwebremoting', name: 'dwr', version: '2.0.1'
-    runtimeOnly group: 'commons-codec', name: 'commons-codec', version: '1.9'
-    runtimeOnly group: 'javax.servlet.jsp', name: 'javax.servlet.jsp-api', version: '2.3.1'
-    runtimeOnly group: 'taglibs', name: 'string', version: '1.1.0'
-    runtimeOnly group: 'commons-fileupload', name: 'commons-fileupload', version: '1.2.2'
-    runtimeOnly group: 'org.json', name: 'json', version: '20260814'
+    implementation libs.jstl
+    implementation libs.struts.core
+    implementation libs.struts.taglib
+    implementation libs.struts.extras
+    implementation libs.struts.tiles
+    implementation libs.javax.mail
+    implementation libs.dwr
+    runtimeOnly libs.commons.codec
+    runtimeOnly libs.jsp.api
+    runtimeOnly libs.taglibs.string
+    runtimeOnly libs.commons.fileupload
+    runtimeOnly libs.json
     imWebApp group: "org.intermine", name: "intermine-webapp", version: imVersion, transitive: false, ext: "war"
-    providedCompile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
-    tomcat "org.apache.tomcat:tomcat:9.0.115@zip"
+    providedCompile libs.javax.servlet.api
+    // the catalog supplies group, name and version; a catalog entry cannot carry the artifact type, so the "@zip" is spelled out
+    tomcat(libs.tomcat) {
+        artifact {
+            name = 'tomcat'
+            type = 'zip'
+            extension = 'zip'
+        }
+    }
 }
 
 processResources {

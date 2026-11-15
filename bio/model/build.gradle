@@ -51,9 +51,9 @@ dependencies {
     api group: "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
     // obo and bbop: on the classpath of the Ant tasks that read the SO model (not part of the API)
     implementation fileTree(dir: 'libs', include: '*.jar')
-    api 'commons-lang:commons-lang:2.6'
-    api group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
-    implementation group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36' // logging binding (runtime scope in the POM)
+    api libs.commons.lang
+    api libs.reload4j
+    implementation libs.slf4j.reload4j // logging binding (runtime scope in the POM)
 }
 
 dbModelConfig {

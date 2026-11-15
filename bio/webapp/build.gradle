@@ -29,23 +29,23 @@ dependencies {
     providedCompile project(':bio-core')
     providedCompile project(':bio-model')
     providedCompile group: "org.intermine", name: "intermine-webapp", version: System.getProperty("imVersion"), classifier: "classes"
-    providedCompile group: 'org.apache.struts', name: 'struts-tiles', version: '1.3.10'
-    providedCompile group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
+    providedCompile libs.struts.tiles
+    providedCompile libs.javax.servlet.api
 
     // api: types that appear in the public or protected signatures of the classes in the bio-webapp classes jar
     api (project(':bio-tools')) { transitive = false }
     api group: "org.intermine", name: "intermine-jbrowse-endpoint", version: System.getProperty("imVersion")
-    api group: 'psidev.psi.mi.jami', name: 'jami-core', version: '3.2.12'
-    api group: "org.biojava", name: "biojava-core", version: "4.2.0"
+    api libs.jami.core
+    api libs.biojava.core
     // implementation: used inside method bodies only
-    implementation group: 'commons-io', name: 'commons-io', version: '1.2'
-    implementation group: 'psidev.psi.mi.jami.bridges', name: 'bridges-core', version: '3.2.12'
-    implementation group: 'psidev.psi.mi.jami.bridges', name: 'jami-ols', version: '3.2.12'
-    implementation group: 'psidev.psi.mi.jami', name: 'jami-interactionviewer-json', version: '3.2.12'
-    implementation group: "org.biojava", name: "biojava-ontology", version: "4.2.0"
-    implementation group: 'org.json', name: 'json', version: '20260814'
+    implementation libs.commons.io
+    implementation libs.jami.bridges.core
+    implementation libs.jami.ols
+    implementation libs.jami.interactionviewer.json
+    implementation libs.biojava.ontology
+    implementation libs.json
 
-    runtimeOnly group: 'org.apache.lucene', name: 'lucene-snowball', version: '3.0.2'
+    runtimeOnly libs.lucene.snowball
 
     imWebApp group: "org.intermine", name: "intermine-webapp", version: System.getProperty("imVersion"), transitive: false, ext: "war"
 }

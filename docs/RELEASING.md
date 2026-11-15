@@ -47,13 +47,13 @@ export CENTRAL_PASSWORD='...'                                        # Portal to
 
 The version appears in these places; change all of them in one commit (`release: 5.1.2`):
 
-- `plugin/build.gradle`, `intermine/build.gradle`, `bio/build.gradle`, `bio/sources/build.gradle`, `bio/postprocess/build.gradle`, `bio/postprocess-test/build.gradle`: `version '5.1.1'` (the `subprojects { }` block, or the top level in `plugin`).
+- `gradle/libs.versions.toml`: `intermine = "5.1.1"` in `[versions]`. The six library builds and `testmine` read it as `libs.versions.intermine`. `plugin/build.gradle` is the exception: it still has its own `version '5.1.1'` at the top level.
 - `plugin/gradle.properties.in`, `intermine/gradle.properties.in`, `bio/gradle.properties.in`, `bio/sources/gradle.properties.in`, `bio/postprocess/gradle.properties.in`, `bio/postprocess-test/gradle.properties.in`: `systemProp.imVersion` and `systemProp.bioVersion`. The generated `gradle.properties` files are git-ignored; regenerate them with `python3 -I config/lib/install_intermine.py` (or the gate) after editing the `.in` files.
 - `testmine/build.gradle`: `imVersion`.
 - `README.md`: the version badge (`badge/version-5.1.0-blue`).
 - `intermine/webapp/src/main/java/org/intermine/web/logic/Constants.java`: `INTERMINE_VERSION`.
 
-Check that nothing was missed: `grep -rn "5\.1\.1" --include=*.gradle --include=*.in --include=*.java .` should show only the new version.
+Check that nothing was missed: `grep -rn "5\.1\.1" --include=*.gradle --include=*.toml --include=*.in --include=*.java .` should show only the new version.
 
 ### Changelog and tag
 

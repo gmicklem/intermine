@@ -21,7 +21,7 @@ dependencies {
     bioModel group: 'org.intermine', name: 'bio-source-flymine-static', version: System.getProperty("flymineVersion"), transitive: false
     testImplementation group: 'org.intermine', name: 'bio-source-flymine-static', version: System.getProperty("flymineVersion"), transitive: false
     api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
-    api group: "org.biojava", name: "biojava-core", version: "4.2.0"
+    api libs.biojava.core
 }
 
 processResources {

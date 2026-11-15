@@ -22,9 +22,9 @@ sourceSets {
 tasks.test.dependsOn(':intermine-testresources:buildDB')
 
 dependencies {
-    api group: 'commons-lang', name: 'commons-lang', version: '2.6'
-    api group: 'commons-collections', name: 'commons-collections', version: '3.2'
-    api group: 'cglib', name: 'cglib', version: '3.1'
-    api group: 'commons-io', name: 'commons-io', version: '1.2'
-    api group: 'org.skyscreamer', name: 'jsonassert', version: '1.2.3'
+    api libs.commons.lang
+    api libs.commons.collections
+    api libs.cglib
+    api libs.commons.io
+    api libs.jsonassert
 }

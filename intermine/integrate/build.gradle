@@ -3,7 +3,7 @@ tasks.test.dependsOn(':intermine-testresources:buildDB')
 
 dependencies {
     api project(':intermine-objectstore')
-    testImplementation group: 'xmlunit', name: 'xmlunit', version: '1.6'
+    testImplementation libs.xmlunit
     testImplementation project(':intermine-objectstore').sourceSets.test.output
     testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')
     testImplementation project(':intermine-resources')
