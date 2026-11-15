@@ -24,17 +24,17 @@ tasks.test.dependsOn(':intermine-testresources:buildDB')
 
 dependencies {
     api project(':intermine-model')
-    api group: 'org.postgresql', name: 'postgresql', version: '42.7.14'
-    api group: 'commons-io', name: 'commons-io', version: '1.2'
-    api group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
-    implementation group: 'com.zaxxer', name: 'HikariCP', version: '4.0.3', transitive: false // conflict with log4j library this JAR needs
-    api group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
-    api group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
+    api libs.postgresql
+    api libs.commons.io
+    api libs.commons.beanutils
+    implementation(libs.hikaricp) { transitive = false } // conflict with log4j library this JAR needs
+    api libs.reload4j
+    api libs.slf4j.reload4j
 
-    api group: 'net.iharder', name: 'base64', version: '2.3.8' //not clear wich version is currently used
-    implementation group: 'au.com.bytecode', name: 'opencsv', version: '2.4' //version 2.3 not available in maven
-    testImplementation group: 'mockobjects', name: 'mockobjects-core', version: '0.09'
-    testImplementation group: 'mockobjects', name: 'mockobjects-jdk1.3', version: '0.09'
+    api libs.base64 //not clear wich version is currently used
+    implementation libs.opencsv //version 2.3 not available in maven
+    testImplementation libs.mockobjects.core
+    testImplementation libs.mockobjects.jdk13
     bundled fileTree(dir: 'libs', include: '*.jar') // eventually replace torque
     testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')
     antlr name: 'antlr-2.7.6-caching'

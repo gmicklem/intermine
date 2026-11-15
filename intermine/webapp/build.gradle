@@ -25,49 +25,48 @@ tasks.test.dependsOn(':intermine-testresources:buildDB')
 dependencies {
     providedCompile project(':intermine-api')
 
-    api group: 'org.directwebremoting', name: 'dwr', version: '2.0.1'
-    api group: 'org.apache.lucene', name: 'lucene-core', version: '3.0.2'
-    api group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.4'
-    api group: 'javax.mail', name: 'mail', version: '1.4'
-    api group: 'org.apache.struts', name: 'struts-core', version: '1.3.10'
-    api group: 'org.apache.struts', name: 'struts-taglib', version: '1.3.10'
-    api group: 'org.apache.struts', name: 'struts-extras', version: '1.3.10'
-    api group: 'org.apache.struts', name: 'struts-tiles', version: '1.3.10'
-    api group: "javax.servlet", name: "jstl", version: "1.2"
-    api group: 'commons-fileupload', name: 'commons-fileupload', version: '1.2.2'
-    api group: 'com.github.erosb', name: 'everit-json-schema', version: '1.14.6' // formerly org.everit.json:org.everit.json.schema (same library, groupId moved)
-    api 'org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:1.0.1'
-    api 'com.fasterxml.jackson.core:jackson-databind:2.18.12'
-    api 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.18.12' // align jersey-media-json-jackson's 2.8.4 Jackson modules
-    api group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: '2.25'
-    api group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.0.1'
-    api group: 'org.glassfish.jersey.core', name: 'jersey-client', version: '2.25'
-    api group: 'org.apache.jena', name: 'jena-core', version: '3.16.0'
-    api group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
+    api libs.dwr
+    api libs.lucene.core
+    api libs.solr.solrj
+    api libs.javax.mail
+    api libs.struts.core
+    api libs.struts.taglib
+    api libs.struts.extras
+    api libs.struts.tiles
+    api libs.jstl
+    api libs.commons.fileupload
+    api libs.everit.json.schema // formerly org.everit.json:org.everit.json.schema (same library, groupId moved)
+    api libs.oltu.client
+    api libs.jackson.databind
+    api libs.jackson.jaxrs.json.provider // align jersey-media-json-jackson's 2.8.4 Jackson modules
+    api libs.jersey.media.json.jackson
+    api libs.javax.ws.rs.api
+    api libs.jersey.client
+    api libs.jena.core
+    api libs.javax.servlet.api
 
     api files('libs/stringtree-json-2.0.5.jar')
-    providedCompile group: 'org.apache.oltu.oauth2', name: 'org.apache.oltu.oauth2.client', version: '1.0.0'
-    providedCompile group: 'org.apache.oltu.oauth2', name: 'org.apache.oltu.oauth2.common', version: '1.0.0'
-    providedCompile group: 'javax.servlet.jsp', name: 'javax.servlet.jsp-api', version: '2.3.1'
-    providedCompile group: 'org.expressme', name: 'JOpenId', version: '1.08'
-    api group: 'org.apache.commons', name: 'commons-math3', version: '3.2'
-    providedCompile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.50'
+    providedCompile libs.oltu.common
+    providedCompile libs.jsp.api
+    providedCompile libs.jopenid
+    api libs.commons.math3
+    providedCompile libs.bcprov.jdk15on
 
-    runtimeOnly group: 'commons-io', name: 'commons-io', version: '1.2'
-    runtimeOnly group: 'commons-collections', name: 'commons-collections', version: '3.2'
-    runtimeOnly group: 'commons-lang', name: 'commons-lang', version: '2.6'
-    runtimeOnly group: 'commons-codec', name: 'commons-codec', version: '1.15'
-    runtimeOnly 'taglibs:string:1.1.0'
-    runtimeOnly group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
-    runtimeOnly group: 'org.json', name: 'json', version: '20260814'
+    runtimeOnly libs.commons.io
+    runtimeOnly libs.commons.collections
+    runtimeOnly libs.commons.lang
+    runtimeOnly libs.commons.codec
+    runtimeOnly libs.taglibs.string
+    runtimeOnly libs.jaxb.api
+    runtimeOnly libs.json
 
     testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')
     testImplementation project(':intermine-objectstore').sourceSets.test.output
     testImplementation project(':intermine-api').sourceSets.test.output
-    testImplementation group: 'org.objenesis', name: 'objenesis', version: '2.1'
-    testImplementation group: 'org.easymock', name: 'easymock', version: '3.2'
-    testImplementation group: 'xmlunit', name: 'xmlunit', version: '1.0'
-    testImplementation group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
+    testImplementation libs.objenesis
+    testImplementation libs.easymock
+    testImplementation libs.xmlunit
+    testImplementation libs.javax.servlet.api
 }
 
 task classesJar(type: Jar) {

@@ -2,9 +2,8 @@
 # bio/postprocess-test, testmine). Each settings.gradle loads this file as `libs`; see
 # decisions/gradle-upgrade-path.md section 6 in the planning repo.
 #
-# So far only the coordinates of the root build files and the testresources modules are here; the module build
-# files still declare literal versions and move to `libs.xxx` in a later batch.
-# Not usable inside `buildscript { }` blocks (Gradle 7.6): those keep literal versions.
+# Every third-party coordinate of the module build files is declared here; the module build.gradle files use
+# `libs.<alias>`. Not usable inside `buildscript { }` blocks (Gradle 7.6): those keep literal versions.
 
 [versions]
 # the InterMine release built from this tree (group org.intermine, all modules)
@@ -13,41 +12,105 @@ intermine = "5.1.1"
 checkstyle = "7.8.1"
 
 ant = "1.7.0"
+base64 = "2.3.8"
+bcprov-jdk15on = "1.50"
 cglib = "3.1"
+commons-beanutils = "1.9.3"
+# one version for intermine/webapp and testmine/webapp (testmine used 1.9)
+commons-codec = "1.15"
 commons-collections = "3.2"
+commons-fileupload = "1.2.2"
 commons-io = "1.2"
 commons-lang = "2.6"
 commons-logging = "1.3.5"
+commons-math3 = "3.2"
+dwr = "2.0.1"
+easymock = "3.2"
+everit-json-schema = "1.14.6"
 hikaricp = "4.0.3"
+jackson = "2.18.12"
 javax-annotation-api = "1.3.2"
+javax-mail = "1.4"
+javax-servlet-api = "3.1.0"
+javax-ws-rs-api = "2.0.1"
 # jakarta.xml.bind-api and jaxb-runtime are released together
 jaxb = "2.3.2"
+jaxb-api = "2.3.1"
+jena = "3.16.0"
+jersey = "2.25"
+jopenid = "1.08"
+json = "20260814"
+jsonassert = "1.2.3"
+jsp-api = "2.3.1"
+jstl = "1.2"
 junit = "4.8.2"
+lucene = "3.0.2"
 mockobjects = "0.09"
+objenesis = "2.1"
+oltu-client = "1.0.1"
+oltu-common = "1.0.0"
 opencsv = "2.4"
 postgresql = "42.7.14"
 reload4j = "1.2.22"
 slf4j = "1.7.36"
 solr = "8.11.4"
-xmlunit = "1.0"
+struts = "1.3.10"
+taglibs-string = "1.1.0"
+# one version for all modules (intermine/integrate used 1.6, the others 1.0; the 1.x API is the same)
+xmlunit = "1.6"
 
 [libraries]
 ant = { module = "org.apache.ant:ant", version.ref = "ant" }
+base64 = { module = "net.iharder:base64", version.ref = "base64" }
+bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk15on", version.ref = "bcprov-jdk15on" }
 cglib = { module = "cglib:cglib", version.ref = "cglib" }
+commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "commons-beanutils" }
+commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
 commons-collections = { module = "commons-collections:commons-collections", version.ref = "commons-collections" }
+commons-fileupload = { module = "commons-fileupload:commons-fileupload", version.ref = "commons-fileupload" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang = { module = "commons-lang:commons-lang", version.ref = "commons-lang" }
 commons-logging = { module = "commons-logging:commons-logging", version.ref = "commons-logging" }
+commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "commons-math3" }
+dwr = { module = "org.directwebremoting:dwr", version.ref = "dwr" }
+easymock = { module = "org.easymock:easymock", version.ref = "easymock" }
+everit-json-schema = { module = "com.github.erosb:everit-json-schema", version.ref = "everit-json-schema" }
 hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-jaxrs-json-provider = { module = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider", version.ref = "jackson" }
 jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jaxb" }
 javax-annotation-api = { module = "javax.annotation:javax.annotation-api", version.ref = "javax-annotation-api" }
+javax-mail = { module = "javax.mail:mail", version.ref = "javax-mail" }
+javax-servlet-api = { module = "javax.servlet:javax.servlet-api", version.ref = "javax-servlet-api" }
+javax-ws-rs-api = { module = "javax.ws.rs:javax.ws.rs-api", version.ref = "javax-ws-rs-api" }
+jaxb-api = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb-api" }
 jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "jaxb" }
+jena-core = { module = "org.apache.jena:jena-core", version.ref = "jena" }
+jena-libs = { module = "org.apache.jena:apache-jena-libs", version.ref = "jena" }
+jersey-client = { module = "org.glassfish.jersey.core:jersey-client", version.ref = "jersey" }
+jersey-media-json-jackson = { module = "org.glassfish.jersey.media:jersey-media-json-jackson", version.ref = "jersey" }
+jopenid = { module = "org.expressme:JOpenId", version.ref = "jopenid" }
+json = { module = "org.json:json", version.ref = "json" }
+jsonassert = { module = "org.skyscreamer:jsonassert", version.ref = "jsonassert" }
+jsp-api = { module = "javax.servlet.jsp:javax.servlet.jsp-api", version.ref = "jsp-api" }
+jstl = { module = "javax.servlet:jstl", version.ref = "jstl" }
 junit = { module = "junit:junit", version.ref = "junit" }
+lucene-core = { module = "org.apache.lucene:lucene-core", version.ref = "lucene" }
+lucene-highlighter = { module = "org.apache.lucene:lucene-highlighter", version.ref = "lucene" }
+lucene-snowball = { module = "org.apache.lucene:lucene-snowball", version.ref = "lucene" }
 mockobjects-core = { module = "mockobjects:mockobjects-core", version.ref = "mockobjects" }
 mockobjects-jdk13 = { module = "mockobjects:mockobjects-jdk1.3", version.ref = "mockobjects" }
+objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
+oltu-client = { module = "org.apache.oltu.oauth2:org.apache.oltu.oauth2.client", version.ref = "oltu-client" }
+oltu-common = { module = "org.apache.oltu.oauth2:org.apache.oltu.oauth2.common", version.ref = "oltu-common" }
 opencsv = { module = "au.com.bytecode:opencsv", version.ref = "opencsv" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 reload4j = { module = "ch.qos.reload4j:reload4j", version.ref = "reload4j" }
 slf4j-reload4j = { module = "org.slf4j:slf4j-reload4j", version.ref = "slf4j" }
 solr-solrj = { module = "org.apache.solr:solr-solrj", version.ref = "solr" }
+struts-core = { module = "org.apache.struts:struts-core", version.ref = "struts" }
+struts-extras = { module = "org.apache.struts:struts-extras", version.ref = "struts" }
+struts-taglib = { module = "org.apache.struts:struts-taglib", version.ref = "struts" }
+struts-tiles = { module = "org.apache.struts:struts-tiles", version.ref = "struts" }
+taglibs-string = { module = "taglibs:string", version.ref = "taglibs-string" }
 xmlunit = { module = "xmlunit:xmlunit", version.ref = "xmlunit" }
