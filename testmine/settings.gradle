@@ -3,3 +3,12 @@ rootProject.name = 'testmine'
 include ':dbmodel',':webapp'
 project(':dbmodel').projectDir = new File(settingsDir, './dbmodel')
 project(':webapp').projectDir = new File(settingsDir, './webapp')
+
+// one version catalog for all seven builds, at the repository root (Gradle 7.4+)
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from(files('../gradle/libs.versions.toml'))
+        }
+    }
+}

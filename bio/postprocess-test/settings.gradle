@@ -17,3 +17,12 @@ project(':bio-postprocess-create-utr-references-test').projectDir = new File(set
 project(':bio-postprocess-create-references-test').projectDir = new File(settingsDir, './create-references-test')
 project(':bio-postprocess-make-spanning-locations-test').projectDir = new File(settingsDir, './make-spanning-locations-test')
 project(':bio-postprocess-transfer-sequences-test').projectDir = new File(settingsDir, './transfer-sequences-test')
+
+// one version catalog for all seven builds, at the repository root (Gradle 7.4+)
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from(files('../../gradle/libs.versions.toml'))
+        }
+    }
+}

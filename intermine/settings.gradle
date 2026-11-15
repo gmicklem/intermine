@@ -28,3 +28,12 @@ project(':intermine-jbrowse-endpoint').projectDir = new File(settingsDir, './jbr
 ////project(':intermine-webservice-client').projectDir = new File(settingsDir, './webservice/client/main')
 ////project(':intermine-webservice-samples').projectDir = new File(settingsDir, './webservice/client/samples')
 ////project(':intermine-webservice-test').projectDir = new File(settingsDir, './webservice/client/test')
+
+// one version catalog for all seven builds, at the repository root (Gradle 7.4+)
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from(files('../gradle/libs.versions.toml'))
+        }
+    }
+}

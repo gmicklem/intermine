@@ -1,12 +1,14 @@
 subprojects {
     group = 'org.intermine'
-    version '5.1.1'
+    version = libs.versions.intermine.get()
 
     apply plugin: "java-library"
     apply plugin: "checkstyle"
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
 
     // -------------------------
     // Build localDirs list
@@ -29,7 +31,7 @@ subprojects {
         // Prefer locally-built InterMine artifacts
         localDirs.each { dir ->
             ivy {
-                url "file://" + dir
+                url = "file://" + dir
                 patternLayout {
                     artifact  "[artifact]-[revision](-[classifier]).[ext]"
                 }
@@ -39,24 +41,24 @@ subprojects {
             }
         }
         maven {
-            url project.getProperty("intermine.maven.central")
+            url = project.getProperty("intermine.maven.central")
         }
         maven {
-            url project.getProperty("intermine.maven.ebi")
+            url = project.getProperty("intermine.maven.ebi")
         }
     }
 
     dependencies {
         // Ant is only part of the public API of bio-core (its Task subclasses): bio-core declares it as api.
-        implementation group: 'org.apache.ant', name: 'ant', version: '1.7.0'
+        implementation libs.ant
         // The Ant tasks of the webapp (loaded by name through the plugin's classpath): nothing compiles against them,
         // so not api. implementation rather than runtimeOnly keeps the runtime scope in the POM that the legacy
         // maven plugin writes (it ignores runtimeOnly).
         implementation group: "org.intermine", name: "intermine-webtasks", version: System.getProperty("imVersion")
-        testImplementation group: 'au.com.bytecode', name: 'opencsv', version: '2.4'
-        testImplementation group: 'cglib', name: 'cglib', version: '3.1'
-        testImplementation group: 'junit', name: 'junit', version: '4.8.2'
-        testImplementation group: 'xmlunit', name: 'xmlunit', version: '1.0'
+        testImplementation libs.opencsv
+        testImplementation libs.cglib
+        testImplementation libs.junit
+        testImplementation libs.xmlunit
     }
 
     // see http://blog.joda.org/2014/02/turning-off-doclint-in-jdk-8-javadoc.html
@@ -74,8 +76,8 @@ subprojects {
     }
 
     checkstyle {
-        toolVersion '7.8.1'
-        configFile file("${rootDir}/../config/checkstyle/checkstyle.xml")
+        toolVersion = libs.versions.checkstyle.get()
+        configFile = file("${rootDir}/../config/checkstyle/checkstyle.xml")
         sourceSets = [sourceSets.main]
         showViolations = true
         ignoreFailures = false

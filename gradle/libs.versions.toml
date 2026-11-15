@@ -1,0 +1,53 @@
+# Version catalog for the seven InterMine Gradle builds (plugin, intermine, bio, bio/sources, bio/postprocess,
+# bio/postprocess-test, testmine). Each settings.gradle loads this file as `libs`; see
+# decisions/gradle-upgrade-path.md section 6 in the planning repo.
+#
+# So far only the coordinates of the root build files and the testresources modules are here; the module build
+# files still declare literal versions and move to `libs.xxx` in a later batch.
+# Not usable inside `buildscript { }` blocks (Gradle 7.6): those keep literal versions.
+
+[versions]
+# the InterMine release built from this tree (group org.intermine, all modules)
+intermine = "5.1.1"
+# kept at 7.8.1 until the checkstyle bump (config/gradle/checkstyle-classpath.gradle)
+checkstyle = "7.8.1"
+
+ant = "1.7.0"
+cglib = "3.1"
+commons-collections = "3.2"
+commons-io = "1.2"
+commons-lang = "2.6"
+commons-logging = "1.3.5"
+hikaricp = "4.0.3"
+javax-annotation-api = "1.3.2"
+# jakarta.xml.bind-api and jaxb-runtime are released together
+jaxb = "2.3.2"
+junit = "4.8.2"
+mockobjects = "0.09"
+opencsv = "2.4"
+postgresql = "42.7.14"
+reload4j = "1.2.22"
+slf4j = "1.7.36"
+solr = "8.11.4"
+xmlunit = "1.0"
+
+[libraries]
+ant = { module = "org.apache.ant:ant", version.ref = "ant" }
+cglib = { module = "cglib:cglib", version.ref = "cglib" }
+commons-collections = { module = "commons-collections:commons-collections", version.ref = "commons-collections" }
+commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
+commons-lang = { module = "commons-lang:commons-lang", version.ref = "commons-lang" }
+commons-logging = { module = "commons-logging:commons-logging", version.ref = "commons-logging" }
+hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
+jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jaxb" }
+javax-annotation-api = { module = "javax.annotation:javax.annotation-api", version.ref = "javax-annotation-api" }
+jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "jaxb" }
+junit = { module = "junit:junit", version.ref = "junit" }
+mockobjects-core = { module = "mockobjects:mockobjects-core", version.ref = "mockobjects" }
+mockobjects-jdk13 = { module = "mockobjects:mockobjects-jdk1.3", version.ref = "mockobjects" }
+opencsv = { module = "au.com.bytecode:opencsv", version.ref = "opencsv" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+reload4j = { module = "ch.qos.reload4j:reload4j", version.ref = "reload4j" }
+slf4j-reload4j = { module = "org.slf4j:slf4j-reload4j", version.ref = "slf4j" }
+solr-solrj = { module = "org.apache.solr:solr-solrj", version.ref = "solr" }
+xmlunit = { module = "xmlunit:xmlunit", version.ref = "xmlunit" }
