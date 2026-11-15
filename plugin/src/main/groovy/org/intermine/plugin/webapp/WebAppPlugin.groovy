@@ -46,7 +46,9 @@ class WebAppPlugin implements Plugin<Project> {
             String webPropertiesPath = project.projectDir.absolutePath + File.separator + "src" + File.separator + "main" +
                     File.separator + "webapp" + File.separator + "WEB-INF" + File.separator + "web.properties"
             inputs.files(webPropertiesPath)
-            inputs.files(DBModelUtils.resource(project, 'copyMineProperties') { "intermine.properties" })
+            // intermine.properties as processResources leaves it in build/resources/main (a mine's copyMineProperties
+            // feeds processResources; a 5.x style one copies into the directory itself)
+            inputs.files(DBModelUtils.processedResources(project))
             outputs.file({ config.propsDir + File.separator + "web.properties" })
 
             doLast {
