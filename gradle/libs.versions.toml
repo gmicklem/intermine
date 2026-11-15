@@ -19,7 +19,8 @@ biojava = "4.2.0"
 cglib = "3.1"
 # 1.9.4 fixes CVE-2019-10086; only pinned for Struts 1.3.10 (intermine/webapp), no InterMine code uses it
 commons-beanutils = "1.9.4"
-commons-collections = "3.2"
+# 3.2.2: CVE-2015-7501 / CVE-2015-6420 (functor deserialisation); same API as 3.2
+commons-collections = "3.2.2"
 commons-fileupload = "1.2.2"
 commons-io = "1.2"
 commons-lang = "2.6"
