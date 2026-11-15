@@ -4,7 +4,7 @@ This page describes how the back-end code in this repository is built: the Gradl
 
 ## Requirements
 
-- JDK 17. JDK 8 still works (CI runs both) until 6.0.0 is released; JDK 21 passes the full gate too (its javac warns that `--release 8` is obsolete: some later JDK will no longer build Java 8 bytecode). The JDK that runs Gradle, i.e. `JAVA_HOME` (`export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=$JAVA_HOME/bin:$PATH`), compiles the code, runs the tests and runs the plugin's Ant tasks (inside the Gradle daemon). No Java toolchain is declared, so `org.gradle.java.installations.*` settings are not needed: a toolchain would compile and test on one JDK while the daemon runs InterMine code on another, and a machine with only JDK 8 could no longer build.
+- JDK 17. JDK 8 still works until 6.0.0 is released (the CI unit tests run on both; the web service tests and Checkstyle run on 17); JDK 21 passes the full gate too (its javac warns that `--release 8` is obsolete: some later JDK will no longer build Java 8 bytecode). The JDK that runs Gradle, i.e. `JAVA_HOME` (`export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 PATH=$JAVA_HOME/bin:$PATH`), compiles the code, runs the tests and runs the plugin's Ant tasks (inside the Gradle daemon). No Java toolchain is declared, so `org.gradle.java.installations.*` settings are not needed: a toolchain would compile and test on one JDK while the daemon runs InterMine code on another, and a machine with only JDK 8 could no longer build.
 - Whatever the build JDK, the jars are Java 8 bytecode (class file version 52), so they run on a JDK 8 Tomcat. On JDK 9+ the code is compiled with `--release 8`, i.e. against the Java 8 API, and the tests run with `--add-opens=java.base/java.lang=ALL-UNNAMED`, which cglib 3.1 needs on JDK 16+ (`org.intermine.util.DynamicBean`). Both are set in one place, `config/gradle/java-target.gradle`, which every build applies. Gradle 8.14.6 runs on JDK 8 to 24; on JDK 8 it prints one deprecation in every build ("Executing Gradle on JVM versions 16 and lower has been deprecated"), because Gradle 9 needs JDK 17 to run.
 - Python 3 for `config/lib/install_intermine.py` (it uses `dataclasses` and `glob(root_dir=...)`, so Python 3.10 or later).
 - PostgreSQL, but only to run tests (see [TESTING.md](TESTING.md)). Compiling and publishing do not need it.
@@ -42,7 +42,7 @@ The jars are not found through one repository but through three mechanisms, all 
 
 No build file uses `mavenLocal()`. `publishToMavenLocal` still matters for two reasons: it depends on the jar, war, sources and javadoc tasks, so running it is what fills the `build/libs` directories that mechanisms 1 and 2 read; and it installs the artifacts into `~/.m2` (or into the directory given with `-Dmaven.repo.local=<dir>`) for builds outside this repository, such as a mine that adds `mavenLocal()`. That is why `config/lib/install_intermine.py`, `testmine/setup.sh` and `config/ci/run.sh` all call it.
 
-Versions are passed as system properties set in `gradle.properties` (`systemProp.imVersion`, `systemProp.bioVersion`, `systemProp.flymineVersion` in `bio/` and `bio/sources/`), and read with `System.getProperty("imVersion")`. `testmine/build.gradle` has its own `imVersion`.
+Two version numbers are in play. The version of the InterMine release that is built (the `version` of every published module, and `imVersion` in `testmine/build.gradle`) comes from the version catalog: `libs.versions.intermine` in `gradle/libs.versions.toml` (`plugin/build.gradle` has its own `version = '5.1.1'`). The versions that a build uses to find the *other* InterMine builds' jars are system properties set in `gradle.properties` (`systemProp.imVersion`, `systemProp.bioVersion`, and `systemProp.flymineVersion`, the version of the `bio-source-flymine-static` test dependency, in `bio/`, `bio/sources/` and `bio/postprocess-test/`), read with `System.getProperty("imVersion")`. Both exist because a `buildscript` block could not read the catalog on Gradle 7.6, so the plugin version there still comes from `imVersion`. They are separate edits and have to change together; the places are listed under "Version bump" in [RELEASING.md](RELEASING.md).
 
 ## Generated files: `config/lib/install_intermine.py`
 
@@ -92,6 +92,8 @@ Every published module applies this script (`ext.imPublicationDescription = '...
 - maps scopes into the POM: `api` becomes `compile`, `implementation` and `runtimeOnly` become `runtime`, `providedCompile` becomes `provided`;
 - registers `install` as a deprecated alias of `publishToMavenLocal`, so older callers keep working;
 - signs only when the root task `centralBundle` is in the task graph, so local installs never need a key.
+
+`config/gradle/webapp-classes-dependency.gradle` is applied by the two modules that depend on `intermine-webapp` (`intermine/webtasks` and `intermine/jbrowse-endpoint`). It writes that dependency into their POMs as `intermine-webapp:<version>:classes` instead of the 12 MB war, so a mine's war does not carry `intermine-webapp-<version>.war` in `WEB-INF/lib`.
 
 `publishToMavenLocal` honours `-Dmaven.repo.local`, for an install that does not touch `~/.m2`:
 
@@ -152,7 +154,7 @@ jar {
 }
 ```
 
-It replaces the old `provided` configuration, whose name was misleading: those jars are not "provided" by anyone, they are merged into the module's jar (the `libs/` directories hold vendored jars that are not in a public repository). Because `bundled` is added to `implementation`, they stay on the compile and test classpaths. `compileOnly` would have removed them from the tests. `duplicatesStrategy = EXCLUDE` keeps the first copy of entries that several bundled jars share, such as `META-INF/LICENSE.txt`.
+`bio/core/build.gradle` also adds the patched `antlr-2.7.6-caching.jar` from `intermine/libs` (`bundled files("${rootDir}/../intermine/libs/antlr-2.7.6-caching.jar")`). It replaces the old `provided` configuration, whose name was misleading: those jars are not "provided" by anyone, they are merged into the module's jar (the `libs/` directories hold vendored jars that are not in a public repository). Because `bundled` is added to `implementation`, they stay on the compile and test classpaths. `compileOnly` would have removed them from the tests. `duplicatesStrategy = EXCLUDE` keeps the first copy of entries that several bundled jars share, such as `META-INF/LICENSE.txt`.
 
 Other configurations you will meet are build-specific and not part of the Gradle standard set: `bioModel`, `mergeModel`, `commonResources`, `imWebApp`, `testModelProps` and `testArtifacts` (the test jar that `intermine-testresources` shares with the modules that test against it, used as `testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')`). The plugin creates `imApiJar` and `imAntlr` (renamed from `api` and `antlr`, which clash with the `java-library` and `antlr` plugins), `bioModel`, `bioModelForSOOnly`, `commonResources` and `mergeSource`, as resolvable-only configurations.
 

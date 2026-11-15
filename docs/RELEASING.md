@@ -1,5 +1,10 @@
 # Releasing InterMine to Maven Central
 
+Two releases are planned from two branches of https://github.com/gmicklem/intermine:
+
+- **5.1.1**: the non-breaking release, on Gradle 6.9.4 and JDK 8, from the branch `release/5.1.1-candidate` (the last 6.9.4 state; section 3). Mines on Gradle 4.9 keep working with its plugin.
+- **6.0.0**: the breaking release, on Gradle 8.14.6 and JDK 17, from `maint-2026` (section 4). Until it is cut, every version number in `maint-2026` still reads `5.1.1`, so artifacts built from that branch are *not* the 5.1.1 release: change the number to `6.0.0` first (see "Version bump").
+
 InterMine publishes these builds to Maven Central under the group `org.intermine`:
 
 | Build (directory) | What it publishes | Bundle file |
@@ -45,11 +50,10 @@ export CENTRAL_PASSWORD='...'                                        # Portal to
 
 ### Version bump
 
-The version appears in these places; change all of them in one commit (`release: 5.1.2`):
+The version appears in these places; change all of them in one commit (`release: 6.0.0`). On `release/5.1.1-candidate` there is no version catalog: the version is `version '5.1.1'` in each of the `build.gradle` files below (`subprojects { }` block, or the top level in `plugin`), and `imVersion` in `testmine/build.gradle`, and it is already 5.1.1. On `maint-2026`:
 
-- `gradle/libs.versions.toml`: `intermine = "5.1.1"` in `[versions]`. The six library builds and `testmine` read it as `libs.versions.intermine`. `plugin/build.gradle` is the exception: it still has its own `version '5.1.1'` at the top level.
+- `gradle/libs.versions.toml`: `intermine = "5.1.1"` in `[versions]`. `intermine`, `bio`, `bio/sources`, `bio/postprocess`, `bio/postprocess-test` and `testmine` read it as `libs.versions.intermine`. `plugin/build.gradle` is the exception: it has its own `version = '5.1.1'` at the top level.
 - `plugin/gradle.properties.in`, `intermine/gradle.properties.in`, `bio/gradle.properties.in`, `bio/sources/gradle.properties.in`, `bio/postprocess/gradle.properties.in`, `bio/postprocess-test/gradle.properties.in`: `systemProp.imVersion` and `systemProp.bioVersion`. The generated `gradle.properties` files are git-ignored; regenerate them with `python3 -I config/lib/install_intermine.py` (or the gate) after editing the `.in` files.
-- `testmine/build.gradle`: `imVersion`.
 - `README.md`: the version badge (`badge/version-5.1.0-blue`).
 - `intermine/webapp/src/main/java/org/intermine/web/logic/Constants.java`: `INTERMINE_VERSION`.
 
@@ -86,8 +90,8 @@ Smoke test with a deployer: in a checkout of a mine (for example `humanmine` or 
 
 ## 3. Release 5.1.1 (Gradle 6.9.4, manual bundle upload)
 
-5.1.1 is built on Gradle 6.9.4 so that the plugin stays usable by mines that are still on Gradle 4.9.
-Releasing needs only JDK 8, the build wrappers and `curl`.
+5.1.1 is built from the branch `release/5.1.1-candidate`, on Gradle 6.9.4, so that the plugin stays usable by mines that are still on Gradle 4.9 (checked: see [UPGRADING-build.md](UPGRADING-build.md)).
+Releasing needs only JDK 8, the build wrappers and `curl`. Check out that branch first.
 
 1. Make sure the working tree is the tagged release commit and the environment of "One-time setup" is exported.
 2. Create the five bundles, in build order:
@@ -126,12 +130,12 @@ done
 
 ## 4. Release 6.0.0 (Gradle 8.14, with the plugin and build upgrade)
 
-6.0.0 ships the Gradle 8.14 build and plugin (steps 2 and 3 of `decisions/gradle-upgrade-path.md`). The publishing scripts are written for Gradle 6.9.4 and also work unchanged on 7.x and 8.x (tested on 8.14.6 with JDK 17 against a sample multi-project build with a war module), so the procedure is the same as for 5.1.1:
+6.0.0 ships the Gradle 8.14 build and plugin (steps 2 and 3 of `decisions/gradle-upgrade-path.md` in https://github.com/gmicklem/intermine-planning). The publishing scripts are written for Gradle 6.9.4 and also work unchanged on 7.x and 8.x (tested on 8.14.6 with JDK 17 against a sample multi-project build with a war module), so the procedure is the same as for 5.1.1:
 
 - Run the five `centralBundle` builds with the Gradle 8.14 wrappers, then upload with the same `curl` calls (use the new version in `name=`).
-- The Portal plugin `com.gradleup.nmcp` was evaluated and vetted (`decisions/package-vetting.md`). It is safe but is not used: it needs JDK 17 and Gradle 8.2+ to run, the builds must still work on JDK 8 until 6.0.0 is out, and it would only replace the zip and the `curl` call above. Revisit it when JDK 8 is dropped and the builds become one composite build, where a single aggregated deployment (`com.gradleup.nmcp.aggregation`, credentials from `CENTRAL_USERNAME` / `CENTRAL_PASSWORD`, `nmcpAggregation { centralPortal { username = ...; password = ...; publishingType = 'USER_MANAGED' } }`) is worth the extra dependency.
+- The Portal plugin `com.gradleup.nmcp` was evaluated and vetted (`decisions/package-vetting.md` in the planning repository). It is safe but is not used: it needs JDK 17 and Gradle 8.2+ to run, the builds must still work on JDK 8 until 6.0.0 is out, and it would only replace the zip and the `curl` call above. Revisit it when JDK 8 is dropped and the builds become one composite build, where a single aggregated deployment (`com.gradleup.nmcp.aggregation`, credentials from `CENTRAL_USERNAME` / `CENTRAL_PASSWORD`, `nmcpAggregation { centralPortal { username = ...; password = ...; publishingType = 'USER_MANAGED' } }`) is worth the extra dependency.
 - Gradle 9 is not covered yet: re-run the publishing scripts with `--warning-mode all` when that step is done (`afterEvaluate` publication, `signing.useInMemoryPgpKeys`).
-- Mines must move to Gradle 8.14 together with the 6.0.0 plugin; their upgrade steps belong in the deployer guide, not here.
+- Mines must move to Gradle 8.14 together with the 6.0.0 plugin; their upgrade steps are in [UPGRADING-build.md](UPGRADING-build.md). Say so in the release notes.
 
 ## 5. After the release
 

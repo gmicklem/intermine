@@ -14,7 +14,7 @@ How the unit tests and web service tests find their databases and settings, how 
   - `testmodel.properties`, from `config/testmodel.properties`
 
   `config/lib/install_intermine.py` writes them, replacing `PSQL_HOST`, `PSQL_USER` and `PSQL_PWD` with the environment variables of those names, and skips any file that already exists. If you change the test password, delete the files so that they are regenerated. `testmine/setup.sh` also writes `~/.intermine/testmodel.properties` (from `testmine/dbmodel/resources/testmodel.properties`) if it is missing.
-- **JDK 17** (or JDK 8) and Python 3 (see [BUILDING.md](BUILDING.md)). The wrapper downloads Gradle itself.
+- **JDK 17** (or JDK 8, until 6.0.0 is released) and Python 3 (see [BUILDING.md](BUILDING.md)). The JDK that runs Gradle (`JAVA_HOME`) also runs the tests. On JDK 9 and later the test tasks get `--add-opens=java.base/java.lang=ALL-UNNAMED` from `config/gradle/java-target.gradle`; nothing to set. The wrapper downloads Gradle itself (8.14.6).
 - For the web service tests only: Solr (`config/ci/init-solr-docker.sh`, which starts the official image in Docker), `wait-for-it`, and a checkout of a client (`imjs` with Node and `grunt`, or `intermine-ws-python`).
 
 ## How CI runs the tests
@@ -28,7 +28,7 @@ Two workflows in `.github/workflows/`. Both start on `push` and `pull_request` w
 | `unit-tests` | `testSuite` in `intermine`, `bio`; `java` 8 and 17; `postgres` 14 and 16 (four cells per suite, `fail-fast: false`) | `config/ci/init.sh` then `config/ci/run.sh` with the suite name |
 | `ws-tests` | `client` in `JS`, `PY`; `java` 17; PostgreSQL 14 | Solr in Docker, then `init.sh` and `run.sh` with the suite `ws`: build and start the testmine web application, then run the client's tests against it (`config/run-ws-tests.sh`) |
 
-Both jobs have a 45 minute timeout, cache `~/.gradle` keyed on the build scripts and templates, check the database connection first (`psql -w -h localhost -U postgres -c 'select version()'` with `PGPASSWORD=postgres`), write a test summary into the job summary (`config/ci/junit-summary.py`), and upload the JUnit XML (always) and the HTML reports (on failure).
+Both jobs have a 45 minute timeout, cache `~/.gradle/caches` and `~/.gradle/wrapper`, keyed on the build scripts and templates, check the database connection first (`psql -w -h localhost -U postgres -c 'select version()'` with `PGPASSWORD=postgres`), write a test summary into the job summary (`config/ci/junit-summary.py`), and upload the JUnit XML (always) and the HTML reports (on failure).
 
 `config/ci/init.sh <workspace> <python> <suite> <client> <testmodel_url>` installs the Python requirements, drops the test databases and the `test` role and recreates the role (`dropuser`, `createuser`, then `alter user test with encrypted password 'test'`; for the suites `intermine`, `bio` and `ws`), and runs `config/lib/install_intermine.py` with `PSQL_USER=test`, `PSQL_PWD=test`, `PSQL_HOST=localhost`. For `ws` it also creates the unit test databases, runs `testmine/setup.sh` and clones the client.
 
@@ -69,7 +69,7 @@ The standard Gradle options apply to narrow a run to one module or class (not ru
 
 For the web service tests use the steps of `config/ci/init.sh` for the suite `ws`, which build and start the testmine web application with `testmine/setup.sh <workspace_dir>`.
 
-## Two PostgreSQL gotchas fixed in this branch
+## Two PostgreSQL gotchas that are fixed in the scripts
 
 1. **PostgreSQL 15 and later: privileges on the `public` schema.** Since PostgreSQL 15 only the owner of a database may create objects in its `public` schema. The test databases are created by `postgres`, but the tests connect as `test`, so the first `create table` failed with `permission denied for schema public` (followed by `table intermine_metadata doesn't exist`). `grantPrivileges` in `intermine/testresources/build.gradle` and `bio/testresources/build.gradle` now also runs `grant all on schema public to test;` in each database. In `testmine/setup.sh` the databases are created with `createdb -O "$PSQL_USER"`, so the mine's user owns them. If you create test databases by hand, do the same.
 2. **`sudo -E` drops `PGPASSWORD`.** The scripts used to run `sudo -E -u postgres psql ...`. The newer `sudo` on the `ubuntu-latest` runner image ignores `-E`, so `PGPASSWORD` was lost and every `dropdb` waited for a password in a loop until the job timed out. `config/ci/init.sh`, `testmine/setup.sh` and the two `createUnitTestDatabases` tasks now connect directly as `PGUSER` (default `postgres`) with `PGPASSWORD` (default `postgres`) and pass `-w`, so a wrong or missing password fails at once instead of prompting. Do not reintroduce `sudo` in these scripts.

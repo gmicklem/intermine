@@ -41,7 +41,7 @@ For a guide on getting started with InterMine, please visit:
 3min bootstrap
 --------------------------------------
 
-As long as you have the prerequisites installed ([Java][java] 8, [PostgreSQL][psql], plus Solr and `wait-for-it`, see [docs/TESTING.md](docs/TESTING.md)), you can get a working data-warehouse and associated web-application by running an automated bootstrap script (it takes the path of the checkout as its only argument):
+As long as you have the prerequisites installed ([Java][java] JDK 17, or JDK 8 until 6.0.0 is released; [PostgreSQL][psql], plus Solr and `wait-for-it`, see [docs/TESTING.md](docs/TESTING.md)), you can get a working data-warehouse and associated web-application by running an automated bootstrap script (it takes the path of the checkout as its only argument):
 
 ```bash
   # For the testmodel
