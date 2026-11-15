@@ -42,7 +42,7 @@ dependencies {
     compile group: "org.biojava", name: "biojava-core", version: "4.2.0"
     compile group: "org.biojava", name: "biojava-genome", version: "4.2.0"
     compile group: "org.biojava", name: "biojava-ontology", version: "4.2.0"
-    compile group: 'org.json', name: 'json', version: '20170516'
+    compile group: 'org.json', name: 'json', version: '20260814'
 
     runtime group: 'org.apache.lucene', name: 'lucene-snowball', version: '3.0.2'
 

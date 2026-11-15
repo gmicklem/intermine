@@ -62,7 +62,7 @@ dependencies {
     runtime 'taglibs:string:1.1.0'
     runtime group: 'fastutil', name: 'fastutil', version: '5.0.9'
     runtime group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.1'
-    runtime group: 'org.json', name: 'json', version: '20170516'
+    runtime group: 'org.json', name: 'json', version: '20260814'
 
     testCompile project(path: ':intermine-testresources', configuration: 'testArtifacts')
     testCompile project(':intermine-objectstore').sourceSets.test.output
