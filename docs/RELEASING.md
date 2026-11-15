@@ -50,6 +50,7 @@ The version appears in these places; change all of them in one commit (`release:
 - `plugin/build.gradle`, `intermine/build.gradle`, `bio/build.gradle`, `bio/sources/build.gradle`, `bio/postprocess/build.gradle`, `bio/postprocess-test/build.gradle`: `version '5.1.1'` (the `subprojects { }` block, or the top level in `plugin`).
 - `plugin/gradle.properties.in`, `intermine/gradle.properties.in`, `bio/gradle.properties.in`, `bio/sources/gradle.properties.in`, `bio/postprocess/gradle.properties.in`, `bio/postprocess-test/gradle.properties.in`: `systemProp.imVersion` and `systemProp.bioVersion`. The generated `gradle.properties` files are git-ignored; regenerate them with `python3 -I config/lib/install_intermine.py` (or the gate) after editing the `.in` files.
 - `testmine/build.gradle`: `imVersion`.
+- `README.md`: the version badge (`badge/version-5.1.0-blue`).
 - `intermine/webapp/src/main/java/org/intermine/web/logic/Constants.java`: `INTERMINE_VERSION`.
 
 Check that nothing was missed: `grep -rn "5\.1\.1" --include=*.gradle --include=*.in --include=*.java .` should show only the new version.
@@ -66,6 +67,7 @@ Use JDK 8 and the wrapper of each build. Build in this order, because later buil
 
 ```bash
 export LANG=C.UTF-8 LC_ALL=C.UTF-8        # javadoc fails on non-ASCII sources under an ASCII locale
+export PSQL_HOST=localhost PSQL_USER=test PSQL_PWD=test   # the script exits at once without them (they go into ~/.intermine/*.properties)
 python3 -I config/lib/install_intermine.py --clean   # writes gradle.properties, then runs publishToMavenLocal in the five builds
 ```
 
