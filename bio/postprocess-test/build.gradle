@@ -158,9 +158,6 @@ subprojects {
         ]
     }
 
-    // Gradle 7+ no longer gives checkstyle 7.8.1 the classpath it needs; see the file for details
-    apply from: "${rootDir}/../../config/gradle/checkstyle-classpath.gradle"
-
     checkstyleMain {
         source = fileTree('src/main') {
             includes = ['**/*.java']
