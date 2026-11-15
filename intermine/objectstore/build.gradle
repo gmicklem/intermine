@@ -2,7 +2,13 @@ apply plugin: 'antlr'
 
 sourceSets {
     main {
-        // no java srcDirs override: the antlr plugin adds build/generated-src/antlr/main itself
+        // The antlr plugin (7.6 and 8.14 alike) adds build/generated-src/antlr/main to the java sources as a plain
+        // directory and only makes compileJava depend on generateGrammarSource, so sourcesJar reads that directory
+        // without knowing its producer. Replace the plain directory with the task: same directory, but now carrying
+        // the task dependency for every consumer of the source set.
+        java {
+            srcDirs = ['src/main/java', tasks.named('generateGrammarSource')]
+        }
         antlr {
             srcDirs = ['src/main/antlr']
         }
