@@ -4,7 +4,7 @@ buildscript {
             // define in ~/.gradle/gradle.properties
             // intermine.plugin.repo=file:///your/intermine/repo/plugin/build/libs
             url project.getProperty("intermine.plugin.repo")
-            layout "pattern", {
+            patternLayout {
                 artifact  "[artifact]-[revision].[ext]"
             }
             metadataSources {
@@ -73,7 +73,7 @@ subprojects {
         localDirs.each { dir ->
             ivy {
                 url "file://" + dir
-                layout "pattern", {
+                patternLayout {
                     artifact  "[artifact]-[revision](-[classifier]).[ext]"
                 }
                 metadataSources {
