@@ -32,7 +32,8 @@ dependencies {
     api project(':intermine-model')
     api libs.postgresql
     api libs.commons.io
-    api libs.commons.beanutils
+    // no imports; the bundled torque jar logs through it (commons-beanutils used to bring it in)
+    implementation libs.commons.logging
     implementation(libs.hikaricp) { transitive = false } // conflict with log4j library this JAR needs
     api libs.reload4j
     api libs.slf4j.reload4j

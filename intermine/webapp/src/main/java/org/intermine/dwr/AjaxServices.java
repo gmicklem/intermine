@@ -10,6 +10,8 @@ package org.intermine.dwr;
  *
  */
 
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -34,7 +36,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.collections.keyvalue.MultiKey;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -1408,7 +1409,13 @@ public class AjaxServices
             session.setAttribute(Constants.PREV_TEMPLATE_NAME, templateQuery.getName());
         }
         try {
-            PropertyUtils.setSimpleProperty(templateQuery, field, value);
+            for (PropertyDescriptor desc : Introspector.getBeanInfo(templateQuery.getClass())
+                    .getPropertyDescriptors()) {
+                if (desc.getName().equals(field) && desc.getWriteMethod() != null) {
+                    desc.getWriteMethod().invoke(templateQuery, value);
+                    break;
+                }
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
