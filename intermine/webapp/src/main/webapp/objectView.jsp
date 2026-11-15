@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib uri="/WEB-INF/functions.tld" prefix="imf" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles"%>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
@@ -57,13 +58,13 @@
         </c:choose>
       </c:when>
       <c:when
-        test="${object.class.name == 'java.lang.String' && fn:length(object) > maxLength && resultElement.keyField && !doNotTruncate}">
+        test="${imf:className(object) == 'java.lang.String' && fn:length(object) > maxLength && resultElement.keyField && !doNotTruncate}">
         <%-- key field, truncate --%>
         <a href="${detailsLink}" ${extlink}><im:abbreviate
           value="${object}" length="${maxLength}" /></a>
       </c:when>
       <c:when
-        test="${object.class.name == 'java.lang.String' && fn:length(object) > maxLength && !resultElement.keyField && !doNotTruncate}">
+        test="${imf:className(object) == 'java.lang.String' && fn:length(object) > maxLength && !resultElement.keyField && !doNotTruncate}">
         <%-- NON key field, truncate --%>
         <%--<im:abbreviate value="${object}" length="${maxLength}" />--%>
         ${object}
@@ -98,7 +99,7 @@
       <c:if test="${reportObject.fieldConfigMap[expr].showInResults}">
         <c:set var="style" value="white-space:nowrap" />
         <c:if
-          test="${outVal.class.name == 'java.lang.String' && fn:length(outVal) > 25}">
+          test="${imf:className(outVal) == 'java.lang.String' && fn:length(outVal) > 25}">
           <c:if test="${fn:length(outVal) > 65}">
             <c:set var="outVal" value="${fn:substring(outVal, 0, 60)}..."
               scope="request" />

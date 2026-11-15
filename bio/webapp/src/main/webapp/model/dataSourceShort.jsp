@@ -1,12 +1,13 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="/WEB-INF/functions.tld" prefix="imf" %>
 
 <!-- dataSourceShort.jsp -->
 <html:xhtml/>
 <c:set var="interMineObject" value="${object}"/>
 
-<c:if test="${fn:endsWith(object.class.name, '.ReportObject')}">
+<c:if test="${fn:endsWith(imf:className(object), '.ReportObject')}">
   <c:set var="interMineObject" value="${object.object}"/>
 </c:if>
 
