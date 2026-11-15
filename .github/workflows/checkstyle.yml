@@ -41,18 +41,18 @@ jobs:
         # B4 will add 17 and 21 here once the builds support them: java: [8, 17, 21]
         java: [8]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
       - name: Set up python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Cache Gradle dependencies and wrapper distributions
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.gradle/caches
@@ -68,7 +68,7 @@ jobs:
           ./config/ci/run.sh ${GITHUB_WORKSPACE} $(which python3) checkstyle none none
       - name: Upload checkstyle reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: checkstyle-reports-java${{ matrix.java }}
           path: '**/build/reports/checkstyle/*.xml'
