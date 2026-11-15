@@ -2,7 +2,7 @@ subprojects {
     group = 'org.intermine'
     version '5.1.1'
 
-    apply plugin: "java"
+    apply plugin: "java-library"
     apply plugin: "maven"
     apply plugin: "signing"
     apply plugin: "checkstyle"
@@ -32,7 +32,7 @@ subprojects {
         localDirs.each { dir ->
             ivy {
                 url "file://" + dir
-                layout "pattern", {
+                patternLayout {
                     artifact  "[artifact]-[revision](-[classifier]).[ext]"
                 }
                 metadataSources {
@@ -49,12 +49,16 @@ subprojects {
     }
 
     dependencies {
-        compile group: 'org.apache.ant', name: 'ant', version: '1.7.0'
-        compile group: "org.intermine", name: "intermine-webtasks", version: System.getProperty("imVersion")
-        testCompile group: 'au.com.bytecode', name: 'opencsv', version: '2.4'
-        testCompile group: 'cglib', name: 'cglib', version: '3.1'
-        testCompile group: 'junit', name: 'junit', version: '4.8.2'
-        testCompile group: 'xmlunit', name: 'xmlunit', version: '1.0'
+        // Ant is only part of the public API of bio-core (its Task subclasses): bio-core declares it as api.
+        implementation group: 'org.apache.ant', name: 'ant', version: '1.7.0'
+        // The Ant tasks of the webapp (loaded by name through the plugin's classpath): nothing compiles against them,
+        // so not api. implementation rather than runtimeOnly keeps the runtime scope in the POM that the legacy
+        // maven plugin writes (it ignores runtimeOnly).
+        implementation group: "org.intermine", name: "intermine-webtasks", version: System.getProperty("imVersion")
+        testImplementation group: 'au.com.bytecode', name: 'opencsv', version: '2.4'
+        testImplementation group: 'cglib', name: 'cglib', version: '3.1'
+        testImplementation group: 'junit', name: 'junit', version: '4.8.2'
+        testImplementation group: 'xmlunit', name: 'xmlunit', version: '1.0'
     }
 
     // see http://blog.joda.org/2014/02/turning-off-doclint-in-jdk-8-javadoc.html

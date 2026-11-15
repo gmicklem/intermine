@@ -4,7 +4,7 @@ buildscript {
             // define in ~/.gradle/gradle.properties
             // intermine.plugin.repo=file:///your/intermine/repo/plugin/build/libs
             url project.getProperty("intermine.plugin.repo")
-            layout "pattern", {
+            patternLayout {
                 artifact  "[artifact]-[revision].[ext]"
             }
             metadataSources {
@@ -74,7 +74,7 @@ subprojects {
         localDirs.each { dir ->
             ivy {
                 url "file://" + dir
-                layout "pattern", {
+                patternLayout {
                     artifact  "[artifact]-[revision](-[classifier]).[ext]"
                 }
                 metadataSources {
@@ -92,23 +92,23 @@ subprojects {
     }
 
     dependencies {
-        compile group: 'com.zaxxer', name: 'HikariCP', version: '4.0.3', transitive: false
-        compile group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
-        compile group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
-        compile group: 'org.apache.ant', name: 'ant', version: '1.7.0'
-        compile group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.4'
-        compile group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false
-        compile group : "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
-        compile group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
-        compile group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
-        compile group : "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion") // log4j
-        compile group: 'commons-collections', name: 'commons-collections', version: '3.2'
-        compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
-        compile group: 'org.postgresql', name: 'postgresql', version: '42.7.14'
+        implementation group: 'com.zaxxer', name: 'HikariCP', version: '4.0.3', transitive: false
+        implementation group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
+        implementation group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
+        implementation group: 'org.apache.ant', name: 'ant', version: '1.7.0'
+        implementation group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.4'
+        implementation group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false
+        implementation group : "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
+        implementation group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
+        implementation group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
+        implementation group : "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion") // log4j
+        implementation group: 'commons-collections', name: 'commons-collections', version: '3.2'
+        implementation group: 'commons-lang', name: 'commons-lang', version: '2.6'
+        implementation group: 'org.postgresql', name: 'postgresql', version: '42.7.14'
 
-        testCompile group: 'junit', name: 'junit', version: '4.8.2'
-        testCompile group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
-        testCompile group: 'xmlunit', name: 'xmlunit', version: '1.0'
+        testImplementation group: 'junit', name: 'junit', version: '4.8.2'
+        testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
+        testImplementation group: 'xmlunit', name: 'xmlunit', version: '1.0'
         mergeModel group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
     }
 
@@ -246,7 +246,8 @@ subprojects {
         }
     }
 
-    tasks.compileTestJava.dependsOn 'copyMineProperties', 'buildUnitTestDB'
+    // lifecycle: the tests need the (empty) test database and intermine.properties in the resources output
+    tasks.named('test') { dependsOn 'copyMineProperties', 'buildUnitTestDB' }
 }
 
 task testReport(type: TestReport) {

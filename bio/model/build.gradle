@@ -4,7 +4,7 @@ buildscript {
             // define in ~/.gradle/gradle.properties
             // intermine.plugin.repo=file:///your/intermine/repo/plugin/build/libs
             url project.getProperty("intermine.plugin.repo")
-            layout "pattern", {
+            patternLayout {
                 artifact  "[artifact]-[revision].[ext]"
             }
             metadataSources {
@@ -46,12 +46,14 @@ processResources {
 }
 
 dependencies {
-    compile group: "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
-    compile group: "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
-    compile fileTree(dir: 'libs', include: '*.jar')
-    compile 'commons-lang:commons-lang:2.6'
-    compile group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
-    compile group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
+    // the generated model classes extend and use the types of these two
+    api group: "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
+    api group: "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
+    // obo and bbop: on the classpath of the Ant tasks that read the SO model (not part of the API)
+    implementation fileTree(dir: 'libs', include: '*.jar')
+    api 'commons-lang:commons-lang:2.6'
+    api group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
+    implementation group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36' // logging binding (runtime scope in the POM)
 }
 
 dbModelConfig {
@@ -60,21 +62,24 @@ dbModelConfig {
     defaultInterminePropertiesFile = "default.intermine.bio-test.properties"
 }
 
+// The test mine's intermine.properties goes into the resources output through processResources (the plugin's
+// tasks read it from there by the task name).
 task copyMineProperties(type: Copy) {
     from "${System.env.HOME}/.intermine/intermine-bio-test.properties"
-    into sourceSets.main.output.resourcesDir
+    into layout.buildDirectory.dir('im/mine-properties')
     rename { fileName -> fileName.replace('intermine-bio-test.properties', 'intermine.properties') }
+}
+
+processResources {
+    from copyMineProperties
 }
 
 // Gradle 6 forbids replacing a task the plugin has already created (overwrite: true); genomic_model.xml
 // now comes from processResources above.
-tasks.getByName('copyGenomicModel') { enabled = false }
+tasks.named('copyGenomicModel') { enabled = false }
 
 // lifecycle: buildDB needs the (empty) test databases to exist; no file output to wire.
-tasks.buildDB.dependsOn ':bio-testresources:createUnitTestDatabases'
-// mergeModels reads and rewrites genomic_model.xml in the processResources output.
-tasks.mergeModels.inputs.files(processResources)
-// kept: both tasks write intermine.properties / default.intermine.properties into the resources dir
-// that the jar packs, and copyDefaultInterMineProperties (plugin) declares no outputs. They are
-// folded into processResources in Gradle Step 2a.
-tasks.mergeModels.dependsOn 'copyMineProperties', 'copyDefaultInterMineProperties'
+tasks.named('buildDB') { dependsOn ':bio-testresources:createUnitTestDatabases' }
+// kept: copyDefaultInterMineProperties (plugin) writes default.intermine.properties into the resources dir
+// that the jar packs and declares no outputs, so there is nothing to wire as an input.
+tasks.named('mergeModels') { dependsOn 'copyDefaultInterMineProperties' }
