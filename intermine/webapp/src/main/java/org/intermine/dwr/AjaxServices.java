@@ -38,8 +38,8 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.collections.keyvalue.MultiKey;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.queryParser.ParseException;
 import org.apache.struts.Globals;
@@ -355,7 +355,7 @@ public class AjaxServices
             if (bag == null) {
                 throw new InterMineException("List \"" + bagName + "\" not found.");
             }
-            bag.setDescription(StringEscapeUtils.escapeHtml(description));
+            bag.setDescription(StringEscapeUtils.escapeHtml4(description));
             return description;
         } catch (RuntimeException e) {
             processException(e);

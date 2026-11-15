@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.intermine.util.XmlUtil;
 import org.intermine.webservice.server.StatusDictionary;
 
 /**
@@ -116,7 +116,7 @@ public class XMLFormatter extends Formatter
      * @return The escaped representation.
      */
     protected String escapeAttribute(Object attr) {
-        return StringEscapeUtils.escapeXml(String.valueOf(attr));
+        return XmlUtil.escapeXml(String.valueOf(attr));
     }
 
     /** {@inheritDoc}} **/
@@ -153,7 +153,7 @@ public class XMLFormatter extends Formatter
      * @return The escaped representation.
      */
     protected String escapeElementContent(String contents) {
-        return StringEscapeUtils.escapeXml(contents);
+        return XmlUtil.escapeXml(contents);
     }
 
     @Override

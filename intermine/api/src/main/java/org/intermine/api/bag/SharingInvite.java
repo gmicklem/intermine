@@ -17,9 +17,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.intermine.api.InterMineAPI;
 import org.intermine.api.profile.InterMineBag;
 import org.intermine.api.profile.Profile;
@@ -537,7 +537,7 @@ public class SharingInvite
 
     @Override
     public int hashCode() {
-        return ObjectUtils.hashCode(token);
+        return Objects.hashCode(token);
     }
 
     @Override

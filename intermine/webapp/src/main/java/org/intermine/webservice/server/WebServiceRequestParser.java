@@ -18,7 +18,7 @@ import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.intermine.util.PropertiesUtil;
 import org.intermine.metadata.StringUtil;
 import org.intermine.web.context.InterMineContext;

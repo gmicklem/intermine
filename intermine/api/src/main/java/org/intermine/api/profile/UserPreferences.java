@@ -17,11 +17,11 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.intermine.util.PropertiesUtil;
 
 /**
@@ -121,7 +121,7 @@ public class UserPreferences extends AbstractMap<String, String>
     public String put(String key, String value) {
         // note: when (if) InterMine moves to java 7+, this can be
         // replaced with a call to java.util.Objects::equals(Object, Object)
-        if (ObjectUtils.equals(value, backingMap.get(key))) {
+        if (Objects.equals(value, backingMap.get(key))) {
             return value; // Nothing to do here...
         }
         synchronized (manager) {

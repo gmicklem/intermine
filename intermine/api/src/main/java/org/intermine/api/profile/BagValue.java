@@ -10,8 +10,8 @@ package org.intermine.api.profile;
  *
  */
 
-import static org.apache.commons.lang.StringUtils.isBlank;
-import static org.apache.commons.lang.StringEscapeUtils.escapeXml;;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.intermine.util.XmlUtil.escapeXml;
 
 /**
  * A class representing a value stored in an InterMineBag.
@@ -76,7 +76,8 @@ public final class BagValue
 
     @Override
     public String toString() {
-        return "<bagValue value=\"" + escapeXml(value) + "\" extra=\"" + escapeXml(extra) + "\"/>";
+        return "<bagValue value=\"" + escapeXml(value) + "\" extra=\"" + escapeXml(extra)
+            + "\"/>";
     }
 
 }

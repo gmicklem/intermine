@@ -31,7 +31,7 @@ tasks.test.dependsOn(':intermine-testresources:buildDB')
 
 dependencies {
     api project(':intermine-model')
-    api libs.commons.lang
+    api libs.commons.lang3
     // org.json is used in PathQueryBinding, JSONQueryHandler and TemplateQueryBinding (JSONException is in public
     // signatures); it used to arrive through jsonassert's org.json 20090211
     api libs.json

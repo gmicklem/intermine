@@ -14,7 +14,7 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.intermine.api.InterMineAPI;
 import org.intermine.api.profile.Profile;
@@ -67,7 +67,7 @@ public abstract class ReportDisplayer
             // failed to display so put an error message in place instead
             LOG.error("Error rendering report displayer " + getClass() + " for "
                     + reportObject.getType() + "(" + reportObject.getId() + "): "
-                    + ExceptionUtils.getFullStackTrace(e));
+                    + ExceptionUtils.getStackTrace(e));
             request.setAttribute("displayerName", getClass().getSimpleName());
             request.setAttribute("jspPage", "reportDisplayerError.jsp");
 

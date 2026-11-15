@@ -50,7 +50,6 @@ dependencies {
     runtimeOnly libs.commons.beanutils
     runtimeOnly libs.commons.io
     runtimeOnly libs.commons.collections
-    runtimeOnly libs.commons.lang
     runtimeOnly libs.taglibs.string
     runtimeOnly libs.jaxb.api
     runtimeOnly libs.json

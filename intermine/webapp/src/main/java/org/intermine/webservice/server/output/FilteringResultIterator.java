@@ -14,10 +14,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 import org.apache.log4j.Logger;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.intermine.api.results.ResultElement;
 import org.intermine.objectstore.query.Results;
 
@@ -59,7 +59,7 @@ public class FilteringResultIterator implements Iterator<List<ResultElement>>
         this(res);
         this.start = start;
         this.end = start + size;
-        this.filterTerm = ObjectUtils.toString(filterTerm).toLowerCase();
+        this.filterTerm = Objects.toString(filterTerm, "").toLowerCase();
         logger.debug(
                 "START: " + start
                 + ", END: " + (start + size)
@@ -123,7 +123,7 @@ public class FilteringResultIterator implements Iterator<List<ResultElement>>
             } else {
                 boolean contained = false;
                 for (Object o: l) {
-                    String n = ObjectUtils.toString(o).toLowerCase();
+                    String n = Objects.toString(o, "").toLowerCase();
                     if (StringUtils.contains(n, filterTerm)) {
                         contained = true;
                     }

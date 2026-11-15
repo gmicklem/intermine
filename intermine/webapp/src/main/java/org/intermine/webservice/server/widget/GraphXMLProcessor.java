@@ -14,7 +14,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.intermine.util.XmlUtil;
+
 
 /**
  * A processor for returning results from graph widgets in XML.
@@ -51,7 +52,7 @@ public class GraphXMLProcessor implements WidgetResultProcessor
             }
         } else {
             sb.append("<" + name + ">");
-            sb.append(StringEscapeUtils.escapeXml(contents.toString()));
+            sb.append(XmlUtil.escapeXml(contents.toString()));
             sb.append("</" + name + ">");
         }
         return sb.toString();

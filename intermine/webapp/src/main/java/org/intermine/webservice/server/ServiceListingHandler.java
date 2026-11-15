@@ -21,7 +21,7 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.intermine.web.context.InterMineContext;
 import org.json.JSONObject;
 import org.xml.sax.Attributes;
@@ -220,7 +220,7 @@ public class ServiceListingHandler extends DefaultHandler
             currentEndPoint = null;
         } else if ("url-pattern".equals(qName)) {
             if (currentEndPoint != null) {
-                currentEndPoint.put("URI", StringUtils.chomp(content, "/*"));
+                currentEndPoint.put("URI", StringUtils.removeEnd(content, "/*"));
             }
         } else if ("content".equals(qName)) {
             if (currentContentType != null) {
