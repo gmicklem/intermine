@@ -95,7 +95,10 @@ subprojects {
         implementation group : "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion") // log4j
         implementation libs.commons.collections
         implementation libs.commons.io
-        implementation libs.commons.lang
+        implementation libs.commons.lang3
+        // commons-lang 2.6: run time only, for the bundled torque jars of intermine-objectstore (they extend
+        // lang.enum.Enum and use lang.exception.NestableException); this build does not take objectstore's own dependencies
+        runtimeOnly libs.commons.lang
         implementation libs.commons.logging
         implementation group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
         implementation group: "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
