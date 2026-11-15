@@ -5,6 +5,8 @@ import org.gradle.api.Project
 import org.gradle.api.tasks.SourceSetContainer
 
 class MineDBModelPlugin implements Plugin<Project> {
+    /** Plugin-internal configuration holding this plugin's own jar (for MergeSourceModelsTask). */
+    static final String IM_PLUGIN = "imPlugin"
 
     void apply(Project project) {
         String projectXmlFilePath = project.getParent().getProjectDir().getAbsolutePath() + File.separator + "project.xml"
@@ -21,13 +23,13 @@ class MineDBModelPlugin implements Plugin<Project> {
                 String buildResourcesMainDir = sourceSets.getByName("main").getOutput().resourcesDir;
                 def ant = new AntBuilder()
                 //added this dependecy otherwise ant doesn't find MergeSourceModelsTask at runtime
-                project.dependencies.add("plugin", [group: "org.intermine", name: "plugin", version: System.getProperty("imVersion")])
+                project.dependencies.add(IM_PLUGIN, [group: "org.intermine", name: "plugin", version: System.getProperty("imVersion")])
                 String modelFilePath = buildResourcesMainDir + File.separator + config.modelName + "_model.xml"
                 ant.taskdef(name: "mergeSourceModels", classname: "org.intermine.plugin.ant.MergeSourceModelsTask") {
                     classpath {
-                        pathelement(path: project.configurations.getByName("plugin").asPath)
+                        pathelement(path: project.configurations.getByName(IM_PLUGIN).asPath)
                         pathelement(path: project.configurations.getByName("mergeSource").asPath)
-                        pathelement(path: project.configurations.getByName("compile").asPath)
+                        pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         dirset(dir: project.getBuildDir().getAbsolutePath())
                     }
                 }

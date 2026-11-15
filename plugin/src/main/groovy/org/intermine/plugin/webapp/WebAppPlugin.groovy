@@ -111,7 +111,7 @@ class WebAppPlugin implements Plugin<Project> {
                     ant.taskdef(name: "summarizeObjectStore", classname: "org.intermine.task.SummariseObjectStoreTask") {
                         classpath {
                             dirset(dir: project.getBuildDir().getAbsolutePath())
-                            pathelement(path: project.configurations.getByName("compile").asPath)
+                            pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
                     }
                     ant.summarizeObjectStore(alias: config.objectStoreName, configFileName: "objectstoresummary.config.properties",
@@ -156,7 +156,7 @@ class WebAppPlugin implements Plugin<Project> {
                 ant.taskdef(name: "loadTemplates", classname: "org.intermine.web.task.LoadDefaultTemplatesTask") {
                     classpath {
                         dirset(dir: project.getBuildDir().getAbsolutePath())
-                        pathelement(path: project.configurations.getByName("compile").asPath)
+                        pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
                 ant.loadTemplates(osAlias: config.userProfileObjectStoreName, userProfileAlias: config.userProfileObjectStoreWriterName,
@@ -166,7 +166,7 @@ class WebAppPlugin implements Plugin<Project> {
             }
         }
 
-        project.task('dropPrecomputedTables') {
+        project.tasks.register('dropPrecomputedTables') {
             group TaskConstants.TASK_GROUP
             description "Drops all precomputed tables from the database"
             dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'jar'
@@ -179,14 +179,14 @@ class WebAppPlugin implements Plugin<Project> {
                 ant.taskdef(name: "dropPrecomputedTables", classname: "org.intermine.task.DropPrecomputedTablesTask") {
                     classpath {
                         dirset(dir: project.getBuildDir().getAbsolutePath())
-                        pathelement(path: project.configurations.getByName("compile").asPath)
+                        pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
                 ant.dropPrecomputedTables(alias: config.objectStoreName)
             }
         }
 
-        project.task('precomputeQueries') {
+        project.tasks.register('precomputeQueries') {
             group TaskConstants.TASK_GROUP
             description "Creates temporary tables to make querying faster -- uses 'genomic_precompute.properties'"
             dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'jar'
@@ -199,7 +199,7 @@ class WebAppPlugin implements Plugin<Project> {
                 ant.taskdef(name: "precomputeQueries", classname: "org.intermine.task.PrecomputeTask") {
                     classpath {
                         dirset(dir: project.getBuildDir().getAbsolutePath())
-                        pathelement(path: project.configurations.getByName("compile").asPath)
+                        pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
                 ant.precomputeQueries(objectStoreAlias: config.objectStoreName, minRows:0,
@@ -207,7 +207,7 @@ class WebAppPlugin implements Plugin<Project> {
             }
         }
 
-        project.task('precomputeTemplates') {
+        project.tasks.register('precomputeTemplates') {
             group TaskConstants.TASK_GROUP
             description "Creates temporary tables to make querying faster -- uses the results of your template queries"
             dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'jar'
@@ -224,7 +224,7 @@ class WebAppPlugin implements Plugin<Project> {
                 ant.taskdef(name: "precomputeTemplates", classname: "org.intermine.web.task.PrecomputeTemplatesTask") {
                     classpath {
                         dirset(dir: project.getBuildDir().getAbsolutePath())
-                        pathelement(path: project.configurations.getByName("compile").asPath)
+                        pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
                 ant.precomputeTemplates(alias: config.objectStoreName,

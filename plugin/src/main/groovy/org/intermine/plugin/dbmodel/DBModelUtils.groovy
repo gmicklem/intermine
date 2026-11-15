@@ -1,6 +1,7 @@
 package org.intermine.plugin.dbmodel
 
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.file.FileTree
@@ -8,8 +9,21 @@ import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.util.PatternSet
 
 class DBModelUtils {
+    /** Plugin-internal configuration holding the intermine-api jar (userprofile model and keys). */
+    static final String IM_API_JAR = "imApiJar"
+
     Project project
     String buildResourcesMainDir
+
+    /**
+     * Classpath for the InterMine Ant tasks the plugin runs: the project's runtime classpath.
+     * It replaces the old `compile` configuration, which Gradle 6 deprecates for resolution and
+     * Gradle 7 removes. runtimeClasspath exists in Gradle 4.9 too and is a superset of `compile`
+     * (it also holds runtime-only dependencies and, for war projects, providedCompile).
+     */
+    static Configuration antClasspath(Project project) {
+        project.configurations.getByName("runtimeClasspath")
+    }
 
     DBModelUtils(Project project) {
         this.project = project
@@ -48,7 +62,7 @@ class DBModelUtils {
         ant.taskdef(name: "modelOutputTask", classname: "org.intermine.task.ModelOutputTask") {
             classpath {
                 dirset(dir: project.getBuildDir().getAbsolutePath())
-                pathelement(path: project.configurations.getByName("compile").asPath)
+                pathelement(path: DBModelUtils.antClasspath(project).asPath)
                 pathelement(path: project.configurations.getByName("bioModel").asPath)
             }
         }
@@ -64,9 +78,9 @@ class DBModelUtils {
         ant.taskdef(name: "torque", classname: "org.intermine.objectstore.intermine.TorqueModelOutputTask") {
             classpath {
                 dirset(dir: project.getBuildDir().getAbsolutePath())
-                pathelement(path: project.configurations.getByName("compile").asPath)
+                pathelement(path: DBModelUtils.antClasspath(project).asPath)
                 pathelement(path: project.configurations.getByName("bioModel").asPath)
-                pathelement(path: project.configurations.getByName("api").asPath) //userprofile classes
+                pathelement(path: project.configurations.getByName(IM_API_JAR).asPath) //userprofile classes
             }
         }
         ant.torque(osname: objectStoreName, destFile: destination)
@@ -82,7 +96,7 @@ class DBModelUtils {
             classpath {
                 dirset(dir: buildResourcesMainDir)//to read default.intermine.properties
                 pathelement(path: project.buildDir.getAbsolutePath())//to read the schema
-                pathelement(path: project.configurations.getByName("compile").asPath)
+                pathelement(path: DBModelUtils.antClasspath(project).asPath)
             }
         }
         ant.buildDB(osname: objectStoreName, model: modelName, schemafile: schemaFile, tempDir: tempDirectory)
@@ -95,8 +109,8 @@ class DBModelUtils {
         ant.taskdef(name: 'insertModel', classname: 'org.intermine.task.StoreMetadataTask') {
             classpath {
                 dirset(dir: buildResourcesMainDir) // intermine.properties
-                pathelement(path: project.configurations.getByName("compile").asPath)
-                pathelement(path: project.configurations.getByName("api").asPath) //userprofile_keyDefs.properties
+                pathelement(path: DBModelUtils.antClasspath(project).asPath)
+                pathelement(path: project.configurations.getByName(IM_API_JAR).asPath) //userprofile_keyDefs.properties
             }
         }
         ant.insertModel(osname: objectStoreName, modelName: modelName)
@@ -109,7 +123,7 @@ class DBModelUtils {
         ant.taskdef(name: 'analyse', classname: 'org.intermine.task.AnalyseDbTask') {
             classpath {
                 dirset(dir: buildResourcesMainDir) // intermine.properties
-                pathelement(path: project.configurations.getByName("compile").asPath)
+                pathelement(path: DBModelUtils.antClasspath(project).asPath)
             }
         }
         ant.analyse(osname: objectStoreName, model: modelName)
@@ -123,7 +137,7 @@ class DBModelUtils {
             classpath {
                 dirset(dir: buildResourcesMainDir) // intermine.properties
                 dirset(dir: project.getBuildDir().getAbsolutePath())
-                pathelement(path: project.configurations.getByName("compile").asPath)
+                pathelement(path: DBModelUtils.antClasspath(project).asPath)
             }
         }
         ant.createIndexes(alias: objectStoreName, attributeIndexes: attributeIndexes)
