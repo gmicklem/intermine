@@ -2,150 +2,121 @@ package org.intermine.plugin.dbmodel
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.UnknownConfigurationException
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.DependencySet
 import org.gradle.api.file.FileTree
-import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.tasks.util.PatternSet
 import org.intermine.plugin.TaskConstants
 import org.intermine.plugin.project.ProjectXmlBinding
 import org.intermine.plugin.project.Source
-import org.intermine.plugin.webapp.WebAppPlugin
 
+/**
+ * Model and database tasks shared by every project that holds an InterMine data model.
+ *
+ * Tasks are registered lazily and wired through their inputs. There are no init tasks: the
+ * dbModelConfig extension and the configurations are created when the plugin is applied, and the
+ * dependencies the plugin needs are added when the configuration is resolved (withDependencies),
+ * so they still see a version set in gradle.properties or a project.xml edited before the build.
+ */
 class DBModelPlugin implements Plugin<Project> {
     /** Plugin-internal configuration holding antlr-complete for runIQLQuery. */
     static final String IM_ANTLR = "imAntlr"
 
     DBModelConfig config
     DBModelUtils dbUtils
-    WebAppPlugin webAppPlugin
-    String buildResourcesMainDir
-    boolean regenerateModel = true
-    boolean generateKeys = true
 
     void apply(Project project) {
+        project.pluginManager.apply(JavaPlugin)
+        config = project.extensions.create('dbModelConfig', DBModelConfig)
+        dbUtils = new DBModelUtils(project)
 
-        project.configurations {
-            bioModel
-            bioModelForSOOnly
-            commonResources
-            mergeSource
+        // Resolvable only: nothing should consume them. imApiJar and imAntlr used to be called api
+        // and antlr, which clash with the java-library and antlr plugins (Gradle 7's antlr plugin
+        // applies java-library).
+        ['bioModel', 'bioModelForSOOnly', 'commonResources', 'mergeSource', DBModelUtils.IM_API_JAR,
+         IM_ANTLR].each { name ->
+            project.configurations.maybeCreate(name).canBeConsumed = false
         }
-        // Plugin-internal configurations. They used to be called api, plugin and antlr, which clash
-        // with the configurations of the java-library and antlr plugins (Gradle 7's antlr plugin
-        // applies java-library). Resolvable only; nothing should consume them.
-        [DBModelUtils.IM_API_JAR, MineDBModelPlugin.IM_PLUGIN, IM_ANTLR].each { name ->
-            project.configurations.create(name) { canBeConsumed = false }
+        addDependency(project, 'commonResources') {
+            [group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")]
         }
-
-        project.task('initConfig') {
-            config = project.extensions.create('dbModelConfig', DBModelConfig)
-
-            doLast {
-                project.dependencies.add("commonResources", [group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")])
-                project.dependencies.add(DBModelUtils.IM_API_JAR, [group: "org.intermine", name: "intermine-api", version: System.getProperty("imVersion"), transitive: false])
-
-                dbUtils = new DBModelUtils(project)
-                SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
-                buildResourcesMainDir = sourceSets.getByName("main").getOutput().resourcesDir
-                if (new File(project.getBuildDir().getAbsolutePath() + File.separator + "gen").exists()) {
-                    // don't generate the model if it's already there
-                    regenerateModel = false
+        addDependency(project, DBModelUtils.IM_API_JAR) {
+            [group: "org.intermine", name: "intermine-api", version: System.getProperty("imVersion"), transitive: false]
+        }
+        // we need bio-model for the SO files. It may be on the classpath already but we can't be sure.
+        addDependency(project, 'bioModelForSOOnly') {
+            [group: "org.intermine", name: "bio-model", version: System.getProperty("bioVersion"), transitive: false]
+        }
+        addDependency(project, IM_ANTLR) {
+            [group: "org.antlr", name: "antlr-complete", version: "3.5.2", transitive: false]
+        }
+        // The bio-source jars of every source in the mine's project.xml (this replaces the old
+        // addSourceDependencies task). Read when mergeSource is resolved, by generateKeys and mergeModels.
+        project.configurations.getByName('mergeSource').withDependencies { DependencySet deps ->
+            File projectXmlFile = projectXml(project)
+            if (!projectXmlFile.exists()) {
+                return
+            }
+            def parser = new XmlParser()
+            parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false)
+            def projectXml = parser.parse(projectXmlFile)
+            projectXml.sources.source.each { source ->
+                String version = System.getProperty("bioVersion")
+                if (source.'@version' != null) {
+                    version = source.'@version'
                 }
-                if (!(new File(project.getParent().getProjectDir().getAbsolutePath() + File.separator + "project.xml").exists())) {
-                    generateKeys = false
+                if (source.@type == "intermine-items-xml-file") {
+                    deps.add(dbUtils.bioSourceDependency(source.'@name', version))
                 }
+                deps.add(dbUtils.bioSourceDependency(source.'@type', version))
             }
         }
 
-        project.task('addSourceDependencies') {
-            description "Add associated datasource dependencies"
-            //FIXME: I'm sure this bit is important, but it currently blocks getting my (justincc) biotestmine working
-            onlyIf {generateKeys} // && !new File(project.getBuildDir().getAbsolutePath() + File.separator + "gen").exists()}
+        // The model tasks write into build/resources/main, which processResources also writes:
+        // they must run after it so that processResources does not overwrite their files. That is
+        // ordering only; processResources is scheduled by whatever reads the files. These tasks do
+        // not declare outputs: their files share processResources' directory, and the model file
+        // is merged in place by mergeModels. They are cheap, and the model tasks are skipped once
+        // build/gen exists. Consumers name the file they read (DBModelUtils.resource), which
+        // schedules the producer.
+        String afterResources = 'processResources'
 
-            doLast {
-                String projectXmlFilePath = project.getParent().getProjectDir().getAbsolutePath() + File.separator + "project.xml"
-                def parser = new XmlParser()
-                parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false)
-                def projectXml = parser.parse(projectXmlFilePath)
-                projectXml.sources.source.each { source ->
-                   String version = System.getProperty("bioVersion")
-                    if (source.'@version' != null) {
-                        version = source.'@version'
-                    }
-                    if (source.@type == "intermine-items-xml-file") {
-                        dbUtils.addBioSourceDependency(source.'@name', version)
-                    }
-                    dbUtils.addBioSourceDependency(source.'@type', version)
-                }
-            }
-        }
-
-        project.task('copyDefaultInterMineProperties') {
+        project.tasks.register('copyDefaultInterMineProperties') {
             description "Copies default.intermine.integrate.properties file into resources output"
-            dependsOn 'initConfig', 'processResources'
+            mustRunAfter afterResources
             doLast {
                 dbUtils.copyDefaultPropertiesFile(config.defaultInterminePropertiesFile)
             }
         }
 
-        project.task('copyGenomicModel') {
-            dependsOn 'initConfig', 'processResources'
-            onlyIf {regenerateModel}
-
+        project.tasks.register('copyGenomicModel') {
+            mustRunAfter afterResources
+            onlyIf { regenerateModel(project) }
             doLast {
-                FileTree fileTree
-                String genomicModelName = "genomic_model.xml"
-
-                try {
-                    project.configurations.getByName("testModel")
-                    fileTree = project.zipTree(project.configurations.getByName("testModel").singleFile)
-                } catch (UnknownConfigurationException ex) {
-                    fileTree = project.zipTree(project.configurations.getByName("bioModel").singleFile)
-                }
-                PatternSet patternSet = new PatternSet()
-                patternSet.include(genomicModelName)
-                File coreXml = fileTree.matching(patternSet).singleFile
-                String modelFilePath = buildResourcesMainDir + File.separator + config.modelName + "_model.xml"
-
-                coreXml.createNewFile()
-                coreXml.renameTo(modelFilePath)
+                DBModelUtils.copyFromArchive(project, modelArchive(project).singleFile, "genomic_model.xml",
+                        dbUtils.buildResourcesMainDir + File.separator + config.modelName + "_model.xml")
             }
         }
 
-        project.task('copyGenomicKeys') {
+        project.tasks.register('copyGenomicKeys') {
             description "Copies default keys for bio in the case of unit tests."
-            dependsOn 'initConfig', 'processResources'
-
+            mustRunAfter afterResources
             doLast {
-                FileTree fileTree
-                String genomicModelName = "genomic_keyDefs.properties"
-
-                try {
-                    project.configurations.getByName("testModel")
-                    fileTree = project.zipTree(project.configurations.getByName("testModel").singleFile)
-                } catch (UnknownConfigurationException ex) {
-                    fileTree = project.zipTree(project.configurations.getByName("bioModel").singleFile)
-                }
-                PatternSet patternSet = new PatternSet()
-                patternSet.include(genomicModelName)
-                File propertiesFile = fileTree.matching(patternSet).singleFile
-                String keysFilePath = buildResourcesMainDir + File.separator + config.modelName + "_keyDefs.properties"
-
-                propertiesFile.createNewFile()
-                propertiesFile.renameTo(keysFilePath)
+                DBModelUtils.copyFromArchive(project, modelArchive(project).singleFile, "genomic_keyDefs.properties",
+                        dbUtils.buildResourcesMainDir + File.separator + config.modelName + "_keyDefs.properties")
             }
         }
 
-        project.task('generateKeys') {
+        project.tasks.register('generateKeys') {
             description "Append keys for each source in project.xml to generated genomic_keyDefs.properties file"
-            dependsOn 'initConfig', 'addSourceDependencies', 'processResources'
-            onlyIf {generateKeys}
+            mustRunAfter afterResources
+            onlyIf { projectXml(project).exists() }
 
             doLast {
 
                 // parse project XML for each data source
-                String projectXml = project.getParent().getProjectDir().getAbsolutePath() + File.separator + "project.xml"
-                org.intermine.plugin.project.Project intermineProject = ProjectXmlBinding.unmarshall(new File(projectXml))
+                org.intermine.plugin.project.Project intermineProject = ProjectXmlBinding.unmarshall(projectXml(project))
                 List<String> sourceNames = new ArrayList<String>()
                 intermineProject.sources.keySet().each { sourceName ->
                     sourceNames.add(sourceName)
@@ -215,21 +186,17 @@ class DBModelPlugin implements Plugin<Project> {
                     sourceProperties.load(sourceKeysFile.newDataInputStream())
                     keysProperties.putAll(sourceProperties)
                 }
-                String keysPath = buildResourcesMainDir + File.separator + config.modelName + "_keyDefs.properties"
-                keysProperties.store(new File(keysPath).newWriter(), null)
+                File keysFile = new File(dbUtils.buildResourcesMainDir, config.modelName + "_keyDefs.properties")
+                keysFile.parentFile.mkdirs()
+                keysProperties.store(keysFile.newWriter(), null)
             }
         }
 
-        project.task('createSoModel') {
+        project.tasks.register('createSoModel') {
             description "Reads SO OBO files and writes so_additions.xml"
-            dependsOn 'initConfig', 'processResources'
-            onlyIf {regenerateModel}
+            onlyIf { regenerateModel(project) }
 
             doLast {
-                // we need bio-model for the SO files. It may be on the classpath already
-                // but we can't be sure.
-                project.dependencies.add("bioModelForSOOnly", [group: "org.intermine", name: "bio-model", version: System.getProperty("bioVersion"), transitive: false])
-
                 def ant = new AntBuilder()
                 //when we execute bio-model build, bio-core might be not installed yet
                 if (project.name.equals("bio-model")) {
@@ -251,22 +218,28 @@ class DBModelPlugin implements Plugin<Project> {
             }
         }
 
-        project.task('generateModel') {
+        project.tasks.register('generateModel') {
             description "Merges different source model files into an intermine XML model"
-            dependsOn 'initConfig', 'mergeModels'
-            onlyIf {regenerateModel}
+            onlyIf { regenerateModel(project) }
+            // mergeModels (added by the biocore-, biomodel-, biosource- or mine-dbmodel plugin) leaves
+            // the merged <modelName>_model.xml in build/resources/main; this generates the Java from it.
+            inputs.files(DBModelUtils.resource(project, 'mergeModels') { config.modelName + "_model.xml" })
+            outputs.dir(genDir(project))
 
             doLast {
                 dbUtils.generateModel(config.modelName)
             }
         }
 
-        project.tasks.compileJava.dependsOn project.tasks.generateModel
+        // lifecycle (kept): the generated model sources must exist before compileJava. Mines replace
+        // the source dirs with srcDirs = ['build/gen'], which would drop a srcDir added lazily here.
+        project.tasks.named('compileJava').configure { dependsOn 'generateModel' }
 
-        project.task('buildDB') {
+        project.tasks.register('buildDB') {
             group TaskConstants.TASK_GROUP
             description "Build the database for the webapp"
-            dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'jar', 'generateKeys'
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties() +
+                    ['generateKeys': { config.modelName + "_keyDefs.properties" }])
 
             doLast {
                 dbUtils.createSchema(config.objectStoreName)
@@ -281,9 +254,11 @@ class DBModelPlugin implements Plugin<Project> {
             }
         }
 
-        project.task('buildUnitTestDB') {
+        project.tasks.register('buildUnitTestDB') {
             description "Build the database for the webapp"
-            dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'copyGenomicModel', 'jar', 'copyGenomicKeys'
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties() +
+                    ['copyGenomicModel': { config.modelName + "_model.xml" },
+                     'copyGenomicKeys': { config.modelName + "_keyDefs.properties" }])
 
             doLast {
                 dbUtils.createSchema(config.objectStoreName)
@@ -292,24 +267,21 @@ class DBModelPlugin implements Plugin<Project> {
             }
         }
 
-        project.task('copyUserProfileModel') {
-            dependsOn 'initConfig', 'processResources'
+        project.tasks.register('copyUserProfileModel') {
+            mustRunAfter afterResources
 
             doLast {
-                FileTree fileTree = project.zipTree(project.configurations.getByName(DBModelUtils.IM_API_JAR).singleFile)
-                PatternSet patternSet = new PatternSet()
-                patternSet.include("userprofile_model.xml")
-                File file = fileTree.matching(patternSet).singleFile
-                String modelFilePath = buildResourcesMainDir + File.separator + config.userProfileModelName + "_model.xml"
-                file.createNewFile()
-                file.renameTo(modelFilePath)
+                DBModelUtils.copyFromArchive(project, project.configurations.getByName(DBModelUtils.IM_API_JAR).singleFile,
+                        "userprofile_model.xml",
+                        dbUtils.buildResourcesMainDir + File.separator + config.userProfileModelName + "_model.xml")
             }
         }
 
-        project.task('createUserDB') {
+        project.tasks.register('createUserDB') {
             group TaskConstants.TASK_GROUP
             description "Creates empty tables in the userprofile database."
-            dependsOn 'initConfig', 'copyDefaultInterMineProperties', 'copyMineProperties', 'copyUserProfileModel', 'jar'
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties() +
+                    ['copyUserProfileModel': { config.userProfileModelName + "_model.xml" }])
 
             doFirst {
                 dbUtils.createSchema(config.userProfileObjectStoreName)
@@ -321,20 +293,19 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.register('buildUserDB') {
             group TaskConstants.TASK_GROUP
             description "Creates empty tables in the userprofile database, then loads the superuser and default templates."
+            // lifecycle (kept): an aggregate task with no action of its own.
             dependsOn 'createUserDB', ':webapp:loadDefaultTemplates'
-            // do nothing
         }
 
         project.tasks.register('runAcceptanceTests') {
             group TaskConstants.TASK_GROUP
             description "Run the configured acceptance tests against the production database, uses <MINE_NAME>_acceptance_test.conf"
-            dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'jar'
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
                 def ant = new AntBuilder()
 
-                SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
-                String buildResourcesMainDir = sourceSets.getByName("main").getOutput().resourcesDir
+                String buildResourcesMainDir = dbUtils.buildResourcesMainDir
                 String outputFilePath = buildResourcesMainDir + File.separator + "acceptance_test.html"
                 String acceptanceTestFilePath = buildResourcesMainDir + File.separator + config.mineName + "_acceptance_test.conf"
 
@@ -352,10 +323,9 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.register('runIQLQuery') {
             group TaskConstants.TASK_GROUP
             description "Run an IQL query against the database, e.g. -Pquery=SELECT DISTINCT a2_.primaryIdentifier AS a1_ FROM org.intermine.model.bio.Gene AS a2_"
-            dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'generateModel', 'jar'
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
-                project.dependencies.add(IM_ANTLR, [group: "org.antlr", name: "antlr-complete", version: "3.5.2", transitive: false])
                 def ant = new AntBuilder()
                 if (project.hasProperty('query')) {
                     def query = project.properties['query']
@@ -374,12 +344,11 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.register('generateUpdateTriggers') {
             group TaskConstants.TASK_GROUP
             description "Generates SQL files for manual CRUD operations on InterMine database. THIS IS AN EXPERIMENTAL FEATURE, USE AT YOUR OWN RISK."
-            dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'generateModel', 'jar'
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
                 def ant = new AntBuilder()
-                SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
-                String buildResourcesMainDir = sourceSets.getByName("main").getOutput().resourcesDir
+                String buildResourcesMainDir = dbUtils.buildResourcesMainDir
                 ant.taskdef(name: "generateUpdateTriggers", classname: "org.intermine.task.GenerateUpdateTriggersTask") {
                     classpath {
                         dirset(dir: project.getBuildDir().getAbsolutePath())
@@ -390,5 +359,34 @@ class DBModelPlugin implements Plugin<Project> {
             }
         }
     }
-}
 
+    /** Adds a dependency to a configuration when it is resolved, so that the notation is read late. */
+    static void addDependency(Project project, String configuration, Closure<Map> notation) {
+        project.configurations.getByName(configuration).withDependencies { DependencySet deps ->
+            deps.add(project.dependencies.create(notation.call()))
+        }
+    }
+
+    static File projectXml(Project project) {
+        new File(project.getParent().getProjectDir(), "project.xml")
+    }
+
+    static File genDir(Project project) {
+        new File(project.getBuildDir(), "gen")
+    }
+
+    /**
+     * The model is generated only while build/gen does not exist: deployers run clean to pick up a
+     * model change. Checked when each task runs (it used to be read once, by initConfig), so that
+     * `clean build` in one invocation still regenerates.
+     */
+    static boolean regenerateModel(Project project) {
+        !genDir(project).exists()
+    }
+
+    /** The archive genomic_model.xml and genomic_keyDefs.properties come from. */
+    static Configuration modelArchive(Project project) {
+        // testModel is not defined by any known build; kept for builds that define it.
+        project.configurations.findByName("testModel") ?: project.configurations.getByName("bioModel")
+    }
+}

@@ -2,8 +2,9 @@ package org.intermine.plugin.webapp
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.plugins.JavaPlugin
 import org.intermine.plugin.TaskConstants
+import org.intermine.plugin.dbmodel.DBModelPlugin
 import org.intermine.plugin.dbmodel.DBModelUtils
 
 import java.nio.file.Files
@@ -14,51 +15,58 @@ class WebAppPlugin implements Plugin<Project> {
     DBModelUtils dbUtils
 
     void apply(Project project) {
-        project.configurations {
-            commonResources
-            bioWebApp
+        project.pluginManager.apply(JavaPlugin)
+        config = project.extensions.create('webappConfig', WebAppConfig)
+        dbUtils = new DBModelUtils(project)
+
+        // Resolvable only (see DBModelPlugin); the dependencies are added when they are resolved.
+        ['commonResources', 'bioWebApp'].each { name ->
+            project.configurations.maybeCreate(name).canBeConsumed = false
+        }
+        DBModelPlugin.addDependency(project, 'commonResources') {
+            [group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")]
+        }
+        DBModelPlugin.addDependency(project, 'bioWebApp') {
+            [group: "org.intermine", name: "bio-webapp", version: System.getProperty("bioVersion"), transitive: false, ext: "war"]
         }
 
-        project.task('initConfig') {
-            config = project.extensions.create('webappConfig', WebAppConfig)
-            dbUtils = new DBModelUtils(project)
-
-            doLast {
-                project.dependencies.add("commonResources", [group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")])
-                project.dependencies.add("bioWebApp", [group: "org.intermine", name: "bio-webapp", version: System.getProperty("bioVersion"), transitive: false, ext: "war"])
-            }
-        }
-
-        project.task('copyDefaultInterMineProperties') {
+        project.tasks.register('copyDefaultInterMineProperties') {
             description "Copies default.intermine.properties file into resources output"
-            dependsOn 'initConfig', 'processResources'
+            // ordering only: it writes into processResources' output directory.
+            mustRunAfter 'processResources'
 
             doLast {
                 dbUtils.copyDefaultPropertiesFile(config.defaultInterminePropertiesFile)
             }
         }
 
-        project.task('mergeProperties') {
+        project.tasks.register('mergeProperties') {
             description "Append intermine.properties to web.properties file"
-            dependsOn 'initConfig', 'copyMineProperties'
+            String webPropertiesPath = project.projectDir.absolutePath + File.separator + "src" + File.separator + "main" +
+                    File.separator + "webapp" + File.separator + "WEB-INF" + File.separator + "web.properties"
+            inputs.files(webPropertiesPath)
+            inputs.files(DBModelUtils.resource(project, 'copyMineProperties') { "intermine.properties" })
+            outputs.file({ config.propsDir + File.separator + "web.properties" })
 
             doLast {
-                String webappDirPath = project.projectDir.absolutePath  + File.separator +  "src" + File.separator + "main" + File.separator + "webapp"
-                String webPropertiesPath = webappDirPath + File.separator + "WEB-INF" + File.separator + "web.properties"
                 if (!(new File(config.propsDir)).exists()) {
                     new File(config.propsDir).mkdir()
                 }
                 String webPropertiesBuiltPath = config.propsDir + File.separator + "web.properties"
                 File webPropertiesBuilt = new File(webPropertiesBuiltPath)
                 Files.copy((new File(webPropertiesPath)).toPath(), webPropertiesBuilt.toPath(), StandardCopyOption.REPLACE_EXISTING)
-                String interMinePropertiesPath = project.buildDir.absolutePath + File.separator + "resources" + File.separator + "main" + File.separator + "intermine.properties"
+                String interMinePropertiesPath = DBModelUtils.resourcesDir(project) + File.separator + "intermine.properties"
                 webPropertiesBuilt.append( (new File(interMinePropertiesPath)).getText())
             }
         }
 
-        project.task('addStrutsConfig') {
+        project.tasks.register('addStrutsConfig') {
             description "Append the struts config modifications to the webapp"
-            dependsOn 'processResources','unwarBioWebApp'
+            // Edits, in place, the files unwarBioWebApp unpacks, so it must run right after it every
+            // time (neither declares outputs). The struts and tiles fragments come from the resources.
+            // A single Sync task with filters should replace the pair once the plugin composes the war.
+            inputs.files(DBModelUtils.processedResources(project))
+            inputs.files(project.files({ explodedWebApp(project) }).builtBy('unwarBioWebApp'))
 
             doLast {
                 String buildResDir = project.buildDir.absolutePath + File.separator + "resources" + File.separator + "main" + File.separator
@@ -101,9 +109,9 @@ class WebAppPlugin implements Plugin<Project> {
 
         // this plugin requires a database to exist and be populated. However this plugin is run at compile time, not runtime.
         // We have no guarantee there will be a database. Hence the try/catch
-        project.task('summariseObjectStore') {
+        project.tasks.register('summariseObjectStore') {
             description "Summarise ObjectStore into objectstoresummary.properties file"
-            dependsOn 'initConfig', 'copyDefaultInterMineProperties', 'copyMineProperties'
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
                 try {
@@ -122,31 +130,30 @@ class WebAppPlugin implements Plugin<Project> {
             }
         }
 
-        project.task('unwarBioWebApp') {
+        project.tasks.register('unwarBioWebApp') {
             description "Unwar bio-webapp under the build/explodedWebAppDir directory"
-            dependsOn 'initConfig'
 
             doLast {
                 String bioWebAppWar = project.configurations.getByName("bioWebApp").singleFile.absolutePath;
-                String destination = project.buildDir.absolutePath + File.separator + "explodedWebApp"
+                String destination = explodedWebApp(project).absolutePath
                 def ant = new AntBuilder()
                 ant.unzip(src: bioWebAppWar, dest: destination, overwrite: "true" )
             }
         }
 
-        project.task('loadDefaultTemplates') {
+        project.tasks.register('loadDefaultTemplates') {
             group TaskConstants.TASK_GROUP
             description "Loads default template queries from an XML file into a given user profile"
-            dependsOn 'copyMineProperties', 'copyDefaultInterMineProperties', 'jar', ':dbmodel:createUserDB'
-            mustRunAfter ':dbmodel:createUserDB'
-            //jar dependency has been added in order to generate the dbmodel.jar (in case a clean plugin has been called)
-            //to allow to read class_keys.properties file
+            // the runtime classpath builds the dbmodel jar (in case a clean has been run), which holds
+            // class_keys.properties
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            // lifecycle (kept): the templates go into the userprofile database createUserDB creates.
+            dependsOn ':dbmodel:createUserDB'
 
             doLast {
                 def ant = new AntBuilder()
 
-                SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets");
-                String buildResourcesMainDir = sourceSets.getByName("main").getOutput().resourcesDir;
+                String buildResourcesMainDir = DBModelUtils.resourcesDir(project)
                 Properties intermineProperties = new Properties();
                 intermineProperties.load(new FileInputStream(buildResourcesMainDir + File.separator + "intermine.properties"));
                 String superUser = intermineProperties.getProperty("superuser.account")
@@ -169,10 +176,7 @@ class WebAppPlugin implements Plugin<Project> {
         project.tasks.register('dropPrecomputedTables') {
             group TaskConstants.TASK_GROUP
             description "Drops all precomputed tables from the database"
-            dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'jar'
-
-            SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
-            String buildResourcesMainDir = sourceSets.getByName("main").getOutput().resourcesDir
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
                 def ant = new AntBuilder()
@@ -189,10 +193,7 @@ class WebAppPlugin implements Plugin<Project> {
         project.tasks.register('precomputeQueries') {
             group TaskConstants.TASK_GROUP
             description "Creates temporary tables to make querying faster -- uses 'genomic_precompute.properties'"
-            dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'jar'
-
-            SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
-            String buildResourcesMainDir = sourceSets.getByName("main").getOutput().resourcesDir
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
                 def ant = new AntBuilder()
@@ -210,13 +211,12 @@ class WebAppPlugin implements Plugin<Project> {
         project.tasks.register('precomputeTemplates') {
             group TaskConstants.TASK_GROUP
             description "Creates temporary tables to make querying faster -- uses the results of your template queries"
-            dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'jar'
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
                 def ant = new AntBuilder()
 
-                SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets");
-                String buildResourcesMainDir = sourceSets.getByName("main").getOutput().resourcesDir
+                String buildResourcesMainDir = DBModelUtils.resourcesDir(project)
                 Properties intermineProperties = new Properties()
                 intermineProperties.load(new FileInputStream(buildResourcesMainDir + File.separator + "intermine.properties"));
                 String superUser = intermineProperties.getProperty("superuser.account")
@@ -232,5 +232,9 @@ class WebAppPlugin implements Plugin<Project> {
                         username: superUser)
             }
         }
+    }
+
+    static File explodedWebApp(Project project) {
+        new File(project.buildDir, "explodedWebApp")
     }
 }

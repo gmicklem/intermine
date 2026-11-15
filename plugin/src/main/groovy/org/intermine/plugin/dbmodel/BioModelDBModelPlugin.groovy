@@ -2,21 +2,20 @@ package org.intermine.plugin.dbmodel
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.tasks.SourceSetContainer
 
 class BioModelDBModelPlugin implements Plugin<Project>{
-    boolean regenerateModel = true
 
     @Override
     void apply(Project project) {
-        project.task('mergeModels') {
+        project.tasks.register('mergeModels') {
             description "Merges only genomic_additions.xml and so_additions.xml into an intermine XML model"
-            dependsOn 'initConfig', 'copyGenomicModel'
+            // Merges genomic_additions.xml (from the resources) into genomic_model.xml in place. bio-model
+            // disables copyGenomicModel and gets genomic_model.xml from processResources instead.
+            inputs.files(DBModelUtils.processedResources(project))
+            inputs.files(DBModelUtils.resource(project, 'copyGenomicModel') { "genomic_model.xml" })
 
             doLast {
-                SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets");
-                String buildResourcesMainDir = sourceSets.getByName("main").getOutput().resourcesDir;
-                String inputModelFilePath = buildResourcesMainDir + File.separator + "genomic_model.xml"
+                String inputModelFilePath = DBModelUtils.resourcesDir(project) + File.separator + "genomic_model.xml"
                 def ant = new AntBuilder()
 
                 ant.taskdef(name: "mergeBioCoreModels", classname: "org.intermine.task.ModelMergerTask") {

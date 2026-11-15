@@ -6,9 +6,11 @@ import org.gradle.api.Project
 class BioCoreDBModelPlugin implements Plugin<Project>{
     @Override
     void apply(Project project) {
-        project.task('mergeModels') {
+        DBModelConfig config = project.extensions.getByType(DBModelConfig)
+        project.tasks.register('mergeModels') {
             description "bio-core gets its model from bio-model. Skip this step. MERGE NOTHING!"
-            dependsOn 'initConfig', 'copyGenomicModel'
+            // The model generateModel reads is the one copyGenomicModel copies from bio-model.
+            inputs.files(DBModelUtils.resource(project, 'copyGenomicModel') { config.modelName + "_model.xml" })
             // do nothing
 
             // used by biocore and bio-postprocess. packages that do NOT generate their own
