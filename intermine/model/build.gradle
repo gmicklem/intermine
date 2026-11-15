@@ -26,5 +26,4 @@ dependencies {
     api libs.commons.collections
     api libs.cglib
     api libs.commons.io
-    api libs.jsonassert
 }

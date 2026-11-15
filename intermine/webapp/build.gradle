@@ -68,6 +68,8 @@ dependencies {
     testImplementation libs.objenesis
     testImplementation libs.easymock
     testImplementation libs.xmlunit
+    // only the four JSON formatter tests use it (it used to be a compile dependency of intermine-model)
+    testImplementation libs.jsonassert
     testImplementation libs.javax.servlet.api
 }
 
