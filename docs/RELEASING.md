@@ -132,6 +132,7 @@ Deployer-visible security and packaging fixes in 5.1.1 compared with 5.1.0 (the 
 4. `intermine-webapp` war has one antlr and one javax.inject; `bio-webapp` war has no second Jackson 2.7, commons-lang3 3.4, jcl-over-slf4j 1.7.19 or logback (from ols-client).
 5. The POMs of `intermine-webtasks` and `intermine-jbrowse-endpoint` name `intermine-webapp:classes`, not the 12 MB war, so a mine's war no longer carries `intermine-webapp-<version>.war` in `WEB-INF/lib` (the 5.1.0 POM on Central has this bug; a build against 5.1.0 still needs `classpath = classpath.filter { !it.name.endsWith('.war') }` on the `War` task).
 6. commons-fileupload 1.2.2 to 1.6.0 (clears six advisories; it brings commons-io 2.19.0) and commons-collections 3.2 to 3.2.2 (CVE-2015-6420 and CVE-2015-7501, deserialisation).
+7. JSP EL: list analysis widgets (`widget.jsp`), template pages (`template.jsp`) and My Data lists (`historyBagView.jsp`) no longer use Java keywords as EL property names (`widget.class`, `dec.boolean`, `savedBag.value.class.name`), which Tomcat 8.5.100+ and current 9.0.x reject ("The identifier [class] is not a valid Java identifier as required by section 1.19 of the EL specification"). New EL functions `imf:className` and `imf:simpleClassName` (`WebUtil`, `functions.tld`) replace `.class` access; mines that override these JSPs need the same change.
 
 ## 4. Release 6.0.0 (Gradle 8.14, with the plugin and build upgrade)
 
