@@ -19,7 +19,7 @@ sourceSets {
     }
 }
 
-def explodedWebAppDir = "$buildDir/explodedWebApp"
+def explodedWebAppDir = layout.buildDirectory.dir("explodedWebApp")
 
 configurations {
     imWebApp
@@ -51,7 +51,7 @@ dependencies {
 }
 
 task unwarIMWebApp(type: Copy) {
-    description "Unwar intermine-webapp under the build/explodedWebAppDir directory"
+    description = "Unwar intermine-webapp under the build/explodedWebAppDir directory"
     from { zipTree(configurations.imWebApp.singleFile) }
     into explodedWebAppDir
 }

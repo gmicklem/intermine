@@ -71,9 +71,15 @@ class DBModelUtils {
         project.files({ new File(resourcesDir(project), fileName.call()) }).builtBy(producer)
     }
 
-    /** The resources output directory as processResources leaves it, as a task input. */
+    /**
+     * The resources output directory as the build leaves it, as a task input: processResources and, where the
+     * project has one, the mine's copyMineProperties. Mine build files written for plugin 5.x define
+     * copyMineProperties as a Copy into this same directory, which makes the whole directory its declared output;
+     * Gradle 8 then fails every task that reads the directory without depending on it.
+     */
     static FileCollection processedResources(Project project) {
-        project.files({ resourcesDir(project) }).builtBy('processResources')
+        project.files({ resourcesDir(project) }).builtBy('processResources',
+                { project.tasks.names.contains('copyMineProperties') ? ['copyMineProperties'] : [] })
     }
 
     /**

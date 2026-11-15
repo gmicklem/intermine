@@ -123,15 +123,16 @@ subprojects {
         defaultInterminePropertiesFile = "default.intermine.bio-test.properties"
     }
 
-    task copyMineProperties() {
-        dependsOn 'processResources'
-        doLast {
-            copy {
-                from "${System.env.HOME}/.intermine/intermine-bio-test.properties"
-                into sourceSets.main.output.resourcesDir
-                rename { fileName -> fileName.replace('intermine-bio-test.properties', 'intermine.properties') }
-            }
-        }
+    // The test mine's intermine.properties reaches the resources output through processResources, so every reader of
+    // that directory (jar, the tests, the plugin's tasks, which name copyMineProperties as the producer) sees who wrote it.
+    task copyMineProperties(type: Copy) {
+        from "${System.env.HOME}/.intermine/intermine-bio-test.properties"
+        into layout.buildDirectory.dir('im/mine-properties')
+        rename { fileName -> fileName.replace('intermine-bio-test.properties', 'intermine.properties') }
+    }
+
+    processResources {
+        from copyMineProperties
     }
 
     jar {
@@ -196,8 +197,9 @@ subprojects {
     ext.imPublicationDescription = 'InterMine Post Processes modules'
     apply from: "${rootDir}/../../config/gradle/publishing.gradle"
 
-    // lifecycle: the tests need the (empty) test database and intermine.properties in the resources output
-    tasks.named('test') { dependsOn 'copyMineProperties', 'buildUnitTestDB' }
+    // lifecycle: the tests need the (empty) test database, which has no file output to wire
+    // (intermine.properties comes in through processResources)
+    tasks.named('test') { dependsOn 'buildUnitTestDB' }
 }
 
 task testReport(type: TestReport) {

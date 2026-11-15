@@ -42,7 +42,7 @@ def generateTestModel = tasks.register('generateTestModel') {
     doLast {
         def destination = testModelSourceDir.get().asFile
         // classes of a removed model class must not survive
-        project.delete(destination)
+        destination.deleteDir()   // not project.delete: Task.project at execution time is deprecated in 8.x
         destination.mkdirs()
         generateModel('testmodel', destination.path, 'java')
     }

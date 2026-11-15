@@ -151,17 +151,16 @@ subprojects {
         defaultInterminePropertiesFile = "default.intermine.bio-test.properties"
     }
 
-    // a task of its own (not folded into processResources): the plugin's property-reading tasks
-    // (DBModelUtils.mineProperties) take their inputs from it by name
-    task copyMineProperties() {
-        dependsOn 'processResources'
-	    doLast {
-            copy {
-                from "${System.env.HOME}/.intermine/intermine-bio-test.properties"
-                into sourceSets.main.output.resourcesDir
-                rename { fileName -> fileName.replace('intermine-bio-test.properties', 'intermine.properties') }
-            }
-        }
+    // The test mine's intermine.properties reaches the resources output through processResources, so every reader of
+    // that directory (jar, the tests, the plugin's tasks, which name copyMineProperties as the producer) sees who wrote it.
+    task copyMineProperties(type: Copy) {
+        from "${System.env.HOME}/.intermine/intermine-bio-test.properties"
+        into layout.buildDirectory.dir('im/mine-properties')
+        rename { fileName -> fileName.replace('intermine-bio-test.properties', 'intermine.properties') }
+    }
+
+    processResources {
+        from copyMineProperties
     }
 
     jar {
@@ -243,9 +242,6 @@ subprojects {
     // Publishing (maven-publish, signing, sources and javadoc jars, `install` alias, Central bundle): see docs/RELEASING.md
     ext.imPublicationDescription = 'InterMine bio sources modules'
     apply from: "${rootDir}/../../config/gradle/publishing.gradle"
-
-    // the unit tests read intermine.properties from build/resources/main, which this task writes
-    tasks.compileTestJava.dependsOn 'copyMineProperties'
 }
 
 task testReport(type: TestReport) {

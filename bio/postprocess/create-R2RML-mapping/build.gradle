@@ -11,7 +11,7 @@ sourceSets {
 
 repositories {
     maven {
-        url project.getProperty("intermine.maven.central")
+        url = project.getProperty("intermine.maven.central")
     }
 }
 

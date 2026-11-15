@@ -4,7 +4,7 @@ This page describes how the back-end code in this repository is built: the Gradl
 
 ## Requirements
 
-- JDK 8. Every build compiles with `sourceCompatibility = 1.8`, and CI runs on JDK 8 only. The Gradle version in the templates (below) cannot run on JDK 17 or 21. Moving the builds to JDK 17 is planned together with the Gradle 8 upgrade; it is not done on this branch.
+- JDK 8. Every build compiles with `sourceCompatibility = 1.8`, and CI runs on JDK 8 only. The Gradle version in the templates (below), 8.14.6, runs on JDK 8 to 24, but on a JDK older than 17 it prints one deprecation in every build ("Executing Gradle on JVM versions 16 and lower has been deprecated"): Gradle 9 needs JDK 17 to run. Moving the builds to JDK 17 is planned next; it is not done on this branch.
 - Python 3 for `config/lib/install_intermine.py` (it uses `dataclasses` and `glob(root_dir=...)`, so Python 3.10 or later).
 - PostgreSQL, but only to run tests (see [TESTING.md](TESTING.md)). Compiling and publishing do not need it.
 - `export LANG=C.UTF-8 LC_ALL=C.UTF-8` before building: javadoc fails on non-ASCII sources under an ASCII locale.
@@ -72,14 +72,14 @@ Flags (from `--help`):
 | `--clojars_url` | `https://clojars.org/repo` | Clojars |
 | `--ebi_url` | `https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/` | EMBL-EBI repository |
 | `--plugins_url` | `https://plugins.gradle.org/m2/` | Gradle plugin portal |
-| `--gradle_distribution_url` | `https://services.gradle.org/distributions/gradle-7.6.6-bin.zip` | the distribution all seven wrappers download |
-| `--gradle_distribution_sha256` | looked up by zip name | written as `distributionSha256Sum`; if the zip name is not known to the script (it knows 4.9, 6.9.4 and 7.6.6) and no value is given, the line is left out and the wrapper does not verify the download |
+| `--gradle_distribution_url` | `https://services.gradle.org/distributions/gradle-8.14.6-bin.zip` | the distribution all seven wrappers download |
+| `--gradle_distribution_sha256` | looked up by zip name | written as `distributionSha256Sum`; if the zip name is not known to the script (it knows 4.9, 6.9.4, 7.6.6 and 8.14.6) and no value is given, the line is left out and the wrapper does not verify the download |
 
 ### Gradle version
 
-The version is not in the `.in` templates themselves (they contain `@@im_gradle_distribution_url@@`); it is the default of `--gradle_distribution_url`, `DEFAULT_GRADLE_VERSION` in `config/lib/install_intermine.py`. **Today that is Gradle 7.6.6** (the 5.1.1 release candidate, branch `release/5.1.1-candidate`, is the last 6.9.4 state). An upgrade to Gradle 8.14 is planned next, so check that constant rather than this page. To try another version without editing anything, pass `--gradle_distribution_url` (and `--gradle_distribution_sha256` for a version the script does not know).
+The version is not in the `.in` templates themselves (they contain `@@im_gradle_distribution_url@@`); it is the default of `--gradle_distribution_url`, `DEFAULT_GRADLE_VERSION` in `config/lib/install_intermine.py`. **Today that is Gradle 8.14.6** (the 5.1.1 release candidate, branch `release/5.1.1-candidate`, is the last 6.9.4 state). Check that constant rather than this page. To try another version without editing anything, pass `--gradle_distribution_url` (and `--gradle_distribution_sha256` for a version the script does not know).
 
-The committed `gradle/wrapper/gradle-wrapper.jar` files are old (the manifest of the one in `intermine/` says Gradle 4.1). That does not matter: the jar only downloads and starts the distribution named in the generated `gradle-wrapper.properties`.
+The committed `gradlew`, `gradlew.bat` and `gradle/wrapper/gradle-wrapper.jar` of the seven builds are the ones Gradle 8.14.6's own `gradle wrapper` writes (the jar's SHA-256 is the published `gradle-8.14.6-wrapper.jar.sha256`). The jar only downloads and starts the distribution named in the generated `gradle-wrapper.properties`; regenerate the three files when the version changes.
 
 ## Publishing configuration: `config/gradle/publishing.gradle`
 
@@ -115,7 +115,7 @@ To change a version, edit its line in `[versions]` and nothing else; every modul
 
 Outside the catalog:
 
-- `buildscript { }` blocks cannot see `libs` (Gradle 7.6). They keep literal coordinates, for example the Cargo plugin in `testmine/webapp/build.gradle` and the InterMine `plugin` classpath in `bio/core` and `bio/model`. Change those by hand.
+- `buildscript { }` blocks keep literal coordinates (they could not see `libs` on Gradle 7.6; on 8.14 they can, so this is a possible clean-up), for example the Cargo plugin in `testmine/webapp/build.gradle` and the InterMine `plugin` classpath in `bio/core` and `bio/model`. Change those by hand.
 - `org.intermine:*` modules are resolved from the build's own jars and use `System.getProperty("imVersion")` (or `imVersion`), which the `gradle.properties.in` templates set. They are not in the catalog.
 - The `.in` templates (`gradle.properties.in`, `gradle-wrapper.properties.in`) are not Gradle files, so they cannot read the catalog. The Gradle version and the generated `systemProp.imVersion` are changed there (see "Generated files" above).
 - Vendored jars (`libs/*.jar`, the antlr caching jar in `flatDir`) have no coordinates and stay as file dependencies.
