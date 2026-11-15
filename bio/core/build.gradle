@@ -66,7 +66,7 @@ dependencies {
     api group: 'org.apache.ant', name: 'ant', version: '1.7.0' // org.apache.tools.ant.Task is a superclass in the public API
     api group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
     api group: 'commons-lang', name: 'commons-lang', version: '2.6'
-    api group: 'commons-collections', name: 'commons-collections', version: '3.2'
+    api group: 'commons-collections', name: 'commons-collections', version: '3.2.2'
     api group: 'commons-io', name: 'commons-io', version: '1.2'
 
     // never compiled against (no imports): the JDBC driver, the pool, the logging binding and bridge, and

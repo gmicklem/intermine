@@ -61,7 +61,7 @@ dependencies {
     providedCompile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.50'
 
     runtimeOnly group: 'commons-io', name: 'commons-io', version: '1.2'
-    runtimeOnly group: 'commons-collections', name: 'commons-collections', version: '3.2'
+    runtimeOnly group: 'commons-collections', name: 'commons-collections', version: '3.2.2'
     runtimeOnly group: 'commons-lang', name: 'commons-lang', version: '2.6'
     runtimeOnly group: 'commons-codec', name: 'commons-codec', version: '1.15'
     runtimeOnly 'taglibs:string:1.1.0'
