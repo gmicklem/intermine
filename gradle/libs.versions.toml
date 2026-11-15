@@ -12,6 +12,7 @@ intermine = "5.1.1"
 checkstyle = "7.8.1"
 
 ant = "1.7.0"
+antlr = "2.7.6"
 base64 = "2.3.8"
 bcprov-jdk15on = "1.50"
 biojava = "4.2.0"
@@ -62,11 +63,14 @@ slf4j = "1.7.36"
 solr = "8.11.4"
 struts = "1.3.10"
 taglibs-string = "1.1.0"
+# distribution zip for the cargo plugin (testmine/webapp); the @zip artifact type is added where it is used
+tomcat = "9.0.115"
 # one version for all modules (intermine/integrate used 1.6, the others 1.0; the 1.x API is the same)
 xmlunit = "1.6"
 
 [libraries]
 ant = { module = "org.apache.ant:ant", version.ref = "ant" }
+antlr = { module = "antlr:antlr", version.ref = "antlr" }
 base64 = { module = "net.iharder:base64", version.ref = "base64" }
 bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk15on", version.ref = "bcprov-jdk15on" }
 biojava-core = { module = "org.biojava:biojava-core", version.ref = "biojava" }
@@ -131,4 +135,5 @@ struts-extras = { module = "org.apache.struts:struts-extras", version.ref = "str
 struts-taglib = { module = "org.apache.struts:struts-taglib", version.ref = "struts" }
 struts-tiles = { module = "org.apache.struts:struts-tiles", version.ref = "struts" }
 taglibs-string = { module = "taglibs:string", version.ref = "taglibs-string" }
+tomcat = { module = "org.apache.tomcat:tomcat", version.ref = "tomcat" }
 xmlunit = { module = "xmlunit:xmlunit", version.ref = "xmlunit" }
