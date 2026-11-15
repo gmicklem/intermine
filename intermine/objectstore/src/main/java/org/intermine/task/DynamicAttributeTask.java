@@ -10,12 +10,13 @@ package org.intermine.task;
  *
  */
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.Hashtable;
 
-import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -46,7 +47,12 @@ public class DynamicAttributeTask extends Task
     public void configureDynamicAttributes(Object bean) {
         Project antProject = getProject();
         Hashtable<?, ?> projectProps = antProject.getProperties();
-        PropertyDescriptor[] props =  PropertyUtils.getPropertyDescriptors(bean);
+        PropertyDescriptor[] props;
+        try {
+            props = Introspector.getBeanInfo(bean.getClass()).getPropertyDescriptors();
+        } catch (IntrospectionException e) {
+            throw new BuildException("failed to introspect " + bean, e);
+        }
         for (int i = 0; i < props.length; i++) {
             PropertyDescriptor desc = props[i];
             Method setter = desc.getWriteMethod();
@@ -97,7 +103,7 @@ public class DynamicAttributeTask extends Task
                                 propValue = getProject().resolveFile(filePropValue);
                             }
                         }
-                        PropertyUtils.setProperty(bean, propName, propValue);
+                        setProperty(bean, props, propName, propValue);
                     } catch (Exception e) {
                         throw new BuildException("failed to set value for " + propName + " to "
                                                  + propValue + " in " + bean, e);
@@ -105,5 +111,26 @@ public class DynamicAttributeTask extends Task
                 }
             }
         }
+    }
+
+    /**
+     * Set the bean property with the given name, which must have a public write method.
+     * @param bean the object to set the property on
+     * @param props the property descriptors of the bean
+     * @param name the property name, as in the property descriptor
+     * @param value the new value
+     * @throws ReflectiveOperationException if there is no such writable property or the write
+     * method fails
+     */
+    private static void setProperty(Object bean, PropertyDescriptor[] props, String name,
+            Object value) throws ReflectiveOperationException {
+        for (PropertyDescriptor desc : props) {
+            if (desc.getName().equals(name) && desc.getWriteMethod() != null) {
+                desc.getWriteMethod().invoke(bean, value);
+                return;
+            }
+        }
+        throw new NoSuchMethodException("Property '" + name + "' has no setter method in class '"
+                + bean.getClass() + "'");
     }
 }

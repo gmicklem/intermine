@@ -73,7 +73,7 @@ public class GenomicRegionSearchListInput extends ListInput
                 || "GET".equalsIgnoreCase(request.getMethod())) {
             input = request.getParameter("query");
         } else {
-            input = IOUtils.toString(request.getInputStream());
+            input = IOUtils.toString(request.getInputStream(), "UTF-8");
         }
         JSONObject jsonRequest = new JSONObject(input);
         GenomicRegionSearchInfo parsed = new GenomicRegionSearchInfo();

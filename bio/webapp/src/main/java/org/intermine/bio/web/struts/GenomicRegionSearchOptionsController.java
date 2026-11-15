@@ -100,7 +100,7 @@ public class GenomicRegionSearchOptionsController extends TilesAction
         try {
             URL url = new URL(galaxyDataUrl);
             URLConnection conn = url.openConnection();
-            galaxyInput = new String(IOUtils.toCharArray(conn.getInputStream())).trim();
+            galaxyInput = new String(IOUtils.toCharArray(conn.getInputStream(), "UTF-8")).trim();
         } catch (Exception e) {
             e.printStackTrace();
             return GALAXY_SERVER_CONNECTION_ERROR;

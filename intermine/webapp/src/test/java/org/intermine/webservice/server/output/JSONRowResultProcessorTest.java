@@ -168,7 +168,7 @@ public class JSONRowResultProcessorTest extends TestCase {
     public void testWrite() throws IOException, JSONException {
         InputStream is = getClass().getResourceAsStream("JSONRowResultProcessorTest.expected");
         StringWriter sw = new StringWriter();
-        IOUtils.copy(is, sw);
+        IOUtils.copy(is, sw, "UTF-8");
         String expected = sw.toString();
 
         MemoryOutput out  = new MemoryOutput();

@@ -182,7 +182,7 @@ public class ProfileManagerTest extends InterMineAPITestCase
 
         InputStream is =
             getClass().getClassLoader().getResourceAsStream("ProfileManagerBindingTest.xml");
-        String expectedXml = normalise(IOUtils.toString(is));
+        String expectedXml = normalise(IOUtils.toString(is, "UTF-8"));
 
         String actualXml = normalise(sw.toString().trim());
 

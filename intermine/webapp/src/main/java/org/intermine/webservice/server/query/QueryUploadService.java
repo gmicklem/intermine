@@ -226,10 +226,10 @@ public class QueryUploadService extends WebService
         String queriesString;
         if ("application/xml".equals(contentType) || "text/xml".equals(contentType)) {
             InputStream in = request.getInputStream();
-            queriesString = IOUtils.toString(in);
+            queriesString = IOUtils.toString(in, "UTF-8");
         } else if ("application/json".equals(contentType) || "text/json".equals(contentType)) {
             InputStream in = request.getInputStream();
-            queriesString = IOUtils.toString(in);
+            queriesString = IOUtils.toString(in, "UTF-8");
         } else {
             queriesString = getRequiredParameter("query");
         }

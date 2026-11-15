@@ -15,9 +15,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.util.Base64;
 import java.util.Properties;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.intermine.web.security.KeySourceException;
@@ -76,7 +76,8 @@ public class JWTVerifier
      * @throws VerificationError if this claim cannot be verified.
      */
     public Verification verify(final String rawString) throws VerificationError {
-        Base64 decoder = new Base64();
+        // JWT segments are base64url (RFC 7515), with or without padding
+        Base64.Decoder decoder = Base64.getUrlDecoder();
         if (StringUtils.isBlank(rawString)) {
             throw new VerificationError("token is blank");
         }
@@ -94,7 +95,7 @@ public class JWTVerifier
             expiry = claims.getLong("exp");
             issuer = claims.getString("iss");
             audience = claims.optString("aud");
-        } catch (JSONException e) {
+        } catch (JSONException | IllegalArgumentException e) {
             throw new VerificationError("Could not parse token: " + e.getMessage());
         }
 
@@ -107,11 +108,17 @@ public class JWTVerifier
                     String.format("This token expired %d seconds ago", secondsSinceExpiry));
         }
 
+        byte[] signature;
+        try {
+            signature = decoder.decode(pieces[2]);
+        } catch (IllegalArgumentException e) {
+            throw new VerificationError("Could not verify signature.");
+        }
         if (!canVerify(
                 header,
                 claims,
                 pieces[0] + "." + pieces[1],
-                decoder.decode(pieces[2]))) {
+                signature)) {
             throw new VerificationError("Could not verify signature.");
         }
         return new Verification(issuer, getPrincipal(claims), getEmail(claims));

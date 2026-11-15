@@ -11,19 +11,26 @@ intermine = "5.1.1"
 # kept at 7.8.1 until the checkstyle bump (config/gradle/checkstyle-classpath.gradle)
 checkstyle = "7.8.1"
 
-ant = "1.7.0"
+# 1.10.x is the Java 8 line; 1.7.0 had 3 advisories. The InterMine tasks only use Task, BuildException, Project and
+# FileSet/DirectoryScanner (stable API). Gradle runs them on its own bundled Ant.
+ant = "1.10.18"
 antlr = "2.7.6"
 base64 = "2.3.8"
 bcprov-jdk15on = "1.50"
 biojava = "4.2.0"
 cglib = "3.1"
-commons-beanutils = "1.9.3"
-# one version for intermine/webapp and testmine/webapp (testmine used 1.9)
-commons-codec = "1.15"
-commons-collections = "3.2"
-commons-fileupload = "1.2.2"
-commons-io = "1.2"
+# 1.9.4 fixes CVE-2019-10086; only pinned for Struts 1.3.10 (intermine/webapp), no InterMine code uses it
+commons-beanutils = "1.9.4"
+# 3.2.2: CVE-2015-7501 / CVE-2015-6420 (functor deserialisation); same API as 3.2
+commons-collections = "3.2.2"
+# 1.6.0 (not 1.5) clears all 6 advisories, the last being CVE-2025-48976; still javax.servlet and Java 8.
+# Kept, not removed: Struts 1 multipart (CommonsMultipartRequestHandler) needs it.
+commons-fileupload = "1.6.0"
+# 2.x still runs on Java 8. IOUtils.toString/copy/toCharArray without a charset are deprecated in 2.x,
+# so the InterMine callers pass "UTF-8"
+commons-io = "2.22.0"
 commons-lang = "2.6"
+# no imports, but the vendored torque jar (BuildDbTask) needs it at run time in every module that runs the Ant tasks
 commons-logging = "1.3.5"
 commons-math3 = "3.2"
 dwr = "2.0.1"
@@ -77,7 +84,6 @@ biojava-core = { module = "org.biojava:biojava-core", version.ref = "biojava" }
 biojava-ontology = { module = "org.biojava:biojava-ontology", version.ref = "biojava" }
 cglib = { module = "cglib:cglib", version.ref = "cglib" }
 commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "commons-beanutils" }
-commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
 commons-collections = { module = "commons-collections:commons-collections", version.ref = "commons-collections" }
 commons-fileupload = { module = "commons-fileupload:commons-fileupload", version.ref = "commons-fileupload" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }

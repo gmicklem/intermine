@@ -71,7 +71,7 @@ public class WebserviceJavaCodeGeneratorTest extends TestCase
         InputStream is = getClass().getResourceAsStream(filename);
         StringWriter sw = new StringWriter();
         try {
-            IOUtils.copy(is, sw);
+            IOUtils.copy(is, sw, "UTF-8");
         } catch (Exception e) {
             throw new RuntimeException("Could not read resource "+ filename);
         }

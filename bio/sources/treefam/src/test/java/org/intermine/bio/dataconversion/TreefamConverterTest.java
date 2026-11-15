@@ -64,7 +64,7 @@ public class TreefamConverterTest extends ItemsTestCase
         out.close();
 
         ClassLoader loader = getClass().getClassLoader();
-        String input = IOUtils.toString(loader.getResourceAsStream("ortholog.txt.table"));
+        String input = IOUtils.toString(loader.getResourceAsStream("ortholog.txt.table"), "UTF-8");
 
         converter.setTreefamOrganisms("7227 9606");
         converter.setGeneFile(genes);

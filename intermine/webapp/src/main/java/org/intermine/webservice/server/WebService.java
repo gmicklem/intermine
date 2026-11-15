@@ -19,6 +19,7 @@ import java.io.PrintWriter;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,6 @@ import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.intermine.api.InterMineAPI;
@@ -577,7 +577,14 @@ public abstract class WebService
                  // Try and read the authString as a basic auth header.
                  // Strip off the "Basic" part - but don't require it.
                 final String encoded = StringUtils.removeStart(authString, "Basic ");
-                final String decoded = new String(Base64.decodeBase64(encoded.getBytes()));
+                final String decoded;
+                try {
+                    decoded = new String(Base64.getMimeDecoder().decode(encoded.getBytes()));
+                } catch (IllegalArgumentException e) {
+                    throw new UnauthorizedException(
+                            "Invalid request authentication. "
+                                    + "Authorization field is not valid base64.");
+                }
                 final String[] parts = decoded.split(":", 2);
                 if (parts.length != 2) {
                     throw new UnauthorizedException(

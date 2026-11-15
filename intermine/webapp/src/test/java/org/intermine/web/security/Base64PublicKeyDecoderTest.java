@@ -8,8 +8,8 @@ import static org.junit.Assert.fail;
 
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
+import java.util.Base64;
 
-import org.apache.commons.codec.binary.Base64;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,7 +28,7 @@ public class Base64PublicKeyDecoderTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		Base64 encoder = new Base64();
+		Base64.Encoder encoder = Base64.getEncoder();
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
 		this.key = keyGen.generateKeyPair().getPublic();
 		this.encoded = encoder.encodeToString(key.getEncoded());
