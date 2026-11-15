@@ -1,19 +1,22 @@
 package org.intermine.plugin.dbmodel
 
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.dsl.DependencyHandler
+import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.util.PatternSet
+
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 class DBModelUtils {
     /** Plugin-internal configuration holding the intermine-api jar (userprofile model and keys). */
     static final String IM_API_JAR = "imApiJar"
 
     Project project
-    String buildResourcesMainDir
 
     /**
      * Classpath for the InterMine Ant tasks the plugin runs: the project's runtime classpath.
@@ -25,30 +28,85 @@ class DBModelUtils {
         project.configurations.getByName("runtimeClasspath")
     }
 
+    /** The main source set's resources output directory, where the InterMine runtime files live. */
+    static String resourcesDir(Project project) {
+        SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
+        sourceSets.getByName("main").getOutput().resourcesDir.toString()
+    }
+
+    /**
+     * A file in the resources output directory that task {@code producer} writes, as a task
+     * input: the consuming task then depends on the producer through its inputs instead of an
+     * explicit dependsOn. The producers write into a directory shared with processResources, so
+     * most of them do not declare outputs; the file name is resolved when the input is read.
+     */
+    static FileCollection resource(Project project, String producer, Closure<String> fileName) {
+        project.files({ new File(resourcesDir(project), fileName.call()) }).builtBy(producer)
+    }
+
+    /** The resources output directory as processResources leaves it, as a task input. */
+    static FileCollection processedResources(Project project) {
+        project.files({ resourcesDir(project) }).builtBy('processResources')
+    }
+
+    /**
+     * Declares what a task that runs InterMine code (an Ant task on this project's classpath)
+     * reads: the compiled classes and resources (this replaces dependsOn 'jar' / 'compileJava';
+     * the Ant tasks use build/ directly, not the jar), the runtime classpath (which also builds
+     * project dependencies such as a mine's dbmodel jar), and the runtime property files that
+     * the given tasks put into the resources directory.
+     */
+    static void readsRuntime(Task task, Map<String, Closure<String>> resources = [:]) {
+        Project project = task.project
+        SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
+        task.inputs.files(sourceSets.getByName("main").output)
+        task.inputs.files(antClasspath(project))
+        resources.each { String producer, Closure<String> fileName ->
+            task.inputs.files(resource(project, producer, fileName))
+        }
+    }
+
+    /** intermine.properties (the mine's own build file copies it in) and default.intermine.properties. */
+    static Map<String, Closure<String>> mineProperties() {
+        ['copyMineProperties': { 'intermine.properties' },
+         'copyDefaultInterMineProperties': { 'default.intermine.properties' }]
+    }
+
+    /**
+     * Copies one entry of an archive to {@code destination}, creating its directory. This
+     * replaces the old createNewFile + renameTo, which did nothing when the destination
+     * directory did not exist yet.
+     */
+    static void copyFromArchive(Project project, File archive, String entry, String destination) {
+        FileTree fileTree = project.zipTree(archive)
+        PatternSet patternSet = new PatternSet()
+        patternSet.include(entry)
+        File file = fileTree.matching(patternSet).singleFile
+        File dest = new File(destination)
+        dest.parentFile.mkdirs()
+        Files.copy(file.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING)
+    }
+
     DBModelUtils(Project project) {
         this.project = project
-        SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
-        buildResourcesMainDir = sourceSets.getByName("main").getOutput().resourcesDir
+    }
+
+    /** Resolved on use, so that a build script can still change the source set after apply. */
+    String getBuildResourcesMainDir() {
+        resourcesDir(project)
     }
 
     protected copyDefaultPropertiesFile = { String defaultPropertiesFile ->
-        FileTree fileTree = project.zipTree(project.configurations.getByName("commonResources").singleFile)
-        PatternSet patternSet = new PatternSet()
-        patternSet.include(defaultPropertiesFile)
-        File file = fileTree.matching(patternSet).singleFile
-        String defaultIMProperties = buildResourcesMainDir + File.separator + "default.intermine.properties"
-        file.createNewFile()
-        file.renameTo(defaultIMProperties)
+        copyFromArchive(project, project.configurations.getByName("commonResources").singleFile,
+                defaultPropertiesFile, buildResourcesMainDir + File.separator + "default.intermine.properties")
     }
 
-    protected addBioSourceDependency = { sourcePostfix, sourceVersion ->
-        DependencyHandler dh = project.getDependencies()
-        Dependency dep = dh.create(
-                [group: "org.intermine", name: "bio-source-${sourcePostfix}", version: "${sourceVersion}"])
-
+    /** The bio-source-<postfix> jar, for the mergeSource configuration. */
+    Dependency bioSourceDependency(sourcePostfix, sourceVersion) {
         // This can prove useful for debugging but may be a bit too noisy in practice
-        // System.out.println("Adding mergeSource configuration dependency ${dep}")
-        dh.add("mergeSource", dep)
+        // System.out.println("Adding mergeSource configuration dependency bio-source-${sourcePostfix}")
+        project.getDependencies().create(
+                [group: "org.intermine", name: "bio-source-${sourcePostfix}", version: "${sourceVersion}"])
     }
 
     protected generateModel = { modelName ->
