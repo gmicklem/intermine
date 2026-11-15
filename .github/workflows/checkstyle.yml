@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # checkstyle 7.8.1 gives the same result on any JDK; use the build JDK
+        # checkstyle 9.3 runs on JDK 8 and later and gives the same result on any of them; use the build JDK
         java: [17]
     steps:
       - uses: actions/checkout@v7
