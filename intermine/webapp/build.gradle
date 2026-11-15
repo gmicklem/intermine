@@ -43,7 +43,6 @@ dependencies {
     api libs.javax.servlet.api
 
     api files('libs/stringtree-json-2.0.5.jar')
-    providedCompile libs.oltu.common
     providedCompile libs.jsp.api
     providedCompile libs.jopenid
     api libs.commons.math3

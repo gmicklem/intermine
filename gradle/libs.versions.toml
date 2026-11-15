@@ -58,8 +58,7 @@ junit = "4.8.2"
 lucene = "3.0.2"
 mockobjects = "0.09"
 objenesis = "2.1"
-oltu-client = "1.0.1"
-oltu-common = "1.0.0"
+oltu-client = "1.0.2"
 opencsv = "2.4"
 postgresql = "42.7.14"
 reload4j = "1.2.22"
@@ -122,7 +121,6 @@ mockobjects-core = { module = "mockobjects:mockobjects-core", version.ref = "moc
 mockobjects-jdk13 = { module = "mockobjects:mockobjects-jdk1.3", version.ref = "mockobjects" }
 objenesis = { module = "org.objenesis:objenesis", version.ref = "objenesis" }
 oltu-client = { module = "org.apache.oltu.oauth2:org.apache.oltu.oauth2.client", version.ref = "oltu-client" }
-oltu-common = { module = "org.apache.oltu.oauth2:org.apache.oltu.oauth2.common", version.ref = "oltu-common" }
 opencsv = { module = "au.com.bytecode:opencsv", version.ref = "opencsv" }
 postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
 reload4j = { module = "ch.qos.reload4j:reload4j", version.ref = "reload4j" }
