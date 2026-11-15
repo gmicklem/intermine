@@ -25,3 +25,6 @@ dependencies {
     testImplementation project(':intermine-resources')
     testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')
 }
+
+// the POM names intermine-webapp:classes (the jar), not the war
+apply from: "${rootDir}/../config/gradle/webapp-classes-dependency.gradle"

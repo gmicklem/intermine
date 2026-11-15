@@ -15,3 +15,6 @@ dependencies {
     api project(':intermine-api')
     api project(':intermine-webapp')
 }
+
+// the POM names intermine-webapp:classes (the jar), not the war
+apply from: "${rootDir}/../config/gradle/webapp-classes-dependency.gradle"
