@@ -36,6 +36,13 @@ sourceSets {
 
 processResources {
     from('.') { include ("core.xml", "genomic_additions.xml")}
+    // bio-model is the source of genomic_model.xml: start it from core.xml; mergeModels then merges
+    // genomic_additions.xml into it in place. This replaces the plugin's copyGenomicModel, which
+    // unpacks genomic_model.xml from the bioModel dependency (bio-model itself).
+    from('.') {
+        include 'core.xml'
+        rename { 'genomic_model.xml' }
+    }
 }
 
 dependencies {
@@ -59,12 +66,15 @@ task copyMineProperties(type: Copy) {
     rename { fileName -> fileName.replace('intermine-bio-test.properties', 'intermine.properties') }
 }
 
-task copyGenomicModel(type: Copy, overwrite: true) {
-    from sourceSets.main.output.resourcesDir
-    include 'core.xml'
-    destinationDir sourceSets.main.output.resourcesDir
-    rename { fileName -> fileName.replace('core.xml', 'genomic_model.xml') }
-}
+// Gradle 6 forbids replacing a task the plugin has already created (overwrite: true); genomic_model.xml
+// now comes from processResources above.
+tasks.getByName('copyGenomicModel') { enabled = false }
 
+// lifecycle: buildDB needs the (empty) test databases to exist; no file output to wire.
 tasks.buildDB.dependsOn ':bio-testresources:createUnitTestDatabases'
-tasks.mergeModels.dependsOn 'processResources', 'copyGenomicModel', 'copyMineProperties', 'copyDefaultInterMineProperties'
+// mergeModels reads and rewrites genomic_model.xml in the processResources output.
+tasks.mergeModels.inputs.files(processResources)
+// kept: both tasks write intermine.properties / default.intermine.properties into the resources dir
+// that the jar packs, and copyDefaultInterMineProperties (plugin) declares no outputs. They are
+// folded into processResources in Gradle Step 2a.
+tasks.mergeModels.dependsOn 'copyMineProperties', 'copyDefaultInterMineProperties'
