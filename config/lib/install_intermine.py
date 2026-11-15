@@ -13,7 +13,7 @@ EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_USER = 2
 
-DEFAULT_GRADLE_VERSION = "6.9.4"
+DEFAULT_GRADLE_VERSION = "7.6.6"
 
 # SHA-256 of the Gradle distributions we know, keyed by zip name, from
 # https://services.gradle.org/distributions/<zip>.sha256. The wrapper verifies the
@@ -23,6 +23,8 @@ GRADLE_DISTRIBUTION_SHA256 = {
         "e66e69dce8173dd2004b39ba93586a184628bc6c28461bc771d6835f7f9b0d28",
     "gradle-6.9.4-bin.zip":
         "3e240228538de9f18772a574e99a0ba959e83d6ef351014381acd9631781389a",
+    "gradle-7.6.6-bin.zip":
+        "673d9776f303bc7048fc3329d232d6ebf1051b07893bd9d11616fad9a8673be0",
 }
 
 
