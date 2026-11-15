@@ -109,6 +109,16 @@ task buildTestModelJar(type: Jar) {
     from(sourceSets.test.output)
 }
 
+// The jar that is published. intermine.properties (the developer's database user and password, see
+// processTestResources) stays in buildTestModelJar, which the other intermine builds use on their test classpath
+// (testArtifacts), but must not be released. A separate directory keeps the two jars from sharing one file name.
+task publishedTestModelJar(type: Jar) {
+    destinationDirectory = layout.buildDirectory.dir('libs-published')
+    from(sourceSets.test.output) {
+        exclude 'intermine.properties'
+    }
+}
+
 // providers.exec (Gradle 7.5+) replaces Project.exec, which is deprecated in 8.11 and removed in 9.0. It runs the
 // command when its output is read, and does not take streams: stdout and stderr come back separately.
 String psqlOutput(execOutput) {
@@ -262,5 +272,6 @@ artifacts {
 }
 
 // The main jar task is disabled at the top of this file: the jar published as intermine-testresources-<version>.jar
-// is the test model jar (test model, data and classes), as in 5.1.0. config/gradle/publishing.gradle reads this.
-ext.imMainJarTask = buildTestModelJar
+// is the test model jar (test model, data and classes), as in 5.1.0, without intermine.properties.
+// config/gradle/publishing.gradle reads this.
+ext.imMainJarTask = publishedTestModelJar
