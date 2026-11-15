@@ -116,7 +116,7 @@ subprojects {
 apply from: "${rootDir}/../config/gradle/central-bundle.gradle"
 
 task testReport(type: TestReport) {
-    destinationDir = file("$buildDir/reports/allTests")
-    // Include the results from the `test` task in all subprojects
-    reportOn subprojects*.test
+    destinationDirectory = layout.buildDirectory.dir('reports/allTests')
+    // Include the results from the `test` task in all subprojects (flatMap keeps the task dependency)
+    testResults.from(subprojects.collect { sub -> sub.tasks.named('test', Test).flatMap { it.binaryResultsDirectory } })
 }
