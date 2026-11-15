@@ -41,14 +41,22 @@ For a guide on getting started with InterMine, please visit:
 3min bootstrap
 --------------------------------------
 
-As long as you have the prerequisites installed ([Java][java], [PostgreSQL][psql]), you can get a working data-warehouse and associated web-application by running an automated bootstrap script:
+As long as you have the prerequisites installed ([Java][java] 8, [PostgreSQL][psql], plus Solr and `wait-for-it`, see [docs/TESTING.md](docs/TESTING.md)), you can get a working data-warehouse and associated web-application by running an automated bootstrap script (it takes the path of the checkout as its only argument):
 
 ```bash
   # For the testmodel
-./testmine/setup.sh
+./testmine/setup.sh "$PWD"
 ```
 For a genomic application, with test data from Malaria, see [BioTestMine](https://github.com/intermine/biotestmine)
 
+
+Developer docs
+--------------------------------------
+
+  * [docs/BUILDING.md](docs/BUILDING.md): the separate Gradle builds, the generated `gradle.properties`, JDK and Gradle versions, dependency conventions
+  * [docs/TESTING.md](docs/TESTING.md): databases and property files the tests need, how CI runs them, running them locally
+  * [docs/UPGRADING-build.md](docs/UPGRADING-build.md): moving a mine's build to a newer InterMine plugin and Gradle
+  * [docs/RELEASING.md](docs/RELEASING.md): version bump, signed bundles, upload to Maven Central
 
 Docker
 --------------------------------------
