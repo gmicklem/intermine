@@ -74,11 +74,6 @@ processResources {
     from copyMineProperties
 }
 
-// the test mine's properties (database credentials) are on the test classpath only, not in the published jar
-jar {
-    exclude 'intermine.properties'
-}
-
 // Gradle 6 forbids replacing a task the plugin has already created (overwrite: true); genomic_model.xml
 // now comes from processResources above.
 tasks.named('copyGenomicModel') { enabled = false }

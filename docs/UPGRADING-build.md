@@ -57,7 +57,7 @@ Nothing is required: 5.1.1 runs on Gradle 4.9. To also move the mine to Gradle 6
      }
      ```
 
-     Delete its `dependsOn 'processResources'` and the `inputs.sourceFiles.stopExecutionIfEmpty()` line. The file now always ends up in the `dbmodel` jar as well; add `jar { exclude 'intermine.properties' }` if you do not want the database credentials in that jar.
+     Delete its `dependsOn 'processResources'` and the `inputs.sourceFiles.stopExecutionIfEmpty()` line. The file also reaches the `dbmodel` resources output, but the plugin excludes `intermine.properties` from the `jar` task of every project that applies a dbmodel plugin, so the database credentials stay out of that jar and you need not add an exclude. (The `webapp` war still gets its own copy through its own `processResources`.)
 4. In `dbmodel/build.gradle`: `compile` to `implementation`; keep `srcDirs = ['build/gen']`.
 5. In `webapp/build.gradle`: `compile` to `implementation`; `JavaExec` `main = ...` to `mainClass = ...` (removed in Gradle 8; *checked*); the war composition (the `war { }` block, `warWebApp`, `copyWebappContent`) is planned to move into the plugin, so these can then be deleted; if you keep them add `duplicatesStrategy = DuplicatesStrategy.EXCLUDE`.
 6. Check with `./gradlew :dbmodel:tasks :webapp:war --dry-run`, then build the war and compare its listing (`unzip -Z1 webapp/build/libs/*.war | sort`) with the war from the old build.

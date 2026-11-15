@@ -60,6 +60,13 @@ task copyTestModel(type: Copy) {
     into layout.buildDirectory.dir('im/testmodel')
 }
 
+// intermine.properties (database user and password) is in build/resources/main for the Ant tasks below, and the
+// webapp has its own copy; the dbmodel jar that goes into the war must not carry it (the plugin does this for the
+// projects that apply it, this build does not)
+jar {
+    exclude 'intermine.properties'
+}
+
 // into build/resources/main (on the Ant classpath below) through processResources, as the property files (root build file)
 processResources {
     from copyTestModel
