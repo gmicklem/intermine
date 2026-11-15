@@ -16,7 +16,6 @@ checkstyle = "7.8.1"
 ant = "1.10.18"
 antlr = "2.7.6"
 base64 = "2.3.8"
-bcprov-jdk15on = "1.50"
 biojava = "4.2.0"
 cglib = "3.1"
 # 1.9.4 fixes CVE-2019-10086; only pinned for Struts 1.3.10 (intermine/webapp), no InterMine code uses it
@@ -77,7 +76,6 @@ xmlunit = "1.6"
 ant = { module = "org.apache.ant:ant", version.ref = "ant" }
 antlr = { module = "antlr:antlr", version.ref = "antlr" }
 base64 = { module = "net.iharder:base64", version.ref = "base64" }
-bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk15on", version.ref = "bcprov-jdk15on" }
 biojava-core = { module = "org.biojava:biojava-core", version.ref = "biojava" }
 biojava-ontology = { module = "org.biojava:biojava-ontology", version.ref = "biojava" }
 cglib = { module = "cglib:cglib", version.ref = "cglib" }
