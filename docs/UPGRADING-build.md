@@ -19,6 +19,14 @@ The sources are the maintainers' planning notes (`decisions/gradle-upgrade-path.
 
 Plugin 6.0.0 needs Gradle 8.14 in the mine: the plugin is compiled against Gradle's own Groovy, and a plugin built for a newer Groovy fails on an older Gradle. Plugin 5.1.1 is built so that it still runs on Gradle 4.9. A mine that pins `imVersion=5.1.+` (flymine does) picks up any 5.1.x plugin automatically, and cannot pick up 6.0.0 by accident; a mine that pins `5.0.+` stays on 5.0.x.
 
+## Three edits that almost every mine needs
+
+HumanMine and FlyMine needed these three changes in their own build files, on either line. Each is explained in the step lists below.
+
+1. **Delete `inputs.sourceFiles.stopExecutionIfEmpty()`** from the `copyMineProperties` task in the root `build.gradle` (flymine line 50, humanmine line 53). Gradle 5.0 removed the method, so a mine does not configure on Gradle 5, 6.9.4, 7 or 8 until the line is gone; only Gradle 4.9 still has it. An empty `Copy` is skipped by Gradle itself, so nothing replaces it.
+2. **Gretty.** `webapp/build.gradle` applies gretty from a script on raw.githubusercontent.com, and that script fetches gretty 2.0.0 from jcenter, which is dead. The mine does not configure on any Gradle. Remove the `apply from` line and the `gretty { }` block; the `cargo` plugin deploys. On Gradle 4.9 only, you can instead copy the script and point it at `mavenCentral()` (5.1.1 step 4).
+3. **The Sequence Ontology paths** `soTermListFilePath` and `soAdditionFilePath` in `dbModelConfig { }` of `dbmodel/build.gradle`. Plugins up to and including the 5.1.1 release candidate hand these strings to Ant unchanged, and Ant resolves a relative path against the working directory of the Gradle daemon's JVM. That is the mine's root only by luck of how the daemon was started: on a Gradle 8 daemon on JDK 9 or later it is the daemon's own directory (`Could not find file containing SO terms ...`). Write them as absolute paths: `"$rootDir/dbmodel/resources/so_terms"` and `"$rootDir/dbmodel/build/so_additions.xml"` (or `rootProject.file('dbmodel/resources/so_terms').absolutePath`; `file(...)` and `project.file(...)` inside `dbmodel/build.gradle` are relative to `dbmodel/`, not to the root). The 6.0.0 plugin resolves relative paths against the mine's root itself, so both forms work there.
+
 ## 5.0.x or 5.1.0 to 5.1.1
 
 This is the non-breaking release. Branch `release/5.1.1-candidate` (the last Gradle 6.9.4 state; its plugin is compiled with Gradle 6.9.4) was checked in a mine on **Gradle 4.9**: the plugin loads, the build configures, and the tasks `tasks`, `createSoModel` and (in `webapp`) `mergeProperties` start. It was also checked on **Gradle 6.9.4**, with the changes below. Loading data, `buildDB` of a full mine and deploying to Tomcat were not run for this line, and this branch needs JDK 8.
@@ -31,7 +39,8 @@ So nothing is required except `imVersion` and `bioVersion`, with one exception t
 4. Deal with the `gretty` line (flymine `webapp/build.gradle:2`): an `apply from: https://raw.githubusercontent.com/akhikhl/gretty/...` script. Its buildscript resolves `org.akhikhl.gretty:gretty:2.0.0` from jcenter, which is dead (it returned 403 in the smoke build), so the build cannot configure. This is not a Gradle-version problem, and it hits a mine on Gradle 4.9 as well. Two ways out:
    - **Remove gretty** (what InterMine recommends): delete the `apply from` line and the `gretty { }` block of the same file. The `cargo` plugin does the deployment. Gretty was already dropped from testmine in InterMine's own `RELEASE_NOTES` because it does not work with Gradle 4.9, and the script is an unpinned remote file.
    - **Keep gretty**: gretty 2.0.0 itself is on Maven Central, only the script looks for it in jcenter. Save the script in the mine's repository (from a fixed commit of akhikhl/gretty, not `master`), change the `jcenter()` in its `buildscript { repositories { } }` to `mavenCentral()`, and point the `apply from:` at that copy. This was not tried here. Gretty 2.0.0 dates from the Gradle 4 era and is not known to work on Gradle 6.9.4 or 8.14, so it is a stop-gap for a mine that stays on Gradle 4.9; the 6.0.0 steps below remove it.
-5. Run `./gradlew --warning-mode all :dbmodel:tasks` to see the remaining deprecations. In the flymine smoke build on 6.9.4 they were:
+5. In `dbmodel/build.gradle`, make `soTermListFilePath` and `soAdditionFilePath` absolute (`"$rootDir/..."`, see "Three edits" above). The 5.1.1 plugin does not resolve them. It is not needed while the daemon happens to start in the mine's root, but it is cheap and it carries over to 6.0.0.
+6. Run `./gradlew --warning-mode all :dbmodel:tasks` to see the remaining deprecations. In the flymine smoke build on 6.9.4 they were:
 
 | Warning | Where (flymine copy) | Fix |
 |---|---|---|
