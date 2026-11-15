@@ -22,7 +22,7 @@ class WebAppPlugin implements Plugin<Project> {
 
         // Resolvable only (see DBModelPlugin); the dependencies are added when they are resolved.
         ['commonResources', 'bioWebApp'].each { name ->
-            project.configurations.maybeCreate(name).canBeConsumed = false
+            DBModelUtils.resolvableConfiguration(project, name)
         }
         DBModelPlugin.addDependency(project, 'commonResources') {
             [group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")]

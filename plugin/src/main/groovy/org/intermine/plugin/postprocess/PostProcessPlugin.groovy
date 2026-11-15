@@ -35,7 +35,7 @@ class PostProcessPlugin implements Plugin<Project> {
     void apply(Project project) {
         // Resolvable only. integrateSource is shared with the integrate plugin.
         ['postProcesses', 'integrateSource'].each { name ->
-            project.configurations.maybeCreate(name).canBeConsumed = false
+            DBModelUtils.resolvableConfiguration(project, name)
         }
         // the bio-postprocess jars of the selected post-processes (initPostProcess used to add them)
         project.configurations.getByName('postProcesses').withDependencies { DependencySet deps ->

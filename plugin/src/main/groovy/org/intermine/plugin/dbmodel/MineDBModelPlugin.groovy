@@ -14,7 +14,7 @@ class MineDBModelPlugin implements Plugin<Project> {
         // Resolvable only. The plugin jar on the build script class path cannot be used instead:
         // Gradle 6+ instruments build script jars, and the copy it loads refers to Gradle internals
         // that Ant's class loader cannot see (NoClassDefFoundError org/gradle/internal/classpath/Instrumented).
-        project.configurations.maybeCreate(IM_PLUGIN).canBeConsumed = false
+        DBModelUtils.resolvableConfiguration(project, IM_PLUGIN)
         //added this dependecy otherwise ant doesn't find MergeSourceModelsTask at runtime
         DBModelPlugin.addDependency(project, IM_PLUGIN) {
             [group: "org.intermine", name: "plugin", version: System.getProperty("imVersion")]

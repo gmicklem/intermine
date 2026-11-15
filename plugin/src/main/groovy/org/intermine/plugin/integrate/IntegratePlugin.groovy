@@ -24,7 +24,7 @@ class IntegratePlugin implements Plugin<Project> {
     void apply(Project project) {
         // Resolvable only; nothing should consume them.
         ['integrateSource', 'postProcesses', 'bioCore'].each { name ->
-            project.configurations.maybeCreate(name).canBeConsumed = false
+            DBModelUtils.resolvableConfiguration(project, name)
         }
         DBModelPlugin.addDependency(project, 'bioCore') {
             [group: "org.intermine", name: "bio-core", version: System.getProperty("bioVersion"), transitive: false]

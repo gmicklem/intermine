@@ -30,6 +30,18 @@ class DBModelUtils {
     }
 
     /**
+     * Creates, or gets if the build script already made it, a configuration that the plugin only
+     * resolves: it is never published and no other project consumes it. Since Gradle 8.0 two
+     * consumable configurations with identical attributes are an error, so it must not be consumable.
+     */
+    static Configuration resolvableConfiguration(Project project, String name) {
+        Configuration configuration = project.configurations.maybeCreate(name)
+        configuration.canBeConsumed = false
+        configuration.canBeResolved = true
+        configuration
+    }
+
+    /**
      * The project's build directory (layout.buildDirectory: Project.getBuildDir() is deprecated from
      * Gradle 8.3), read when called so that a build script can still move it after apply. A File,
      * because the Ant tasks take plain paths.

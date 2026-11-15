@@ -38,7 +38,7 @@ class DBModelPlugin implements Plugin<Project> {
         // applies java-library).
         ['bioModel', 'bioModelForSOOnly', 'commonResources', 'mergeSource', DBModelUtils.IM_API_JAR,
          IM_ANTLR].each { name ->
-            project.configurations.maybeCreate(name).canBeConsumed = false
+            DBModelUtils.resolvableConfiguration(project, name)
         }
         addDependency(project, 'commonResources') {
             [group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")]

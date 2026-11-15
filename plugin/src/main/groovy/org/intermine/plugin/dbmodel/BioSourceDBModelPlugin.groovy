@@ -12,7 +12,7 @@ class BioSourceDBModelPlugin implements Plugin<Project>{
     void apply(Project project) {
         config = project.extensions.create('bioSourceDBModelConfig', BioSourceDBModelConfig)
         // Classpath of ModelMergerTask; the bio/sources build declares its dependencies.
-        project.configurations.maybeCreate('mergeModel').canBeConsumed = false
+        DBModelUtils.resolvableConfiguration(project, 'mergeModel')
 
         //only buildDB if there are tests to run
         if ((new File(project.projectDir.absolutePath + "/src/test")).exists()) {
