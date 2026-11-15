@@ -32,19 +32,37 @@ Nothing is required: 5.1.1 runs on Gradle 4.9. To also move the mine to Gradle 6
 
 ## 5.1.1 to 6.0.0 (Gradle 8.14)
 
-**To be confirmed when 6.0.0 is cut.** What is planned, from the design notes, for a mine that is already on 5.1.1 and Gradle 6.9.4:
+**To be confirmed when 6.0.0 is cut.** What is planned, for a mine that is already on 5.1.1 and Gradle 6.9.4. The items marked *(checked)* were confirmed by a smoke build of a flymine copy on Gradle 8.14.6 with the plugin built from this branch (see the end of this section).
 
-1. While still on the old Gradle (the build still configures), update the wrapper: `./gradlew wrapper --gradle-version 8.14.6 --distribution-type bin`.
+1. While still on the old Gradle (the build still configures), update the wrapper: `./gradlew wrapper --gradle-version 8.14.6 --distribution-type bin --gradle-distribution-sha256-sum 7988ed071b2a07900e2ec715fca15c6ab72bce6db433af301fa7fa7e9407bd24`. Gradle 8.14 still runs on JDK 8, but prints "Executing Gradle on JVM versions 16 and lower has been deprecated" in every build; that warning goes away only with JDK 17.
 2. In `gradle.properties` change the plugin version to `6.0.+` (`5.0.+` or `5.1.+` today), and the Gradle-internal property `systemProp.javax.xml.stream.XMLOutputFactory = com.sun.xml.internal...` can be removed once the InterMine build drops it.
 3. In `build.gradle`:
    - drop `apply plugin: 'maven'` and the `jcenter()` repository (if still there);
    - replace `compile` by `implementation` and `testCompile` by `testImplementation`. Gradle 7 removed `compile`, `testCompile` and `runtime`. Use `api` instead of `implementation` where a project exposes a dependency in its own public API to a project that compiles against it (and apply `java-library` there); for example, a `dbmodel` project that the `webapp` project compiles against uses `api` for what `webapp` needs;
-   - the `cargo` plugin `com.bmuschko:gradle-cargo-plugin`: `2.8.0` to `2.9.0` (to be verified on 8.14);
-   - `sourceCompatibility` / `targetCompatibility` at project level become `java { sourceCompatibility = JavaVersion.VERSION_1_8; targetCompatibility = JavaVersion.VERSION_1_8 }`;
-   - the mine's own `copyMineProperties` task is replaced by `processResources { from(minePropertyFile) { rename { 'intermine.properties' } } }`; a task of that name defined by the mine no longer runs with plugin 6.0.0 (breaking).
+   - the `cargo` plugin `com.bmuschko:gradle-cargo-plugin`: `2.8.0` to `2.9.0`. 2.9.0 deploys InterMine's testmine to Tomcat 9 on Gradle 8.14.6 without a deprecation warning; 2.8.0 configures on 8.14.6 (flymine copy) but was not run. Neither works on Gradle 9;
+   - `sourceCompatibility` / `targetCompatibility` at project level become `java { sourceCompatibility = JavaVersion.VERSION_1_8; targetCompatibility = JavaVersion.VERSION_1_8 }` *(checked: the project-level form prints "The org.gradle.api.plugins.JavaPluginConvention type has been deprecated", removed in Gradle 9)*;
+   - assign properties with `=`: `url 'https://...'` in `repositories { maven { } }` becomes `url = 'https://...'`, and `description "..."` in task blocks becomes `description = "..."` (also in `webapp/build.gradle`) *(checked: Gradle 8.14 deprecates the space form, Gradle 10 removes it)*;
+   - the mine's own `copyMineProperties` task must stop writing into `build/resources/main` *(checked: on Gradle 8 any build that runs it together with `jar` fails with "Task ':dbmodel:jar' uses this output of task ':dbmodel:copyMineProperties' without declaring an explicit or implicit dependency")*. Keep the task and its name (the plugin's tasks find the file through it), but copy into a directory of its own and let `processResources` take it:
+
+     ```groovy
+     task copyMineProperties(type: Copy) {
+       description = "Copies mine specific intermine.properties file (from .intermine directory) into resources output to be included in the war"
+       from (minePropertyFile)
+       into layout.buildDirectory.dir('im/mine-properties')
+       rename { fileName -> fileName.replace("$minePropertyFileName", "intermine.properties") }
+     }
+
+     processResources {
+       from copyMineProperties
+     }
+     ```
+
+     Delete its `dependsOn 'processResources'` and the `inputs.sourceFiles.stopExecutionIfEmpty()` line. The file now always ends up in the `dbmodel` jar as well; add `jar { exclude 'intermine.properties' }` if you do not want the database credentials in that jar.
 4. In `dbmodel/build.gradle`: `compile` to `implementation`; keep `srcDirs = ['build/gen']`.
-5. In `webapp/build.gradle`: `compile` to `implementation`; `JavaExec` `main = ...` to `mainClass = ...` (removed in Gradle 8); the war composition (the `war { }` block, `warWebApp`, `copyWebappContent`) is planned to move into the plugin, so these can then be deleted; if you keep them add `duplicatesStrategy = DuplicatesStrategy.EXCLUDE`.
+5. In `webapp/build.gradle`: `compile` to `implementation`; `JavaExec` `main = ...` to `mainClass = ...` (removed in Gradle 8; *checked*); the war composition (the `war { }` block, `warWebApp`, `copyWebappContent`) is planned to move into the plugin, so these can then be deleted; if you keep them add `duplicatesStrategy = DuplicatesStrategy.EXCLUDE`.
 6. Check with `./gradlew :dbmodel:tasks :webapp:war --dry-run`, then build the war and compare its listing (`unzip -Z1 webapp/build/libs/*.war | sort`) with the war from the old build.
+
+Smoke build on Gradle 8.14.6 (a copy of flymine at `a507ed84`, JDK 8, the plugin and InterMine artifacts built from this branch as 5.1.1): with the edits above plus the ones of the 5.1.1 section (gretty, `maven`, `jcenter()`, `compile`, `stopExecutionIfEmpty`), `./gradlew --warning-mode all :dbmodel:tasks` and `:webapp:war :dbmodel:buildDB --dry-run` configure, and `:dbmodel:jar` runs `createSoModel`, `mergeModels`, `generateModel` and `compileJava`, with no deprecation warning other than the JDK 8 one. The plugin itself printed none. The flymine-specific sources (`bio-source-drosophila-homology` and 19 more) are in no reachable repository, so the copy's `project.xml` was cut to the 47 sources that InterMine publishes; with that model `:webapp:compileJava` stops at classes from the missing sources (`MicroArrayAssay`), which is data, not Gradle.
 
 ## Publishing and dependencies of the InterMine artifacts
 
