@@ -38,6 +38,11 @@ Getting Started With InterMine
 For a guide on getting started with InterMine, please visit:
 [tutorial][tutorial]
 
+Building, releasing and upgrading a mine
+--------------------------------------
+
+For how this branch is built see [docs/BUILDING.md](docs/BUILDING.md), for releasing [docs/RELEASING.md](docs/RELEASING.md), and for people who run a mine (humanmine, flymine, ...) and want to move its build to this release see [docs/UPGRADING-build.md](docs/UPGRADING-build.md).
+
 3min bootstrap
 --------------------------------------
 
