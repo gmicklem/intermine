@@ -41,13 +41,18 @@ dependencies {
     implementation group: "org.intermine", name: "intermine-webapp", version: imVersion, classifier: "classes"
     implementation group: "org.intermine", name: "intermine-api", version: imVersion
     implementation group: "org.intermine", name: "intermine-webtasks", version: imVersion
-    implementation libs.jstl
-    implementation libs.struts.core
-    implementation libs.struts.taglib
-    implementation libs.struts.extras
-    implementation libs.struts.tiles
-    implementation libs.javax.mail
-    implementation libs.dwr
+    // Struts, DWR, JSTL and JavaMail are in WEB-INF/lib of the intermine-webapp war that unwarIMWebApp explodes into
+    // the final war, with the versions of its pom. This build resolves intermine-webapp from a local directory without
+    // the pom, so as implementation these libraries came with Struts' own old commons-beanutils 1.8.0,
+    // commons-digester 1.8 and commons-validator 1.3.1 next to the 1.9.4, 2.1 and 1.9.0 of intermine-webapp.
+    // compileOnly: the classes compile against them and the war carries the one set.
+    compileOnly libs.jstl
+    compileOnly libs.struts.core
+    compileOnly libs.struts.taglib
+    compileOnly libs.struts.extras
+    compileOnly libs.struts.tiles
+    compileOnly libs.javax.mail
+    compileOnly libs.dwr
     runtimeOnly libs.jsp.api
     runtimeOnly libs.taglibs.string
     runtimeOnly libs.commons.fileupload
@@ -121,7 +126,7 @@ task warTestModelWebApp(type: War) {
     description = "Create the war from the build/explodedWebAppDir directory"
     from "${explodedWebAppDir}"
     exclude "WEB-INF/web.properties"
-    // intermine-webapp's WEB-INF/lib (exploded above) and this project's own libraries share 12 jars
+    // intermine-webapp's WEB-INF/lib (exploded above) and this project's own libraries share some jars
     // (same name and version); keep one entry of each instead of two entries with the same name
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     webInf { from "${mergePropsDir}" }
