@@ -33,7 +33,6 @@ subprojects {
     version '5.1.1'
 
     apply plugin: 'java'
-    apply plugin: 'maven'
     apply plugin: 'dbmodel'
     apply plugin: 'biocore-dbmodel'
     apply plugin: "checkstyle"
@@ -183,20 +182,7 @@ subprojects {
         forkEvery = 1
     }
 
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
-        from sourceSets.main.allSource
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
-    }
-
-    artifacts {
-        archives sourcesJar
-        archives javadocJar
-    }
+    // Not published (no release has ever contained bio-postprocess-*-test), so no publishing setup here.
 
     // lifecycle: the tests need the (empty) test database and intermine.properties in the resources output
     tasks.named('test') { dependsOn 'copyMineProperties', 'buildUnitTestDB' }

@@ -76,6 +76,7 @@ task classesJar(type: Jar) {
 }
 
 
-artifacts {
-    archives classesJar
+// published next to the war, as the 'classes' classifier (bio-webapp compiles against it)
+publishing.publications.configureEach {
+    artifact classesJar
 }

@@ -280,3 +280,7 @@ tasks.buildTestModelJar.dependsOn 'testClasses'
 artifacts {
     testArtifacts buildTestModelJar
 }
+
+// The main jar task is disabled at the top of this file: the jar published as intermine-testresources-<version>.jar
+// is the test model jar (test model, data and classes), as in 5.1.0. config/gradle/publishing.gradle reads this.
+ext.imMainJarTask = buildTestModelJar

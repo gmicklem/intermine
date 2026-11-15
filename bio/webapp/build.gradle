@@ -68,6 +68,7 @@ task classesJar(type: Jar) {
     from sourceSets.main.output
 }
 
-artifacts {
-    archives classesJar
+// published next to the war, as the 'classes' classifier
+publishing.publications.configureEach {
+    artifact classesJar
 }

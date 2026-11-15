@@ -28,7 +28,7 @@ run_gradle() {
 gradlew_install() {
     local dir=$1
 
-    run_gradle "$dir" install
+    run_gradle "$dir" publishToMavenLocal
 }
 
 gradlew_build() {

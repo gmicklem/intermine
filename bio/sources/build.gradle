@@ -20,6 +20,9 @@ buildscript {
     }
 }
 
+// `centralBundle`: zip of all signed publications for the Maven Central Portal (docs/RELEASING.md)
+apply from: "${rootDir}/../../config/gradle/central-bundle.gradle"
+
 ext {
     // set here to make available to individual bio-sources
     bioVersion = System.getProperty("bioVersion")
@@ -31,8 +34,6 @@ subprojects {
     version '5.1.1'
 
     apply plugin: 'java-library'
-    apply plugin: 'maven'
-    apply plugin: 'signing'
     apply plugin: 'dbmodel'
     apply plugin: 'biosource-dbmodel'
     apply plugin: "checkstyle"
@@ -232,67 +233,9 @@ subprojects {
         forkEvery = 1
     }
 
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
-        from sourceSets.main.allSource
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
-    }
-
-    artifacts {
-        archives sourcesJar
-        archives javadocJar
-    }
-
-    signing {
-        required { gradle.taskGraph.hasTask("publish") }
-        sign configurations.archives
-    }
-
-    uploadArchives {
-        repositories {
-            mavenDeployer {
-                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-                repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                    authentication(userName: ossrhUsername, password: ossrhPassword)
-                }
-
-                snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-                    authentication(userName: ossrhUsername, password: ossrhPassword)
-                }
-
-                pom.project {
-                    name project.name
-                    packaging 'jar'
-                    description 'InterMine bio sources modules'
-                    url 'https://github.com/intermine/intermine'
-
-                    scm {
-                        connection 'scm:git:git://github.com/intermine/intermine.git'
-                        developerConnection 'scm:git:ssh://github.com:intermine/intermine.git'
-                        url 'https://github.com/intermine/intermine'
-                    }
-
-                    licenses {
-                        license {
-                            name 'LGPL-2.1'
-                            url 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
-                        }
-                    }
-
-                    developers {
-                        developer {
-                            name 'InterMine core team and contributors'
-                        }
-                    }
-                }
-            }
-        }
-    }
+    // Publishing (maven-publish, signing, sources and javadoc jars, `install` alias, Central bundle): see docs/RELEASING.md
+    ext.imPublicationDescription = 'InterMine bio sources modules'
+    apply from: "${rootDir}/../../config/gradle/publishing.gradle"
 
     // the unit tests read intermine.properties from build/resources/main, which this task writes
     tasks.compileTestJava.dependsOn 'copyMineProperties'

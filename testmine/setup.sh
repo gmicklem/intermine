@@ -90,8 +90,8 @@ done
 # So we need to install them to Maven so that the testmine Gradle can fetch them
 echo "------> Installing InterMine Gradle project JARs to local Maven..."
 cd "${WORKSPACE_DIR}"/intermine
-(cd "${WORKSPACE_DIR}"/plugin && ./gradlew install --no-daemon)
-./gradlew install  --no-daemon
+(cd "${WORKSPACE_DIR}"/plugin && ./gradlew publishToMavenLocal --no-daemon)
+./gradlew publishToMavenLocal --no-daemon
 
 echo "------> Loading demo data set..."
 cd "${TESTMINE_DIR}"
