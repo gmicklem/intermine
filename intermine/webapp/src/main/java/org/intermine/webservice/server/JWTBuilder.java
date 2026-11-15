@@ -15,10 +15,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.intermine.api.profile.Profile;
 import org.json.JSONObject;
@@ -32,6 +32,8 @@ import org.json.JSONObject;
 public final class JWTBuilder
 {
 
+    // base64url without padding, as RFC 7515 requires of JWT segments
+    private static final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
     private static final String TO_STR_FMT =
             "JWTBuilder(algorithm = %s, key = %s, issuer = %s)";
     private static final String BAD_VALIDITY =
@@ -157,14 +159,14 @@ public final class JWTBuilder
         String toSign = encodeContent(header, claims);
 
         byte[] signature = sign(toSign);
-        return toSign + "." + Base64.encodeBase64URLSafeString(signature);
+        return toSign + "." + ENCODER.encodeToString(signature);
     }
 
     private String encodeContent(Map<String, Object> header,
             Map<String, Object> claims) {
         String toSign = String.format("%s.%s",
-                Base64.encodeBase64URLSafeString(new JSONObject(header).toString().getBytes()),
-                Base64.encodeBase64URLSafeString(new JSONObject(claims).toString().getBytes()));
+                ENCODER.encodeToString(new JSONObject(header).toString().getBytes()),
+                ENCODER.encodeToString(new JSONObject(claims).toString().getBytes()));
         return toSign;
     }
 

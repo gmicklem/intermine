@@ -19,8 +19,6 @@ biojava = "4.2.0"
 cglib = "3.1"
 # 1.9.4 fixes CVE-2019-10086; only pinned for Struts 1.3.10 (intermine/webapp), no InterMine code uses it
 commons-beanutils = "1.9.4"
-# one version for intermine/webapp and testmine/webapp (testmine used 1.9)
-commons-codec = "1.15"
 commons-collections = "3.2"
 commons-fileupload = "1.2.2"
 commons-io = "1.2"
@@ -79,7 +77,6 @@ biojava-core = { module = "org.biojava:biojava-core", version.ref = "biojava" }
 biojava-ontology = { module = "org.biojava:biojava-ontology", version.ref = "biojava" }
 cglib = { module = "cglib:cglib", version.ref = "cglib" }
 commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "commons-beanutils" }
-commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
 commons-collections = { module = "commons-collections:commons-collections", version.ref = "commons-collections" }
 commons-fileupload = { module = "commons-fileupload:commons-fileupload", version.ref = "commons-fileupload" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }

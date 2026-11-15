@@ -11,6 +11,7 @@ package org.intermine.web.struts.oauth2;
  */
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -19,7 +20,6 @@ import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.oltu.oauth2.client.OAuthClient;
@@ -130,7 +130,8 @@ public class Callback extends LoginHandler
         LOG.debug("GOOGLE RESPONSE: " + resp.getBody());
 
         MigrationMapping migrationMapping = null;
-        Base64 decoder = new Base64();
+        // the segments of a JWT are base64url
+        Base64.Decoder decoder = Base64.getUrlDecoder();
         String accessToken = resp.getAccessToken();
         JSONObject respData;
         try {
@@ -142,7 +143,12 @@ public class Callback extends LoginHandler
         if (jwt != null) {
             String[] pieces = jwt.split("\\.");
             if (pieces.length == 3) {
-                JSONObject claims = new JSONObject(new String(decoder.decode(pieces[1])));
+                JSONObject claims;
+                try {
+                    claims = new JSONObject(new String(decoder.decode(pieces[1])));
+                } catch (IllegalArgumentException e) {
+                    throw new ForseenProblem("oauth2.error.bad-json");
+                }
                 String openidID = claims.optString("openid_id");
                 String sub = claims.optString("sub");
                 migrationMapping = new MigrationMapping(openidID, sub);

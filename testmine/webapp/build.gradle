@@ -48,7 +48,6 @@ dependencies {
     implementation libs.struts.tiles
     implementation libs.javax.mail
     implementation libs.dwr
-    runtimeOnly libs.commons.codec
     runtimeOnly libs.jsp.api
     runtimeOnly libs.taglibs.string
     runtimeOnly libs.commons.fileupload
