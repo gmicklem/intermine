@@ -1,14 +1,15 @@
 InterMine
 ============
 
-Master: [![InterMine CI](https://github.com/intermine/intermine/workflows/InterMine%20CI/badge.svg?branch=master)](https://github.com/intermine/intermine/actions?query=workflow%3A%22InterMine+CI%22)
-Dev: [![InterMine CI](https://github.com/intermine/intermine/workflows/InterMine%20CI/badge.svg?branch=dev)](https://github.com/intermine/intermine/actions?query=workflow%3A%22InterMine+CI%22)
+Master: [![InterMine CI](https://github.com/intermine/intermine/actions/workflows/im-build.yml/badge.svg?branch=master)](https://github.com/intermine/intermine/actions/workflows/im-build.yml?query=branch%3Amaster)
+Dev: [![InterMine CI](https://github.com/intermine/intermine/actions/workflows/im-build.yml/badge.svg?branch=dev)](https://github.com/intermine/intermine/actions/workflows/im-build.yml?query=branch%3Adev)
+[![Checkstyle](https://github.com/intermine/intermine/actions/workflows/checkstyle.yml/badge.svg?branch=dev)](https://github.com/intermine/intermine/actions/workflows/checkstyle.yml?query=branch%3Adev)
 [![Version](http://img.shields.io/badge/version-5.1.0-blue.svg?style=flat)](https://github.com/intermine/intermine/releases)
 [![License](http://img.shields.io/badge/license-LGPL_2.1-blue.svg?style=flat)](https://github.com/intermine/intermine/blob/master/LICENSE)
 [![Research software impact](http://depsy.org/api/package/pypi/intermine/badge.svg)](http://depsy.org/package/python/intermine)
 [![Conda](https://anaconda.org/anaconda/conda-build/badges/installer/conda.svg)](https://anaconda.org/bioconda/intermine)
 [![Documentation Status](https://readthedocs.org/projects/intermine/badge/?version=latest)](https://intermine.readthedocs.io/en/latest/?badge=latest)
-f
+
 A powerful open source data warehouse system. InterMine allows users
 to integrate diverse data sources with a minimum of effort, providing
 powerful web-services and an elegant web-application with minimal
@@ -86,8 +87,6 @@ Stěpán R, Sullivan J, Micklem G.* <br/>
 
 See [zotero](https://www.zotero.org/groups/2117194/intermine/) for the full list of InterMine publications.
 
-[travis-badge-master]: https://travis-ci.org/intermine/intermine.svg?branch=master
-[ci]: https://travis-ci.org/intermine/intermine
 [readthedocs]: http://intermine.readthedocs.org/en/latest
 [tutorial]: http://intermine.readthedocs.org/en/latest/get-started/tutorial
 [psql]: http://www.postgresql.org
