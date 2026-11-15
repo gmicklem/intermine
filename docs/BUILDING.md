@@ -168,4 +168,6 @@ All run inside one build directory, after `config/lib/install_intermine.py` has 
 ./gradlew checkstyleMain           # checkstyle only
 ```
 
+Checkstyle 9.3 (`checkstyle` in `gradle/libs.versions.toml`, the last release that runs on JDK 8) is run by the plain Gradle `checkstyle` plugin on `src/main` only, with the rules in `config/checkstyle/checkstyle.xml`, the header in `config/checkstyle/copyright_header.txt` and the exceptions in `config/checkstyle/suppressions.xml`. It needs nothing from the build classpath. The reports are `build/reports/checkstyle/main.xml` and `main.html` in each module.
+
 These are the commands in `CONTRIBUTING.md`, `config/ci/run.sh` and `config/lib/install_intermine.py`. CI adds `-Dorg.gradle.jvmargs=-Xmx4g --max-workers=4 --no-daemon --warning-mode all --stacktrace`.

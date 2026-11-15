@@ -26,18 +26,30 @@
 <module name="Checker">
   <property name="severity" value="warning"/>
 
-  <module name="TreeWalker">
-    <property name="tabWidth" value="4"/>
+  <property name="tabWidth" value="4"/>
 
+  <module name="TreeWalker">
     <module name="JavadocType">
       <property name="scope" value="package" />
       <property name="authorFormat" value="" />
       <property name="tokens" value="INTERFACE_DEF,CLASS_DEF" />
     </module>
 
-    <module name="JavadocMethod">
+    <!-- Checkstyle 8.20 and 8.21 split the "missing Javadoc" half of JavadocType and JavadocMethod into their own
+         checks; the settings are those the old checks had. JavadocMethod no longer loads the exception
+         classes of `throws` clauses (8.28), so a declared exception without a @throws tag is not reported. -->
+    <module name="MissingJavadocType">
       <property name="scope" value="package" />
-      <property name="allowUndeclaredRTE" value="true" />
+      <property name="tokens" value="INTERFACE_DEF,CLASS_DEF" />
+    </module>
+
+    <module name="JavadocMethod">
+      <property name="accessModifiers" value="public, protected, package" />
+      <property name="tokens" value="METHOD_DEF,CTOR_DEF" />
+    </module>
+
+    <module name="MissingJavadocMethod">
+      <property name="scope" value="package" />
       <property name="tokens" value="METHOD_DEF,CTOR_DEF" />
     </module>
 
@@ -96,11 +108,6 @@
     <module name="UnusedImports"/>
 
     <!-- size violations -->
-
-    <module name="LineLength">
-      <property name="max" value="100"/>
-      <property name="ignorePattern" value="^$"/>
-    </module>
 
     <module name="MethodLength">
       <property name="tokens" value="METHOD_DEF, CTOR_DEF"/>
@@ -247,6 +254,12 @@
   <!--<module name="FileLength">
     <property name="max" value="2200"/>
   </module>-->
+
+  <!-- a Checker child since Checkstyle 8.24 (it was a TreeWalker check) -->
+  <module name="LineLength">
+    <property name="max" value="100"/>
+    <property name="ignorePattern" value="^$"/>
+  </module>
 
   <module name="FileTabCharacter">
     <property name="eachLine" value="true"/>

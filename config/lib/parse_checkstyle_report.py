@@ -27,16 +27,6 @@ class CheckStyleHandler(ContentHandler):
         elif name == "error":
             self.handleError(attrs)
 
-    # TODO - compile the classes so we don't have to do this.
-    def can_ignore(self, err):
-        if "Unable to get class information" in err.message:
-            return True
-        if "Redundant throws" in err.message:
-            return True
-        if "Unused @throws tag" in err.message:
-            return True
-        return False
-
     def handleError(self, attrs):
         err = Error(
             attrs.get("severity"),
@@ -44,8 +34,7 @@ class CheckStyleHandler(ContentHandler):
             attrs.get("column"),
             attrs.get("message"),
         )
-        if not self.can_ignore(err):
-            self.errors[self.currentFile].append(err)
+        self.errors[self.currentFile].append(err)
 
 
 class NervousErrorHandler(ErrorHandler):
