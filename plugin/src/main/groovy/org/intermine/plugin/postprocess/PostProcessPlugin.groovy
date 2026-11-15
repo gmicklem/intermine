@@ -1,5 +1,6 @@
 package org.intermine.plugin.postprocess
 
+import groovy.ant.AntBuilder
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -34,7 +35,7 @@ class PostProcessPlugin implements Plugin<Project> {
     void apply(Project project) {
         // Resolvable only. integrateSource is shared with the integrate plugin.
         ['postProcesses', 'integrateSource'].each { name ->
-            project.configurations.maybeCreate(name).canBeConsumed = false
+            DBModelUtils.resolvableConfiguration(project, name)
         }
         // the bio-postprocess jars of the selected post-processes (initPostProcess used to add them)
         project.configurations.getByName('postProcesses').withDependencies { DependencySet deps ->
@@ -76,8 +77,8 @@ class PostProcessPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('postProcess') {
-            group TaskConstants.TASK_GROUP
-            description "Post processes. Optional input parameters: process (process name) and source(if process=do-sources). E.g. postprocess -Pprocess=create-references"
+            group = TaskConstants.TASK_GROUP
+            description = "Post processes. Optional input parameters: process (process name) and source(if process=do-sources). E.g. postprocess -Pprocess=create-references"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast{
@@ -105,7 +106,7 @@ class PostProcessPlugin implements Plugin<Project> {
                                 ant.project.setProperty("source.name", sourceName)
                                 ant.taskdef(name: "sourcePostProcess", classname: "org.intermine.task.PostProcessorTask") {
                                     classpath {
-                                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                                         pathelement(path: project.configurations.getByName("integrateSource").asPath)
                                     }
@@ -123,7 +124,7 @@ class PostProcessPlugin implements Plugin<Project> {
                             String postprocessorClassName = bioSourceProperties.getPostProcesserClassName(processName)
                             ant.taskdef(name: "corePostProcess", classname: "org.intermine.task.PostProcessorTask") {
                                 classpath {
-                                dirset(dir: project.getBuildDir().getAbsolutePath())
+                                dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                                 pathelement(path: project.configurations.getByName("postProcesses").asPath)
                                 }

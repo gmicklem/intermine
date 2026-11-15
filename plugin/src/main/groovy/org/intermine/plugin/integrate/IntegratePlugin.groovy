@@ -24,7 +24,7 @@ class IntegratePlugin implements Plugin<Project> {
     void apply(Project project) {
         // Resolvable only; nothing should consume them.
         ['integrateSource', 'postProcesses', 'bioCore'].each { name ->
-            project.configurations.maybeCreate(name).canBeConsumed = false
+            DBModelUtils.resolvableConfiguration(project, name)
         }
         DBModelPlugin.addDependency(project, 'bioCore') {
             [group: "org.intermine", name: "bio-core", version: System.getProperty("bioVersion"), transitive: false]
@@ -45,21 +45,21 @@ class IntegratePlugin implements Plugin<Project> {
         }
 
         project.tasks.register('integrate') {
-            group TaskConstants.TASK_GROUP
-            description "Integrates sources into production database. Optional input properties: source (source name) and action(possible values: pre-retrieve, retrieve or load). E.g. integrate -Psource=uniprot-malaria -Paction=load"
+            group = TaskConstants.TASK_GROUP
+            description = "Integrates sources into production database. Optional input properties: source (source name) and action(possible values: pre-retrieve, retrieve or load). E.g. integrate -Psource=uniprot-malaria -Paction=load"
             // lifecycle (kept): an aggregate task; onlyIf picks the single- or multi-source path.
             dependsOn 'integrateSingleSource', 'integrateMultipleSources'
         }
 
         project.tasks.register('integrateSingleSource') {
-            description "Integrates single source into production database."
+            description = "Integrates single source into production database."
             // lifecycle (kept): the database pipeline for one source.
             dependsOn 'preRetrieveSingleSource', 'retrieveSingleSource', 'loadSingleSource'
             onlyIf { spec(project).sourceNames.size() == 1 }
         }
 
         project.tasks.register('integrateMultipleSources') {
-            description "Integrates multiple sources into production database."
+            description = "Integrates multiple sources into production database."
             integrates(it)
             onlyIf { spec(project).sourceNames.size() > 1 }
 
@@ -94,7 +94,7 @@ class IntegratePlugin implements Plugin<Project> {
         }
 
         project.tasks.register('preRetrieveSingleSource') {
-            description "Pre-retrieves a single source"
+            description = "Pre-retrieves a single source"
             integrates(it)
             // lifecycle (kept): the items database must exist first.
             dependsOn 'buildTgtItems'
@@ -110,7 +110,7 @@ class IntegratePlugin implements Plugin<Project> {
         }
 
         project.tasks.register('retrieveSingleSource') {
-            description "Retrieves a single source into tgt items database"
+            description = "Retrieves a single source into tgt items database"
             integrates(it)
             // lifecycle (kept): database pipeline order.
             dependsOn 'buildTgtItems', 'preRetrieveSingleSource'
@@ -137,7 +137,7 @@ class IntegratePlugin implements Plugin<Project> {
         }
 
         project.tasks.register('buildTgtItems') {
-            description "Builds tgt items database"
+            description = "Builds tgt items database"
             integrates(it)
             onlyIf { spec(project).sourceNames.size() == 1 && !spec(project).action.equals(IntegrateAction.LOAD) }
 
@@ -157,7 +157,7 @@ class IntegratePlugin implements Plugin<Project> {
         }
 
         project.tasks.register('loadSingleSource') {
-            description "Loads items into production database"
+            description = "Loads items into production database"
             integrates(it)
             // ordering (kept): with -Paction=load alone the retrieve step is not run at all.
             mustRunAfter 'retrieveSingleSource'

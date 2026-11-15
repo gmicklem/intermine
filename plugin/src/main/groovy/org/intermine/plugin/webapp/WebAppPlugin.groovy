@@ -1,5 +1,6 @@
 package org.intermine.plugin.webapp
 
+import groovy.ant.AntBuilder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPlugin
@@ -21,7 +22,7 @@ class WebAppPlugin implements Plugin<Project> {
 
         // Resolvable only (see DBModelPlugin); the dependencies are added when they are resolved.
         ['commonResources', 'bioWebApp'].each { name ->
-            project.configurations.maybeCreate(name).canBeConsumed = false
+            DBModelUtils.resolvableConfiguration(project, name)
         }
         DBModelPlugin.addDependency(project, 'commonResources') {
             [group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")]
@@ -31,7 +32,7 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('copyDefaultInterMineProperties') {
-            description "Copies default.intermine.properties file into resources output"
+            description = "Copies default.intermine.properties file into resources output"
             // ordering only: it writes into processResources' output directory.
             mustRunAfter 'processResources'
 
@@ -41,7 +42,7 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('mergeProperties') {
-            description "Append intermine.properties to web.properties file"
+            description = "Append intermine.properties to web.properties file"
             String webPropertiesPath = project.projectDir.absolutePath + File.separator + "src" + File.separator + "main" +
                     File.separator + "webapp" + File.separator + "WEB-INF" + File.separator + "web.properties"
             inputs.files(webPropertiesPath)
@@ -61,7 +62,7 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('addStrutsConfig') {
-            description "Append the struts config modifications to the webapp"
+            description = "Append the struts config modifications to the webapp"
             // Edits, in place, the files unwarBioWebApp unpacks, so it must run right after it every
             // time (neither declares outputs). The struts and tiles fragments come from the resources.
             // A single Sync task with filters should replace the pair once the plugin composes the war.
@@ -69,10 +70,11 @@ class WebAppPlugin implements Plugin<Project> {
             inputs.files(project.files({ explodedWebApp(project) }).builtBy('unwarBioWebApp'))
 
             doLast {
-                String buildResDir = project.buildDir.absolutePath + File.separator + "resources" + File.separator + "main" + File.separator
-                File strutsConfigModelPath = new File(buildResDir + "struts-config-model.xml")
-                File strutsConfigFormPath = new File(buildResDir + "struts-config-form-model.xml")
-                File strutsConfigPath = new File(project.buildDir.absolutePath + "/explodedWebApp/WEB-INF/struts-config.xml")
+                File buildResDir = DBModelUtils.buildFile(project, "resources/main")
+                File webInf = new File(explodedWebApp(project), "WEB-INF")
+                File strutsConfigModelPath = new File(buildResDir, "struts-config-model.xml")
+                File strutsConfigFormPath = new File(buildResDir, "struts-config-form-model.xml")
+                File strutsConfigPath = new File(webInf, "struts-config.xml")
 
                 //struts-config.xml
                 String content = strutsConfigPath.text
@@ -85,24 +87,24 @@ class WebAppPlugin implements Plugin<Project> {
                 }
 
                 //tiles-defs.xml
-                File tilesDefsModel = new File(buildResDir + "tiles-defs-model.xml")
-                File tilesDefs = new File(project.buildDir.absolutePath + "/explodedWebApp/WEB-INF/tiles-defs.xml")
+                File tilesDefsModel = new File(buildResDir, "tiles-defs-model.xml")
+                File tilesDefs = new File(webInf, "tiles-defs.xml")
                 content = tilesDefs.text
                 tilesDefs.withWriter { w ->
                     w << content.replace("<!--@MODEL_INCLUDE@-->", tilesDefsModel.text)
                 }
 
                 // web.xml
-                File webXml = new File(project.buildDir.absolutePath + "/explodedWebApp/WEB-INF/web.xml")
-                File webBio = new File(project.buildDir.absolutePath + "/explodedWebApp/WEB-INF/web-bio.xml")
+                File webXml = new File(webInf, "web.xml")
+                File webBio = new File(webInf, "web-bio.xml")
                 content = webXml.text
                 webXml.withWriter { w ->
                     w << content.replace("<!--@MODEL_INCLUDE@-->", webBio.text)
                 }
 
                 //internationalisation
-                File modelProperties = new File(buildResDir + "model.properties")
-                File intermineWebAppProperties = new File(project.buildDir.absolutePath + "/explodedWebApp/WEB-INF/classes/InterMineWebApp.properties")
+                File modelProperties = new File(buildResDir, "model.properties")
+                File intermineWebAppProperties = new File(webInf, "classes/InterMineWebApp.properties")
                 intermineWebAppProperties.append(modelProperties.text)
             }
         }
@@ -110,7 +112,7 @@ class WebAppPlugin implements Plugin<Project> {
         // this plugin requires a database to exist and be populated. However this plugin is run at compile time, not runtime.
         // We have no guarantee there will be a database. Hence the try/catch
         project.tasks.register('summariseObjectStore') {
-            description "Summarise ObjectStore into objectstoresummary.properties file"
+            description = "Summarise ObjectStore into objectstoresummary.properties file"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
@@ -118,7 +120,7 @@ class WebAppPlugin implements Plugin<Project> {
                     def ant = new AntBuilder()
                     ant.taskdef(name: "summarizeObjectStore", classname: "org.intermine.task.SummariseObjectStoreTask") {
                         classpath {
-                            dirset(dir: project.getBuildDir().getAbsolutePath())
+                            dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
                     }
@@ -131,7 +133,7 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('unwarBioWebApp') {
-            description "Unwar bio-webapp under the build/explodedWebAppDir directory"
+            description = "Unwar bio-webapp under the build/explodedWebAppDir directory"
 
             doLast {
                 String bioWebAppWar = project.configurations.getByName("bioWebApp").singleFile.absolutePath;
@@ -142,8 +144,8 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('loadDefaultTemplates') {
-            group TaskConstants.TASK_GROUP
-            description "Loads default template queries from an XML file into a given user profile"
+            group = TaskConstants.TASK_GROUP
+            description = "Loads default template queries from an XML file into a given user profile"
             // the runtime classpath builds the dbmodel jar (in case a clean has been run), which holds
             // class_keys.properties
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
@@ -162,7 +164,7 @@ class WebAppPlugin implements Plugin<Project> {
 
                 ant.taskdef(name: "loadTemplates", classname: "org.intermine.web.task.LoadDefaultTemplatesTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -174,15 +176,15 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('dropPrecomputedTables') {
-            group TaskConstants.TASK_GROUP
-            description "Drops all precomputed tables from the database"
+            group = TaskConstants.TASK_GROUP
+            description = "Drops all precomputed tables from the database"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
                 def ant = new AntBuilder()
                 ant.taskdef(name: "dropPrecomputedTables", classname: "org.intermine.task.DropPrecomputedTablesTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -191,15 +193,15 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('precomputeQueries') {
-            group TaskConstants.TASK_GROUP
-            description "Creates temporary tables to make querying faster -- uses 'genomic_precompute.properties'"
+            group = TaskConstants.TASK_GROUP
+            description = "Creates temporary tables to make querying faster -- uses 'genomic_precompute.properties'"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
                 def ant = new AntBuilder()
                 ant.taskdef(name: "precomputeQueries", classname: "org.intermine.task.PrecomputeTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -209,8 +211,8 @@ class WebAppPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('precomputeTemplates') {
-            group TaskConstants.TASK_GROUP
-            description "Creates temporary tables to make querying faster -- uses the results of your template queries"
+            group = TaskConstants.TASK_GROUP
+            description = "Creates temporary tables to make querying faster -- uses the results of your template queries"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
@@ -223,7 +225,7 @@ class WebAppPlugin implements Plugin<Project> {
 
                 ant.taskdef(name: "precomputeTemplates", classname: "org.intermine.web.task.PrecomputeTemplatesTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -235,6 +237,6 @@ class WebAppPlugin implements Plugin<Project> {
     }
 
     static File explodedWebApp(Project project) {
-        new File(project.buildDir, "explodedWebApp")
+        DBModelUtils.buildFile(project, "explodedWebApp")
     }
 }

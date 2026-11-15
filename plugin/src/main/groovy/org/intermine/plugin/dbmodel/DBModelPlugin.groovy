@@ -1,5 +1,7 @@
 package org.intermine.plugin.dbmodel
 
+import groovy.ant.AntBuilder
+import groovy.xml.XmlParser
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -36,7 +38,7 @@ class DBModelPlugin implements Plugin<Project> {
         // applies java-library).
         ['bioModel', 'bioModelForSOOnly', 'commonResources', 'mergeSource', DBModelUtils.IM_API_JAR,
          IM_ANTLR].each { name ->
-            project.configurations.maybeCreate(name).canBeConsumed = false
+            DBModelUtils.resolvableConfiguration(project, name)
         }
         addDependency(project, 'commonResources') {
             [group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")]
@@ -83,7 +85,7 @@ class DBModelPlugin implements Plugin<Project> {
         String afterResources = 'processResources'
 
         project.tasks.register('copyDefaultInterMineProperties') {
-            description "Copies default.intermine.integrate.properties file into resources output"
+            description = "Copies default.intermine.integrate.properties file into resources output"
             mustRunAfter afterResources
             doLast {
                 dbUtils.copyDefaultPropertiesFile(config.defaultInterminePropertiesFile)
@@ -100,7 +102,7 @@ class DBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('copyGenomicKeys') {
-            description "Copies default keys for bio in the case of unit tests."
+            description = "Copies default keys for bio in the case of unit tests."
             mustRunAfter afterResources
             doLast {
                 DBModelUtils.copyFromArchive(project, modelArchive(project).singleFile, "genomic_keyDefs.properties",
@@ -109,7 +111,7 @@ class DBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('generateKeys') {
-            description "Append keys for each source in project.xml to generated genomic_keyDefs.properties file"
+            description = "Append keys for each source in project.xml to generated genomic_keyDefs.properties file"
             mustRunAfter afterResources
             onlyIf { projectXml(project).exists() }
 
@@ -193,7 +195,7 @@ class DBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('createSoModel') {
-            description "Reads SO OBO files and writes so_additions.xml"
+            description = "Reads SO OBO files and writes so_additions.xml"
             onlyIf { regenerateModel(project) }
 
             doLast {
@@ -202,7 +204,7 @@ class DBModelPlugin implements Plugin<Project> {
                 if (project.name.equals("bio-model")) {
                     ant.taskdef(name: "createSoModel", classname: "org.intermine.bio.task.SOToModelTask") {
                         classpath {
-                            dirset(dir: project.buildDir.absolutePath)
+                            dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
                     }
@@ -219,12 +221,12 @@ class DBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('generateModel') {
-            description "Merges different source model files into an intermine XML model"
+            description = "Merges different source model files into an intermine XML model"
             onlyIf { regenerateModel(project) }
             // mergeModels (added by the biocore-, biomodel-, biosource- or mine-dbmodel plugin) leaves
             // the merged <modelName>_model.xml in build/resources/main; this generates the Java from it.
             inputs.files(DBModelUtils.resource(project, 'mergeModels') { config.modelName + "_model.xml" })
-            outputs.dir(genDir(project))
+            outputs.dir(project.layout.buildDirectory.dir("gen"))
 
             doLast {
                 dbUtils.generateModel(config.modelName)
@@ -236,8 +238,8 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.named('compileJava').configure { dependsOn 'generateModel' }
 
         project.tasks.register('buildDB') {
-            group TaskConstants.TASK_GROUP
-            description "Build the database for the webapp"
+            group = TaskConstants.TASK_GROUP
+            description = "Build the database for the webapp"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties() +
                     ['generateKeys': { config.modelName + "_keyDefs.properties" }])
 
@@ -255,7 +257,7 @@ class DBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('buildUnitTestDB') {
-            description "Build the database for the webapp"
+            description = "Build the database for the webapp"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties() +
                     ['copyGenomicModel': { config.modelName + "_model.xml" },
                      'copyGenomicKeys': { config.modelName + "_keyDefs.properties" }])
@@ -278,8 +280,8 @@ class DBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('createUserDB') {
-            group TaskConstants.TASK_GROUP
-            description "Creates empty tables in the userprofile database."
+            group = TaskConstants.TASK_GROUP
+            description = "Creates empty tables in the userprofile database."
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties() +
                     ['copyUserProfileModel': { config.userProfileModelName + "_model.xml" }])
 
@@ -291,15 +293,15 @@ class DBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('buildUserDB') {
-            group TaskConstants.TASK_GROUP
-            description "Creates empty tables in the userprofile database, then loads the superuser and default templates."
+            group = TaskConstants.TASK_GROUP
+            description = "Creates empty tables in the userprofile database, then loads the superuser and default templates."
             // lifecycle (kept): an aggregate task with no action of its own.
             dependsOn 'createUserDB', ':webapp:loadDefaultTemplates'
         }
 
         project.tasks.register('runAcceptanceTests') {
-            group TaskConstants.TASK_GROUP
-            description "Run the configured acceptance tests against the production database, uses <MINE_NAME>_acceptance_test.conf"
+            group = TaskConstants.TASK_GROUP
+            description = "Run the configured acceptance tests against the production database, uses <MINE_NAME>_acceptance_test.conf"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
@@ -311,7 +313,7 @@ class DBModelPlugin implements Plugin<Project> {
 
                 ant.taskdef(name: "acceptanceTest", classname: "org.intermine.task.AcceptanceTestTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -321,8 +323,8 @@ class DBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('runIQLQuery') {
-            group TaskConstants.TASK_GROUP
-            description "Run an IQL query against the database, e.g. -Pquery=SELECT DISTINCT a2_.primaryIdentifier AS a1_ FROM org.intermine.model.bio.Gene AS a2_"
+            group = TaskConstants.TASK_GROUP
+            description = "Run an IQL query against the database, e.g. -Pquery=SELECT DISTINCT a2_.primaryIdentifier AS a1_ FROM org.intermine.model.bio.Gene AS a2_"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
@@ -331,7 +333,7 @@ class DBModelPlugin implements Plugin<Project> {
                     def query = project.properties['query']
                     ant.taskdef(name: "runIQLQuery", classname: "org.intermine.task.RunIqlQueryTask") {
                         classpath {
-                            dirset(dir: project.getBuildDir().getAbsolutePath())
+                            dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                             pathelement(path: project.configurations.getByName(IM_ANTLR).asPath)
                         }
@@ -342,8 +344,8 @@ class DBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('generateUpdateTriggers') {
-            group TaskConstants.TASK_GROUP
-            description "Generates SQL files for manual CRUD operations on InterMine database. THIS IS AN EXPERIMENTAL FEATURE, USE AT YOUR OWN RISK."
+            group = TaskConstants.TASK_GROUP
+            description = "Generates SQL files for manual CRUD operations on InterMine database. THIS IS AN EXPERIMENTAL FEATURE, USE AT YOUR OWN RISK."
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
 
             doLast {
@@ -351,7 +353,7 @@ class DBModelPlugin implements Plugin<Project> {
                 String buildResourcesMainDir = dbUtils.buildResourcesMainDir
                 ant.taskdef(name: "generateUpdateTriggers", classname: "org.intermine.task.GenerateUpdateTriggersTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -372,7 +374,7 @@ class DBModelPlugin implements Plugin<Project> {
     }
 
     static File genDir(Project project) {
-        new File(project.getBuildDir(), "gen")
+        DBModelUtils.buildFile(project, "gen")
     }
 
     /**
