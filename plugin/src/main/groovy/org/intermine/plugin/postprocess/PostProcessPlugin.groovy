@@ -106,7 +106,7 @@ class PostProcessPlugin implements Plugin<Project> {
                                 ant.project.setProperty("source.name", sourceName)
                                 ant.taskdef(name: "sourcePostProcess", classname: "org.intermine.task.PostProcessorTask") {
                                     classpath {
-                                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                                         pathelement(path: project.configurations.getByName("integrateSource").asPath)
                                     }
@@ -124,7 +124,7 @@ class PostProcessPlugin implements Plugin<Project> {
                             String postprocessorClassName = bioSourceProperties.getPostProcesserClassName(processName)
                             ant.taskdef(name: "corePostProcess", classname: "org.intermine.task.PostProcessorTask") {
                                 classpath {
-                                dirset(dir: project.getBuildDir().getAbsolutePath())
+                                dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                                 pathelement(path: project.configurations.getByName("postProcesses").asPath)
                                 }

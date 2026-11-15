@@ -83,7 +83,7 @@ class BioSourceDBModelPlugin implements Plugin<Project>{
                     ant.taskdef(name: "mergeBioSourceModel", classname: "org.intermine.task.ModelMergerTask") {
                         classpath {
                             pathelement(path: project.configurations.mergeModel.asPath)
-                            dirset(dir: project.buildDir.absolutePath)
+                            dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         }
                     }
                     String extraAdditionsFile = config.globalAdditionsFile

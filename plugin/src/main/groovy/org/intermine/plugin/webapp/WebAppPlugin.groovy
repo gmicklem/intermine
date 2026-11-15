@@ -70,10 +70,11 @@ class WebAppPlugin implements Plugin<Project> {
             inputs.files(project.files({ explodedWebApp(project) }).builtBy('unwarBioWebApp'))
 
             doLast {
-                String buildResDir = project.buildDir.absolutePath + File.separator + "resources" + File.separator + "main" + File.separator
-                File strutsConfigModelPath = new File(buildResDir + "struts-config-model.xml")
-                File strutsConfigFormPath = new File(buildResDir + "struts-config-form-model.xml")
-                File strutsConfigPath = new File(project.buildDir.absolutePath + "/explodedWebApp/WEB-INF/struts-config.xml")
+                File buildResDir = DBModelUtils.buildFile(project, "resources/main")
+                File webInf = new File(explodedWebApp(project), "WEB-INF")
+                File strutsConfigModelPath = new File(buildResDir, "struts-config-model.xml")
+                File strutsConfigFormPath = new File(buildResDir, "struts-config-form-model.xml")
+                File strutsConfigPath = new File(webInf, "struts-config.xml")
 
                 //struts-config.xml
                 String content = strutsConfigPath.text
@@ -86,24 +87,24 @@ class WebAppPlugin implements Plugin<Project> {
                 }
 
                 //tiles-defs.xml
-                File tilesDefsModel = new File(buildResDir + "tiles-defs-model.xml")
-                File tilesDefs = new File(project.buildDir.absolutePath + "/explodedWebApp/WEB-INF/tiles-defs.xml")
+                File tilesDefsModel = new File(buildResDir, "tiles-defs-model.xml")
+                File tilesDefs = new File(webInf, "tiles-defs.xml")
                 content = tilesDefs.text
                 tilesDefs.withWriter { w ->
                     w << content.replace("<!--@MODEL_INCLUDE@-->", tilesDefsModel.text)
                 }
 
                 // web.xml
-                File webXml = new File(project.buildDir.absolutePath + "/explodedWebApp/WEB-INF/web.xml")
-                File webBio = new File(project.buildDir.absolutePath + "/explodedWebApp/WEB-INF/web-bio.xml")
+                File webXml = new File(webInf, "web.xml")
+                File webBio = new File(webInf, "web-bio.xml")
                 content = webXml.text
                 webXml.withWriter { w ->
                     w << content.replace("<!--@MODEL_INCLUDE@-->", webBio.text)
                 }
 
                 //internationalisation
-                File modelProperties = new File(buildResDir + "model.properties")
-                File intermineWebAppProperties = new File(project.buildDir.absolutePath + "/explodedWebApp/WEB-INF/classes/InterMineWebApp.properties")
+                File modelProperties = new File(buildResDir, "model.properties")
+                File intermineWebAppProperties = new File(webInf, "classes/InterMineWebApp.properties")
                 intermineWebAppProperties.append(modelProperties.text)
             }
         }
@@ -119,7 +120,7 @@ class WebAppPlugin implements Plugin<Project> {
                     def ant = new AntBuilder()
                     ant.taskdef(name: "summarizeObjectStore", classname: "org.intermine.task.SummariseObjectStoreTask") {
                         classpath {
-                            dirset(dir: project.getBuildDir().getAbsolutePath())
+                            dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
                     }
@@ -163,7 +164,7 @@ class WebAppPlugin implements Plugin<Project> {
 
                 ant.taskdef(name: "loadTemplates", classname: "org.intermine.web.task.LoadDefaultTemplatesTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -183,7 +184,7 @@ class WebAppPlugin implements Plugin<Project> {
                 def ant = new AntBuilder()
                 ant.taskdef(name: "dropPrecomputedTables", classname: "org.intermine.task.DropPrecomputedTablesTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -200,7 +201,7 @@ class WebAppPlugin implements Plugin<Project> {
                 def ant = new AntBuilder()
                 ant.taskdef(name: "precomputeQueries", classname: "org.intermine.task.PrecomputeTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -224,7 +225,7 @@ class WebAppPlugin implements Plugin<Project> {
 
                 ant.taskdef(name: "precomputeTemplates", classname: "org.intermine.web.task.PrecomputeTemplatesTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -236,6 +237,6 @@ class WebAppPlugin implements Plugin<Project> {
     }
 
     static File explodedWebApp(Project project) {
-        new File(project.buildDir, "explodedWebApp")
+        DBModelUtils.buildFile(project, "explodedWebApp")
     }
 }

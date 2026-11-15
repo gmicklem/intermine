@@ -41,7 +41,7 @@ class MineDBModelPlugin implements Plugin<Project> {
                         pathelement(path: project.configurations.getByName(IM_PLUGIN).asPath)
                         pathelement(path: project.configurations.getByName("mergeSource").asPath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                     }
                 }
                 ant.mergeSourceModels(projectXmlPath: projectXmlFilePath,

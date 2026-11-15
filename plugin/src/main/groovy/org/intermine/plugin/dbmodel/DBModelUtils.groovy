@@ -29,6 +29,20 @@ class DBModelUtils {
         project.configurations.getByName("runtimeClasspath")
     }
 
+    /**
+     * The project's build directory (layout.buildDirectory: Project.getBuildDir() is deprecated from
+     * Gradle 8.3), read when called so that a build script can still move it after apply. A File,
+     * because the Ant tasks take plain paths.
+     */
+    static File buildDirectory(Project project) {
+        project.layout.buildDirectory.get().asFile
+    }
+
+    /** A file or directory under the build directory (see buildDirectory). */
+    static File buildFile(Project project, String path) {
+        project.layout.buildDirectory.file(path).get().asFile
+    }
+
     /** The main source set's resources output directory, where the InterMine runtime files live. */
     static String resourcesDir(Project project) {
         SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
@@ -112,15 +126,15 @@ class DBModelUtils {
 
     protected generateModel = { modelName ->
         def ant = new AntBuilder()
-        String destination = project.getBuildDir().getAbsolutePath() + File.separator + "gen"
-        File destinationPath = new File(destination);
+        File destinationPath = DBModelUtils.buildFile(project, "gen")
+        String destination = destinationPath.absolutePath
         if (! destinationPath.exists()){
             // we might have done a clean right before. compileJava comes after this step
             destinationPath.mkdirs();
         }
         ant.taskdef(name: "modelOutputTask", classname: "org.intermine.task.ModelOutputTask") {
             classpath {
-                dirset(dir: project.getBuildDir().getAbsolutePath())
+                dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                 pathelement(path: project.configurations.getByName("bioModel").asPath)
             }
@@ -130,13 +144,13 @@ class DBModelUtils {
 
     protected createSchema = { objectStoreName ->
         String schemaFile = objectStoreName + "-schema.xml"
-        String destination = project.getBuildDir().getAbsolutePath() + File.separator + schemaFile
+        String destination = DBModelUtils.buildFile(project, schemaFile).absolutePath
         System.out.println("Creating schema in objectstore ${objectStoreName} for ${destination}")
 
         def ant = new AntBuilder()
         ant.taskdef(name: "torque", classname: "org.intermine.objectstore.intermine.TorqueModelOutputTask") {
             classpath {
-                dirset(dir: project.getBuildDir().getAbsolutePath())
+                dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                 pathelement(path: project.configurations.getByName("bioModel").asPath)
                 pathelement(path: project.configurations.getByName(IM_API_JAR).asPath) //userprofile classes
@@ -147,14 +161,14 @@ class DBModelUtils {
 
     protected createTables = { objectStoreName, modelName ->
         String schemaFile = objectStoreName + "-schema.xml"
-        String tempDirectory = project.getBuildDir().getAbsolutePath() + File.separator + "tmp"
+        String tempDirectory = DBModelUtils.buildFile(project, "tmp").absolutePath
         System.out.println("Creating tables in objectstore ${objectStoreName} with schema ${schemaFile}")
 
         def ant = new AntBuilder()
         ant.taskdef(name: "buildDB", classname: "org.intermine.task.BuildDbTask") {
             classpath {
                 dirset(dir: buildResourcesMainDir)//to read default.intermine.properties
-                pathelement(path: project.buildDir.getAbsolutePath())//to read the schema
+                pathelement(path: DBModelUtils.buildDirectory(project).absolutePath)//to read the schema
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
             }
         }
@@ -195,7 +209,7 @@ class DBModelUtils {
         ant.taskdef(name: 'createIndexes', classname: 'org.intermine.task.CreateIndexesTask') {
             classpath {
                 dirset(dir: buildResourcesMainDir) // intermine.properties
-                dirset(dir: project.getBuildDir().getAbsolutePath())
+                dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
             }
         }

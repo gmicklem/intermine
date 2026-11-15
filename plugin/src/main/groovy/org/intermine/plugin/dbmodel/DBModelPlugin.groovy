@@ -204,7 +204,7 @@ class DBModelPlugin implements Plugin<Project> {
                 if (project.name.equals("bio-model")) {
                     ant.taskdef(name: "createSoModel", classname: "org.intermine.bio.task.SOToModelTask") {
                         classpath {
-                            dirset(dir: project.buildDir.absolutePath)
+                            dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
                     }
@@ -226,7 +226,7 @@ class DBModelPlugin implements Plugin<Project> {
             // mergeModels (added by the biocore-, biomodel-, biosource- or mine-dbmodel plugin) leaves
             // the merged <modelName>_model.xml in build/resources/main; this generates the Java from it.
             inputs.files(DBModelUtils.resource(project, 'mergeModels') { config.modelName + "_model.xml" })
-            outputs.dir(genDir(project))
+            outputs.dir(project.layout.buildDirectory.dir("gen"))
 
             doLast {
                 dbUtils.generateModel(config.modelName)
@@ -313,7 +313,7 @@ class DBModelPlugin implements Plugin<Project> {
 
                 ant.taskdef(name: "acceptanceTest", classname: "org.intermine.task.AcceptanceTestTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -333,7 +333,7 @@ class DBModelPlugin implements Plugin<Project> {
                     def query = project.properties['query']
                     ant.taskdef(name: "runIQLQuery", classname: "org.intermine.task.RunIqlQueryTask") {
                         classpath {
-                            dirset(dir: project.getBuildDir().getAbsolutePath())
+                            dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                             pathelement(path: project.configurations.getByName(IM_ANTLR).asPath)
                         }
@@ -353,7 +353,7 @@ class DBModelPlugin implements Plugin<Project> {
                 String buildResourcesMainDir = dbUtils.buildResourcesMainDir
                 ant.taskdef(name: "generateUpdateTriggers", classname: "org.intermine.task.GenerateUpdateTriggersTask") {
                     classpath {
-                        dirset(dir: project.getBuildDir().getAbsolutePath())
+                        dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
@@ -374,7 +374,7 @@ class DBModelPlugin implements Plugin<Project> {
     }
 
     static File genDir(Project project) {
-        new File(project.getBuildDir(), "gen")
+        DBModelUtils.buildFile(project, "gen")
     }
 
     /**
