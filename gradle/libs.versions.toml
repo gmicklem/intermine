@@ -35,7 +35,6 @@ jackson = "2.18.12"
 jami = "3.2.12"
 # jami-commons, jami-mitab, jami-xml as used by bio/sources/psi-complexes (3.0.0, not bumped with jami-core)
 jami-v3 = "3.0.0"
-javax-annotation-api = "1.3.2"
 javax-mail = "1.4"
 javax-servlet-api = "3.1.0"
 javax-ws-rs-api = "2.0.1"
@@ -100,7 +99,6 @@ jami-interactionviewer-json = { module = "psidev.psi.mi.jami:jami-interactionvie
 jami-mitab = { module = "psidev.psi.mi.jami:jami-mitab", version.ref = "jami-v3" }
 jami-ols = { module = "psidev.psi.mi.jami.bridges:jami-ols", version.ref = "jami" }
 jami-xml = { module = "psidev.psi.mi.jami:jami-xml", version.ref = "jami-v3" }
-javax-annotation-api = { module = "javax.annotation:javax.annotation-api", version.ref = "javax-annotation-api" }
 javax-mail = { module = "javax.mail:mail", version.ref = "javax-mail" }
 javax-servlet-api = { module = "javax.servlet:javax.servlet-api", version.ref = "javax-servlet-api" }
 javax-ws-rs-api = { module = "javax.ws.rs:javax.ws.rs-api", version.ref = "javax-ws-rs-api" }

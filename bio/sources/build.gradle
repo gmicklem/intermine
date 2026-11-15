@@ -137,10 +137,10 @@ subprojects {
         mergeModel group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
         mergeModel libs.commons.lang
 
-        // JAX-B dependencies for JDK 9+
+        // JAXB, which JDK 11 removed: psi-complexes binds XML with it (jami-xml, the ChEBI client); the other sources do not
+        // need it. (javax.annotation-api was here too, but no source and no jar on these classpaths uses it.)
         implementation libs.jakarta.xml.bind.api
         implementation libs.jaxb.runtime
-        implementation libs.javax.annotation.api
     }
 
     dbModelConfig {
