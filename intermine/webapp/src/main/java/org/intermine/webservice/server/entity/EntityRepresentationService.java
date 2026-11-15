@@ -10,7 +10,6 @@ package org.intermine.webservice.server.entity;
  *
  */
 
-import org.apache.commons.httpclient.HttpStatus;
 import org.intermine.api.InterMineAPI;
 import org.intermine.web.logic.export.ResponseUtil;
 import org.intermine.web.logic.results.RDFObject;
@@ -21,6 +20,7 @@ import org.intermine.webservice.server.core.JSONService;
 import org.intermine.webservice.server.exceptions.BadRequestException;
 import org.intermine.webservice.server.exceptions.ResourceNotFoundException;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 
 
@@ -56,7 +56,7 @@ public class EntityRepresentationService extends JSONService
             ResponseUtil.setJSONHeader(response, filename, formatIsJSONP());
             throw new ResourceNotFoundException("The lui doesn't exist");
         } else {
-            response.setStatus(HttpStatus.SC_OK);
+            response.setStatus(HttpServletResponse.SC_OK);
             ResponseUtil.setRDFXMLContentType(response);
             PrintWriter out = new PrintWriter(response.getOutputStream());
             rdfObject.serializeAsRDF(out);

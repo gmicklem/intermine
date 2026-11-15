@@ -10,8 +10,6 @@ package org.intermine.web.filters;
  *
  */
 
-import org.apache.commons.httpclient.HttpStatus;
-
 import org.intermine.objectstore.ObjectStoreException;
 import org.intermine.web.uri.InterMineLUI;
 import org.intermine.web.uri.InterMineLUIConverter;
@@ -52,7 +50,7 @@ public class PermanentURLFilter implements Filter
             InterMineLUIConverter urlConverter = new InterMineLUIConverter();
             Integer id = urlConverter.getInterMineID(permanentURL);
             if (id == -1) {
-                response.setStatus(HttpStatus.SC_NOT_FOUND);
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 chain.doFilter(req, res);
             } else {
                 String redirectURL = request.getContextPath() + "/report.do?id=" + id;
@@ -61,7 +59,7 @@ public class PermanentURLFilter implements Filter
         } catch (InvalidPermanentURLException ex) {
             chain.doFilter(req, res);
         } catch (ObjectStoreException ex) {
-            response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
         return;
     }

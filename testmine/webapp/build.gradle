@@ -46,7 +46,6 @@ dependencies {
     runtime group: 'commons-codec', name: 'commons-codec', version: '1.9'
     runtime group: 'javax.servlet.jsp', name: 'javax.servlet.jsp-api', version: '2.3.1'
     runtime group: 'taglibs', name: 'string', version: '1.1.0'
-    runtime group: 'commons-httpclient', name: 'commons-httpclient', version: '3.0'
     runtime group: 'commons-fileupload', name: 'commons-fileupload', version: '1.2.2'
     runtime group: 'org.json', name: 'json', version: '20260814'
     imWebApp group: "org.intermine", name: "intermine-webapp", version: imVersion, transitive: false, ext: "war"
