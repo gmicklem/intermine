@@ -72,12 +72,12 @@ Flags (from `--help`):
 | `--clojars_url` | `https://clojars.org/repo` | Clojars |
 | `--ebi_url` | `https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/` | EMBL-EBI repository |
 | `--plugins_url` | `https://plugins.gradle.org/m2/` | Gradle plugin portal |
-| `--gradle_distribution_url` | `https://services.gradle.org/distributions/gradle-6.9.4-bin.zip` | the distribution all seven wrappers download |
-| `--gradle_distribution_sha256` | looked up by zip name | written as `distributionSha256Sum`; if the zip name is not known to the script (it knows 4.9 and 6.9.4) and no value is given, the line is left out and the wrapper does not verify the download |
+| `--gradle_distribution_url` | `https://services.gradle.org/distributions/gradle-7.6.6-bin.zip` | the distribution all seven wrappers download |
+| `--gradle_distribution_sha256` | looked up by zip name | written as `distributionSha256Sum`; if the zip name is not known to the script (it knows 4.9, 6.9.4 and 7.6.6) and no value is given, the line is left out and the wrapper does not verify the download |
 
 ### Gradle version
 
-The version is not in the `.in` templates themselves (they contain `@@im_gradle_distribution_url@@`); it is the default of `--gradle_distribution_url`, `DEFAULT_GRADLE_VERSION` in `config/lib/install_intermine.py`. **Today that is Gradle 6.9.4.** A Gradle 7.6 upgrade is in progress on another branch, and a later upgrade to Gradle 8.x is planned, so check that constant rather than this page. To try another version without editing anything, pass `--gradle_distribution_url` (and `--gradle_distribution_sha256` for a version the script does not know).
+The version is not in the `.in` templates themselves (they contain `@@im_gradle_distribution_url@@`); it is the default of `--gradle_distribution_url`, `DEFAULT_GRADLE_VERSION` in `config/lib/install_intermine.py`. **Today that is Gradle 7.6.6** (the 5.1.1 release candidate, branch `release/5.1.1-candidate`, is the last 6.9.4 state). An upgrade to Gradle 8.14 is planned next, so check that constant rather than this page. To try another version without editing anything, pass `--gradle_distribution_url` (and `--gradle_distribution_sha256` for a version the script does not know).
 
 The committed `gradle/wrapper/gradle-wrapper.jar` files are old (the manifest of the one in `intermine/` says Gradle 4.1). That does not matter: the jar only downloads and starts the distribution named in the generated `gradle-wrapper.properties`.
 
@@ -102,7 +102,7 @@ cd intermine && ./gradlew -Dmaven.repo.local=/tmp/im-m2 publishToMavenLocal
 
 ## Dependency configuration conventions
 
-The build files use the Gradle 7 configuration names; `compile`, `testCompile`, `runtime` and `provided` are no longer used (they are still accepted by Gradle 6.9.4, but removed in Gradle 7). What the build files do today:
+The build files use the Gradle 7 configuration names; `compile`, `testCompile`, `runtime` and `provided` are no longer used (removed in Gradle 7). What the build files do today:
 
 | Configuration | Use | POM scope |
 |---|---|---|
