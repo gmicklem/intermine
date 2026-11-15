@@ -7,11 +7,23 @@ import os
 from pathlib import Path
 from subprocess import run
 import sys
-from typing import Any
+from typing import Any, Optional
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_USER = 2
+
+DEFAULT_GRADLE_VERSION = "6.9.4"
+
+# SHA-256 of the Gradle distributions we know, keyed by zip name, from
+# https://services.gradle.org/distributions/<zip>.sha256. The wrapper verifies the
+# download against it (distributionSha256Sum).
+GRADLE_DISTRIBUTION_SHA256 = {
+    "gradle-4.9-bin.zip":
+        "e66e69dce8173dd2004b39ba93586a184628bc6c28461bc771d6835f7f9b0d28",
+    "gradle-6.9.4-bin.zip":
+        "3e240228538de9f18772a574e99a0ba959e83d6ef351014381acd9631781389a",
+}
 
 
 @dataclass
@@ -21,6 +33,7 @@ class IntermineBuilder:
     clojars_url: str
     ebi_url: str
     gradle_distribution_url: str
+    gradle_distribution_sha256: Optional[str]
     offline: bool
     offline_url: str
     plugins_url: str
@@ -58,8 +71,18 @@ class IntermineBuilder:
         self.create_properties("gradle.properties", replacement_dict)
 
     def create_gradle_wrapper_properties(self) -> None:
+        sha256 = self.gradle_distribution_sha256
+        if sha256 is None:
+            zip_name = self.gradle_distribution_url.rsplit("/", 1)[-1]
+            sha256 = GRADLE_DISTRIBUTION_SHA256.get(zip_name)
+            if sha256 is None:
+                print(
+                    f"No known SHA-256 for {zip_name}: the wrapper will not "
+                    "verify the download (use --gradle_distribution_sha256)"
+                )
         replacement_dict = {
             "im_gradle_distribution_url": self.gradle_distribution_url,
+            "im_gradle_distribution_sha256": sha256,
         }
 
         self.create_properties("gradle-wrapper.properties", replacement_dict)
@@ -67,6 +90,10 @@ class IntermineBuilder:
     def create_properties(
         self, filename: str, replacement_dict: dict[str, Any]
     ) -> None:
+        """Write each <filename>.in with @@key@@ replaced by its value.
+
+        A line that uses a key whose value is None is left out.
+        """
         for properties_in in glob.glob(
             f"**/{filename}.in", root_dir=self.checkout, recursive=True
         ):
@@ -80,6 +107,11 @@ class IntermineBuilder:
                 with open(path_in) as f_in:
                     for line in f_in:
                         for key, value in replacement_dict.items():
+                            if f"@@{key}@@" not in line:
+                                continue
+                            if value is None:
+                                line = ""
+                                break
                             line = line.replace(f"@@{key}@@", value)
                         f_out.write(line)
 
@@ -185,8 +217,20 @@ def main() -> None:
 
     parser.add_argument(
         "--gradle_distribution_url",
-        default="https://services.gradle.org/distributions/gradle-4.9-bin.zip",
-        help="URL of Gradle plugins Maven repository",
+        default=(
+            "https://services.gradle.org/distributions/"
+            f"gradle-{DEFAULT_GRADLE_VERSION}-bin.zip"
+        ),
+        help="URL of the Gradle distribution the wrappers use",
+    )
+
+    parser.add_argument(
+        "--gradle_distribution_sha256",
+        default=None,
+        help=(
+            "SHA-256 of the Gradle distribution (default: looked up by zip "
+            "name for known versions; omitted otherwise)"
+        ),
     )
 
     args = parser.parse_args()
