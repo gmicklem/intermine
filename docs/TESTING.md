@@ -14,7 +14,7 @@ How the unit tests and web service tests find their databases and settings, how 
   - `testmodel.properties`, from `config/testmodel.properties`
 
   `config/lib/install_intermine.py` writes them, replacing `PSQL_HOST`, `PSQL_USER` and `PSQL_PWD` with the environment variables of those names, and skips any file that already exists. If you change the test password, delete the files so that they are regenerated. `testmine/setup.sh` also writes `~/.intermine/testmodel.properties` (from `testmine/dbmodel/resources/testmodel.properties`) if it is missing.
-- **JDK 8** and Python 3 (see [BUILDING.md](BUILDING.md)). The wrapper downloads Gradle itself.
+- **JDK 17** (or JDK 8) and Python 3 (see [BUILDING.md](BUILDING.md)). The wrapper downloads Gradle itself.
 - For the web service tests only: Solr (`config/ci/init-solr-docker.sh`, which starts the official image in Docker), `wait-for-it`, and a checkout of a client (`imjs` with Node and `grunt`, or `intermine-ws-python`).
 
 ## How CI runs the tests
@@ -25,8 +25,8 @@ Two workflows in `.github/workflows/`. Both start on `push` and `pull_request` w
 
 | Job | Matrix | What it runs |
 |---|---|---|
-| `unit-tests` | `testSuite` in `intermine`, `bio`; `java` 8; `postgres` 14 and 16 (four cells, `fail-fast: false`) | `config/ci/init.sh` then `config/ci/run.sh` with the suite name |
-| `ws-tests` | `client` in `JS`, `PY`; `java` 8; PostgreSQL 14 | Solr in Docker, then `init.sh` and `run.sh` with the suite `ws`: build and start the testmine web application, then run the client's tests against it (`config/run-ws-tests.sh`) |
+| `unit-tests` | `testSuite` in `intermine`, `bio`; `java` 8 and 17; `postgres` 14 and 16 (four cells per suite, `fail-fast: false`) | `config/ci/init.sh` then `config/ci/run.sh` with the suite name |
+| `ws-tests` | `client` in `JS`, `PY`; `java` 17; PostgreSQL 14 | Solr in Docker, then `init.sh` and `run.sh` with the suite `ws`: build and start the testmine web application, then run the client's tests against it (`config/run-ws-tests.sh`) |
 
 Both jobs have a 45 minute timeout, cache `~/.gradle` keyed on the build scripts and templates, check the database connection first (`psql -w -h localhost -U postgres -c 'select version()'` with `PGPASSWORD=postgres`), write a test summary into the job summary (`config/ci/junit-summary.py`), and upload the JUnit XML (always) and the HTML reports (on failure).
 
@@ -36,7 +36,7 @@ Both jobs have a 45 minute timeout, cache `~/.gradle` keyed on the build scripts
 
 ### `checkstyle.yml` ("Checkstyle")
 
-One job, JDK 8, 30 minute timeout. It runs `init.sh` and `run.sh` with the suite `checkstyle`: `./gradlew checkstyleMain` in `intermine`, `bio`, `bio/sources` and `bio/postprocess`, then `config/lib/parse_checkstyle_report.py`, which reads every `reports/checkstyle/main.xml` and fails on any remaining error, or if no report was found. Checkstyle itself already fails the build (`ignoreFailures = false`, `maxWarnings = 0`).
+One job, JDK 17, 30 minute timeout. It runs `init.sh` and `run.sh` with the suite `checkstyle`: `./gradlew checkstyleMain` in `intermine`, `bio`, `bio/sources` and `bio/postprocess`, then `config/lib/parse_checkstyle_report.py`, which reads every `reports/checkstyle/main.xml` and fails on any remaining error, or if no report was found. Checkstyle itself already fails the build (`ignoreFailures = false`, `maxWarnings = 0`).
 
 ### How pass or fail is decided despite `ignoreFailures = true`
 

@@ -65,10 +65,12 @@ jobs:
       fail-fast: false
       matrix:
         testSuite: [intermine, bio]
-        # Only JDK 8 is gated until B4 (JDK 17 build, then 21 verification) adds
-        # them here. Gradle 8.14 runs on JDK 8 to 24, but warns on JDK < 17:
-        #   java: [8, 17, 21]
-        java: [8]
+        # The builds and tests run on JDK 17; the jars stay Java 8 bytecode
+        # (config/gradle/java-target.gradle), so 6.x still runs on a JDK 8
+        # Tomcat. The JDK 8 cells show that a JDK 8-only machine still builds
+        # and passes, until 6.0.0 is out. JDK 21 also passes the full gate
+        # (checked by hand); it is left out to keep the matrix at 4 cells.
+        java: [8, 17]
         postgres: ['14', '16']
     steps:
       - uses: actions/checkout@v7
@@ -155,7 +157,8 @@ jobs:
       fail-fast: false
       matrix:
         client: [JS, PY]
-        java: [8]  # see the note in unit-tests
+        # the web application on the build JDK of 6.0.0 (testmine runs on 8 too)
+        java: [17]
     steps:
       - uses: actions/checkout@v7
       - name: Set up JDK ${{ matrix.java }}
