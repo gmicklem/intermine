@@ -28,6 +28,9 @@ dependencies {
     api libs.antlr
     api libs.commons.collections
     api libs.commons.io
+    api libs.commons.lang3
+    // commons-lang 2.6: the bundled torque jars of intermine-objectstore (BuildDbTask, SqlGenerator) extend
+    // lang.enum.Enum and use lang.exception.NestableException; nothing in InterMine code imports it any more
     api libs.commons.lang
     // the testmine war then has two jars for org.apache.commons.logging: this one and jcl-over-slf4j, which
     // solr-solrj brings. Both end in reload4j (commons-logging finds log4j 1.x itself, jcl-over-slf4j goes

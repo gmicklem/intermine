@@ -11,7 +11,7 @@ package org.intermine.bio.postprocess;
  *
  */
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.intermine.api.identifiers.IdentifiersMapper;
 import org.intermine.api.rdf.RDFHelper;

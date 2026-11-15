@@ -15,7 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.intermine.util.XmlUtil;
+
 
 /**
  * A widget result processor for enrichment results that produces output
@@ -69,7 +70,7 @@ public final class EnrichmentXMLProcessor implements WidgetResultProcessor
                 }
             } else {
                 sb.append("<" + name + ">");
-                sb.append(StringEscapeUtils.escapeXml(contents.toString()));
+                sb.append(XmlUtil.escapeXml(contents.toString()));
                 sb.append("</" + name + ">");
             }
         }

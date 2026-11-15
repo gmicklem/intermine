@@ -33,4 +33,14 @@ public class XmlUtilTest extends TestCase
         assertEquals("foo &gamma; bar &beta; zz",
                      XmlUtil.fixEntityNames("foo &ggr; bar &bgr; zz"));
     }
+
+    public void testEscapeXml() {
+        assertNull(XmlUtil.escapeXml(null));
+        assertEquals("", XmlUtil.escapeXml(""));
+        assertEquals("plain text", XmlUtil.escapeXml("plain text"));
+        assertEquals("a&lt;b&gt;&amp;&quot;&apos;", XmlUtil.escapeXml("a<b>&\"'"));
+        assertEquals("caf&#233;", XmlUtil.escapeXml("caf\u00e9"));
+        assertEquals("&#128512;x", XmlUtil.escapeXml("\uD83D\uDE00x"));
+        assertEquals("ab", XmlUtil.escapeXml("a\u0001b"));
+    }
 }

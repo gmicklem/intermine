@@ -14,6 +14,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 /**
  * General-purpose methods for manipulating URIs and XML schema types
  * @author Mark Woodbridge
@@ -151,5 +153,39 @@ public final class XmlUtil
         }
 
         return retVal;
+    }
+
+    /**
+     * Escape text for use in an XML 1.0 document (element content or attribute value). The five
+     * XML entities are escaped, characters that XML 1.0 cannot contain are removed, and every
+     * character above U+007F is written as a numeric character reference, so the result is
+     * plain ASCII whatever the character set of the stream it is written to (the web services
+     * use a PrintWriter with the platform default). This is the output of commons-lang 2.6
+     * StringEscapeUtils.escapeXml, except that characters outside the Basic Multilingual Plane
+     * are one reference for the code point, not two for the surrogates, and control characters
+     * are dropped instead of copied.
+     * @param value the text, may be null
+     * @return the escaped text, null if value is null
+     */
+    public static String escapeXml(String value) {
+        String xml = StringEscapeUtils.escapeXml10(value);
+        if (xml == null) {
+            return null;
+        }
+        StringBuilder sb = null;
+        for (int i = 0; i < xml.length();) {
+            int cp = xml.codePointAt(i);
+            int len = Character.charCount(cp);
+            if (cp > 0x7f) {
+                if (sb == null) {
+                    sb = new StringBuilder(xml.length() + 16).append(xml, 0, i);
+                }
+                sb.append("&#").append(cp).append(';');
+            } else if (sb != null) {
+                sb.append((char) cp);
+            }
+            i += len;
+        }
+        return sb == null ? xml : sb.toString();
     }
 }

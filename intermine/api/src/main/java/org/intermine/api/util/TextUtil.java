@@ -12,7 +12,7 @@ package org.intermine.api.util;
 
 import java.util.Date;
 
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 
 /**
  *
@@ -38,7 +38,7 @@ public final class TextUtil
      */
     public static String generateRandomUniqueString(int length) {
         String timePrefix = Long.toHexString(new Date().getTime());
-        String randomSuffix = RandomStringUtils.randomAlphanumeric(length);
+        String randomSuffix = RandomStringUtils.secure().nextAlphanumeric(length);
 
         StringBuilder sb = new StringBuilder();
 

@@ -16,8 +16,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.intermine.util.XmlUtil;
 import org.intermine.web.logic.widget.config.GraphWidgetConfig;
 import org.intermine.web.logic.widget.config.WidgetConfig;
 
@@ -75,7 +75,7 @@ public final class XMLWidgetProcessor extends WidgetProcessorImpl
                     sb.append(formatCell(k.toString(), ((Map) contents).get(k)));
                 }
             } else {
-                sb.append(StringEscapeUtils.escapeXml(contents.toString()));
+                sb.append(XmlUtil.escapeXml(contents.toString()));
             }
             sb.append("</" + name + ">");
         }

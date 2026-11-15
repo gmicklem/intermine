@@ -13,7 +13,7 @@ dependencies {
      // We need this dependency because the pre-generated userprofile classes and model XML are here, which is necessary to build the userprofile-test db
     testImplementation project(':intermine-api')
     testImplementation project(':intermine-objectstore')
-    testImplementation libs.commons.lang
+    testImplementation libs.commons.lang3
 }
 
 void generateModel(model, destination, type) {

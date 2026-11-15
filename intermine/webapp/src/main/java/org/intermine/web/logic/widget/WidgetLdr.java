@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.math.NumberUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.intermine.api.profile.InterMineBag;
 import org.intermine.objectstore.ObjectStore;
@@ -104,7 +104,7 @@ public class WidgetLdr
         } else if ("false".equalsIgnoreCase(value)) {
             queryValue = new QueryValue(false);
         } else {
-            if (!NumberUtils.isNumber(value)) {
+            if (!NumberUtils.isCreatable(value)) {
                 queryValue = new QueryValue(value);
             } else {
                 try {

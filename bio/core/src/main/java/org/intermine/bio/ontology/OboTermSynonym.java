@@ -10,7 +10,7 @@ package org.intermine.bio.ontology;
  *
  */
 
-import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
  * Object representing aa OboTerm synonym.

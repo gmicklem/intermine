@@ -15,8 +15,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Cookie;
 
-import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
@@ -109,15 +109,15 @@ public class HtmlHeadController extends TilesAction
 
         /* report page */
         } else if ("report".equals(pageName) && objectId != null) {
-            if (!StringUtils.isNumeric(objectId)) {
-                LOG.warn("object ID not a number! " + objectId);
-                htmlPageTitle = "invalid id";
-                request.setAttribute("htmlPageTitle", htmlPageTitle);
-                return null;
-            }
             if (StringUtils.isBlank(objectId)) {
                 LOG.warn("object ID null! ");
                 htmlPageTitle = "no id provided";
+                request.setAttribute("htmlPageTitle", htmlPageTitle);
+                return null;
+            }
+            if (!StringUtils.isNumeric(objectId)) {
+                LOG.warn("object ID not a number! " + objectId);
+                htmlPageTitle = "invalid id";
                 request.setAttribute("htmlPageTitle", htmlPageTitle);
                 return null;
             }
@@ -141,7 +141,7 @@ public class HtmlHeadController extends TilesAction
                 LOG.warn("Could not correctly set the page title for object ID - " + objectId, e);
             }
         }
-        request.setAttribute("htmlPageTitle", StringEscapeUtils.escapeHtml(htmlPageTitle));
+        request.setAttribute("htmlPageTitle", StringEscapeUtils.escapeHtml4(htmlPageTitle));
 
         // Can we employ user tracking?
         String userTrackingMessage = (String) SessionMethods.getWebProperties(

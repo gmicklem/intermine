@@ -19,11 +19,11 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.collections.set.ListOrderedSet;
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.intermine.web.logic.widget.config.WidgetConfig;
 import org.intermine.metadata.TypeUtil;
 
@@ -310,7 +310,7 @@ public class Type
 
         return fieldConfigMap.equals(typeObj.fieldConfigMap)
             && longDisplayers.equals(typeObj.longDisplayers)
-            && ObjectUtils.equals(tableDisplayer, typeObj.tableDisplayer);
+            && Objects.equals(tableDisplayer, typeObj.tableDisplayer);
     }
 
     /**
