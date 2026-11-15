@@ -6,12 +6,14 @@
 
 
 <tiles:importAttribute/>
+<%-- "short" is a Java keyword, so Tomcat 8.5 rejects it as an EL identifier; use the scope maps --%>
+<c:set var="isShort" value="${pageScope['short'] == 'true' || requestScope['short'] == 'true'}"/>
 
 <!-- tablePageLinks -->
 <span class="tablePageLinks">
       <c:choose>
       <c:when test="${!resultsTable.firstPage}">
-        <c:if test="${short != 'true'}">
+        <c:if test="${!isShort}">
           <html:link action="/${currentPage}?table=${param.table}&amp;bagName=${bagName}&amp;page=0&amp;size=${resultsTable.pageSize}&amp;trail=${param.trail}">
             &nbsp;&lt;&lt;&nbsp;<fmt:message key="results.first"/>
           </html:link>
@@ -21,7 +23,7 @@
         </html:link><span style="float:left">&nbsp;|&nbsp;</span>
       </c:when>
       <c:otherwise>
-        <span style="float:left"><c:if test="${short != 'true'}">&nbsp;&lt;&lt;&nbsp;<fmt:message key="results.first"/></c:if>
+        <span style="float:left"><c:if test="${!isShort}">&nbsp;&lt;&lt;&nbsp;<fmt:message key="results.first"/></c:if>
         &nbsp;&lt;&nbsp;<fmt:message key="results.previous"/>&nbsp;|&nbsp;</span>
       </c:otherwise>
     </c:choose>
@@ -35,7 +37,7 @@
         <fmt:message key="results.next"/>&nbsp;&gt;&nbsp;
       </c:otherwise>
     </c:choose>
-    <c:if test="${short != 'true'}">
+    <c:if test="${!isShort}">
     <c:choose>
       <c:when test="${!resultsTable.lastPage && resultsTable.maxRetrievableIndex > resultsTable.estimatedSize}">
         <html:link action="/changeTable?table=${param.table}&amp;method=last&amp;trail=${param.trail}&amp;currentPage=${currentPage}&amp;bagName=${bag.name}">
