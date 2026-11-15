@@ -83,7 +83,7 @@ public class TemplateUploadService extends WebService
                 || "GET".equalsIgnoreCase(request.getMethod())) {
             templatesXML = getRequiredParameter(TEMPLATES_PARAMETER);
         } else {
-            templatesXML = IOUtils.toString(request.getInputStream());
+            templatesXML = IOUtils.toString(request.getInputStream(), "UTF-8");
         }
         Profile profile = getPermission().getProfile();
 

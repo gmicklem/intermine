@@ -62,7 +62,7 @@ public class EnsemblComparaConverterTest extends ItemsTestCase
     public void testProcess() throws Exception {
 
         ClassLoader loader = getClass().getClassLoader();
-        String input = IOUtils.toString(loader.getResourceAsStream(TEST_FILE));
+        String input = IOUtils.toString(loader.getResourceAsStream(TEST_FILE), "UTF-8");
 
         File currentFile = new File(getClass().getClassLoader().getResource(TEST_FILE).toURI());
         converter.setCurrentFile(currentFile);

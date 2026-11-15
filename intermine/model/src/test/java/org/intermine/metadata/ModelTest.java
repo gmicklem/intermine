@@ -300,7 +300,7 @@ public class ModelTest extends TestCase
         Model model = Model.getInstanceByName("basicmodel");
         InputStream is = getClass().getResourceAsStream("expected_model.xml");
         
-        String modelString = IOUtils.toString(is).replaceAll("\n$", "");
+        String modelString = IOUtils.toString(is, "UTF-8").replaceAll("\n$", "");
         assertEquals(modelString, model.toString().replaceAll("\t", "    "));
     }
 

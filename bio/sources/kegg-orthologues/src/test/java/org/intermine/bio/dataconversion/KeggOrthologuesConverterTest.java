@@ -46,7 +46,7 @@ public class KeggOrthologuesConverterTest extends ItemsTestCase
 
 
         ClassLoader loader = getClass().getClassLoader();
-        String input = IOUtils.toString(loader.getResourceAsStream("KeggOrthologuesConverterTest_src.txt"));
+        String input = IOUtils.toString(loader.getResourceAsStream("KeggOrthologuesConverterTest_src.txt"), "UTF-8");
 
         converter.setKeggOrganisms("7227 9606 4932 7955 10090 10116 6239");
         converter.process(new StringReader(input));

@@ -99,7 +99,7 @@ public class TagBindingTest extends InterMineAPITestCase
 
         InputStream is =
             getClass().getClassLoader().getResourceAsStream("TagBindingTest.xml");
-        String expectedXml = normalise(IOUtils.toString(is));
+        String expectedXml = normalise(IOUtils.toString(is, "UTF-8"));
 
         String actualXml = normalise(sw.toString().trim());
         Diff diff = XMLUnit.compareXML(expectedXml, actualXml);

@@ -121,7 +121,7 @@ public class OboParserTest extends TestCase
 //    }
 
     public void testGetTermIdNameMap() throws Exception {
-        String test = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("OboParserTest.obo"));
+        String test = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("OboParserTest.obo"), "UTF-8");
 
         Map idNames = parser.getTermIdNameMap(new StringReader(test));
 

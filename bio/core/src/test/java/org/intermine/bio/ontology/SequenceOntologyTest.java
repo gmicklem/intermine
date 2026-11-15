@@ -38,7 +38,7 @@ public class SequenceOntologyTest extends XMLTestCase
     public void testGetAllClasses()  throws URISyntaxException, IOException, SAXException, ParserConfigurationException {
         File terms = new File(SequenceOntologyTest.class.getClassLoader().getResource("so_terms-test").toURI());
         File oboFile = new File(SequenceOntologyTest.class.getClassLoader().getResource("SequenceOntology.obo").toURI());
-        String targetXML = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("so-target.xml"));
+        String targetXML = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("so-target.xml"), "UTF-8");
         SequenceOntologyFactory.reset();
         SequenceOntology so = SequenceOntologyFactory.getSequenceOntology(oboFile, terms);
         Model model = so.getModel();
@@ -50,7 +50,7 @@ public class SequenceOntologyTest extends XMLTestCase
         SequenceOntologyFactory.reset();
         SequenceOntology so = SequenceOntologyFactory.getSequenceOntology();
         Model model = so.getModel();
-        String targetXML = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("so-target-default.xml"));
+        String targetXML = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("so-target-default.xml"), "UTF-8");
 
 //        PrintWriter writer = new PrintWriter("so-target-default-ACTUAL.xml", "UTF-8");
 //        writer.println(model.toString());

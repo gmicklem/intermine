@@ -114,7 +114,7 @@ public class TokenRoundTripTest {
         assertTrue("The file was created correctly", token.exists());
 
         FileInputStream is = new FileInputStream(token);
-        String jwt = IOUtils.toString(is);
+        String jwt = IOUtils.toString(is, "UTF-8");
 
         verifier.setOptions(defaultStrategy.getAbsolutePath());
         verifier.setToken(jwt);
@@ -132,7 +132,7 @@ public class TokenRoundTripTest {
         assertTrue("The file was created correctly", token.exists());
 
         FileInputStream is = new FileInputStream(token);
-        String jwt = IOUtils.toString(is);
+        String jwt = IOUtils.toString(is, "UTF-8");
 
         verifier.setOptions(anyAlias.getAbsolutePath());
         verifier.setToken(jwt);
@@ -150,7 +150,7 @@ public class TokenRoundTripTest {
         assertTrue("The file was created correctly", token.exists());
 
         FileInputStream is = new FileInputStream(token);
-        String jwt = IOUtils.toString(is);
+        String jwt = IOUtils.toString(is, "UTF-8");
 
         verifier.setOptions(badConf.getAbsolutePath());
         verifier.setToken(jwt);

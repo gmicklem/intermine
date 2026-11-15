@@ -741,7 +741,7 @@ public class AjaxServices
         try {
             return String.format(
                 IOUtils.toString(
-                        AjaxServices.class.getResourceAsStream(filename)), positionalArgs);
+                        AjaxServices.class.getResourceAsStream(filename), "UTF-8"), positionalArgs);
         } catch (IOException e) {
             LOG.error(e);
             throw new RuntimeException("Could not read " + filename, e);

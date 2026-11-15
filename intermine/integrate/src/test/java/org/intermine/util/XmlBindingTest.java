@@ -40,7 +40,7 @@ public class XmlBindingTest extends XMLTestCase {
         setIds(unmarshalled);
         binding.marshal(unmarshalled, sw);
         // System.out.println(sw.toString());
-        String expected = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("testmodel_data.xml"));
+        String expected = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("testmodel_data.xml"), "UTF-8");
 
         Diff diff = new Diff(expected, sw.toString());
         DetailedDiff detail = new DetailedDiff(diff);

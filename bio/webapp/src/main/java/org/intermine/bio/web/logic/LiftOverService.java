@@ -109,7 +109,7 @@ public class LiftOverService
             wr.flush();
             wr.close();
 
-            liftOverResponse = new String(IOUtils.toCharArray(conn.getInputStream()));
+            liftOverResponse = new String(IOUtils.toCharArray(conn.getInputStream(), "UTF-8"));
 
             LOG.info("LiftOver response message: \n" + liftOverResponse);
 

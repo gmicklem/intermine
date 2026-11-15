@@ -374,7 +374,7 @@ public class InitialiserPlugin implements PlugIn
         } else {
             StringWriter writer = new StringWriter();
             try {
-                IOUtils.copy(xmlInputStreamForValidate, writer);
+                IOUtils.copy(xmlInputStreamForValidate, writer, "UTF-8");
             } catch (IOException ioe) {
                 LOG.error("Problems converting xmlInputStream into a String ", ioe);
                 blockingErrorKeys.put("errors.init.aspects.generic", ioe.getMessage());
@@ -436,7 +436,7 @@ public class InitialiserPlugin implements PlugIn
         } else {
             StringWriter writer = new StringWriter();
             try {
-                IOUtils.copy(xmlInputStreamForValidation, writer);
+                IOUtils.copy(xmlInputStreamForValidation, writer, "UTF-8");
             } catch (IOException ioe) {
                 LOG.error("Problems converting xmlInputStream into a String ", ioe);
                 blockingErrorKeys.put("errors.init.webconfig.generic", ioe.getMessage());
