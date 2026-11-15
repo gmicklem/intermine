@@ -3,6 +3,7 @@ package org.intermine.plugin.postprocess
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.intermine.plugin.dbmodel.DBModelUtils
 import org.gradle.tooling.BuildException
 import org.intermine.plugin.BioSourceProperties
 import org.intermine.plugin.TaskConstants
@@ -110,7 +111,7 @@ class PostProcessPlugin implements Plugin<Project> {
                                 ant.taskdef(name: "sourcePostProcess", classname: "org.intermine.task.PostProcessorTask") {
                                     classpath {
                                         dirset(dir: project.getBuildDir().getAbsolutePath())
-                                        pathelement(path: project.configurations.getByName("compile").asPath)
+                                        pathelement(path: DBModelUtils.antClasspath(project).asPath)
                                         pathelement(path: project.configurations.getByName("integrateSource").asPath)
                                     }
                                 }
@@ -128,7 +129,7 @@ class PostProcessPlugin implements Plugin<Project> {
                             ant.taskdef(name: "corePostProcess", classname: "org.intermine.task.PostProcessorTask") {
                                 classpath {
                                 dirset(dir: project.getBuildDir().getAbsolutePath())
-                                pathelement(path: project.configurations.getByName("compile").asPath)
+                                pathelement(path: DBModelUtils.antClasspath(project).asPath)
                                 pathelement(path: project.configurations.getByName("postProcesses").asPath)
                                 }
                             }

@@ -69,11 +69,14 @@ subprojects {
         from minePropertyFile
         into sourceSets.main.output.resourcesDir
         rename { fileName -> fileName.replace("testmodel.properties", "intermine.properties") }
-        inputs.sourceFiles.stopExecutionIfEmpty()
+        // A missing minePropertyFile leaves the Copy without sources, so Gradle skips it as
+        // NO-SOURCE; stopExecutionIfEmpty() was removed in Gradle 5.0.
     }
 
     task copyDefaultProperties(type: Copy) {
         description "Copies default.intermine.properties file (from resources project) into resources output to be included in the war"
+        // kept: writes into processResources' output dir, so it must run after it. To be folded
+        // into processResources together with its users in dbmodel/ and webapp/ (Gradle Step 2a).
         dependsOn 'processResources'
         from({ zipTree(configurations.commonResources.singleFile) }) {
             include "default.intermine.test.properties"
@@ -81,8 +84,4 @@ subprojects {
         into sourceSets.main.output.resourcesDir
         rename { fileName -> fileName.replace("default.intermine.test.properties", "default.intermine.properties") }
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.9'
 }

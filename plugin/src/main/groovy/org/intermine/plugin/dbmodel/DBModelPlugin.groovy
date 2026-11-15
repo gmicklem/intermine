@@ -12,6 +12,8 @@ import org.intermine.plugin.project.Source
 import org.intermine.plugin.webapp.WebAppPlugin
 
 class DBModelPlugin implements Plugin<Project> {
+    /** Plugin-internal configuration holding antlr-complete for runIQLQuery. */
+    static final String IM_ANTLR = "imAntlr"
 
     DBModelConfig config
     DBModelUtils dbUtils
@@ -26,10 +28,13 @@ class DBModelPlugin implements Plugin<Project> {
             bioModel
             bioModelForSOOnly
             commonResources
-            api
             mergeSource
-            plugin
-            antlr
+        }
+        // Plugin-internal configurations. They used to be called api, plugin and antlr, which clash
+        // with the configurations of the java-library and antlr plugins (Gradle 7's antlr plugin
+        // applies java-library). Resolvable only; nothing should consume them.
+        [DBModelUtils.IM_API_JAR, MineDBModelPlugin.IM_PLUGIN, IM_ANTLR].each { name ->
+            project.configurations.create(name) { canBeConsumed = false }
         }
 
         project.task('initConfig') {
@@ -37,7 +42,7 @@ class DBModelPlugin implements Plugin<Project> {
 
             doLast {
                 project.dependencies.add("commonResources", [group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")])
-                project.dependencies.add("api", [group: "org.intermine", name: "intermine-api", version: System.getProperty("imVersion"), transitive: false])
+                project.dependencies.add(DBModelUtils.IM_API_JAR, [group: "org.intermine", name: "intermine-api", version: System.getProperty("imVersion"), transitive: false])
 
                 dbUtils = new DBModelUtils(project)
                 SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
@@ -231,14 +236,14 @@ class DBModelPlugin implements Plugin<Project> {
                     ant.taskdef(name: "createSoModel", classname: "org.intermine.bio.task.SOToModelTask") {
                         classpath {
                             dirset(dir: project.buildDir.absolutePath)
-                            pathelement(path: project.configurations.getByName("compile").asPath)
+                            pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
                     }
                 } else {
                     ant.taskdef(name: "createSoModel", classname: "org.intermine.bio.task.SOToModelTask") {
                         classpath {
                             pathelement(path: project.configurations.getByName("bioModelForSOOnly").asPath)
-                            pathelement(path: project.configurations.getByName("compile").asPath)
+                            pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
                     }
                 }
@@ -291,7 +296,7 @@ class DBModelPlugin implements Plugin<Project> {
             dependsOn 'initConfig', 'processResources'
 
             doLast {
-                FileTree fileTree = project.zipTree(project.configurations.getByName("api").singleFile)
+                FileTree fileTree = project.zipTree(project.configurations.getByName(DBModelUtils.IM_API_JAR).singleFile)
                 PatternSet patternSet = new PatternSet()
                 patternSet.include("userprofile_model.xml")
                 File file = fileTree.matching(patternSet).singleFile
@@ -313,14 +318,14 @@ class DBModelPlugin implements Plugin<Project> {
             }
         }
 
-        project.task('buildUserDB') {
+        project.tasks.register('buildUserDB') {
             group TaskConstants.TASK_GROUP
             description "Creates empty tables in the userprofile database, then loads the superuser and default templates."
             dependsOn 'createUserDB', ':webapp:loadDefaultTemplates'
             // do nothing
         }
 
-        project.task('runAcceptanceTests') {
+        project.tasks.register('runAcceptanceTests') {
             group TaskConstants.TASK_GROUP
             description "Run the configured acceptance tests against the production database, uses <MINE_NAME>_acceptance_test.conf"
             dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'jar'
@@ -336,7 +341,7 @@ class DBModelPlugin implements Plugin<Project> {
                 ant.taskdef(name: "acceptanceTest", classname: "org.intermine.task.AcceptanceTestTask") {
                     classpath {
                         dirset(dir: project.getBuildDir().getAbsolutePath())
-                        pathelement(path: project.configurations.getByName("compile").asPath)
+                        pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
                 ant.acceptanceTest(database: "db.production", configFile: acceptanceTestFilePath,
@@ -344,21 +349,21 @@ class DBModelPlugin implements Plugin<Project> {
             }
         }
 
-        project.task('runIQLQuery') {
+        project.tasks.register('runIQLQuery') {
             group TaskConstants.TASK_GROUP
             description "Run an IQL query against the database, e.g. -Pquery=SELECT DISTINCT a2_.primaryIdentifier AS a1_ FROM org.intermine.model.bio.Gene AS a2_"
             dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'generateModel', 'jar'
 
             doLast {
-                project.dependencies.add("antlr", [group: "org.antlr", name: "antlr-complete", version: "3.5.2", transitive: false])
+                project.dependencies.add(IM_ANTLR, [group: "org.antlr", name: "antlr-complete", version: "3.5.2", transitive: false])
                 def ant = new AntBuilder()
                 if (project.hasProperty('query')) {
                     def query = project.properties['query']
                     ant.taskdef(name: "runIQLQuery", classname: "org.intermine.task.RunIqlQueryTask") {
                         classpath {
                             dirset(dir: project.getBuildDir().getAbsolutePath())
-                            pathelement(path: project.configurations.getByName("compile").asPath)
-                            pathelement(path: project.configurations.getByName("antlr").asPath)
+                            pathelement(path: DBModelUtils.antClasspath(project).asPath)
+                            pathelement(path: project.configurations.getByName(IM_ANTLR).asPath)
                         }
                     }
                     ant.runIQLQuery(alias: config.objectStoreName, query: query)
@@ -366,7 +371,7 @@ class DBModelPlugin implements Plugin<Project> {
             }
         }
 
-        project.task('generateUpdateTriggers') {
+        project.tasks.register('generateUpdateTriggers') {
             group TaskConstants.TASK_GROUP
             description "Generates SQL files for manual CRUD operations on InterMine database. THIS IS AN EXPERIMENTAL FEATURE, USE AT YOUR OWN RISK."
             dependsOn 'initConfig', 'copyMineProperties', 'copyDefaultInterMineProperties', 'generateModel', 'jar'
@@ -378,7 +383,7 @@ class DBModelPlugin implements Plugin<Project> {
                 ant.taskdef(name: "generateUpdateTriggers", classname: "org.intermine.task.GenerateUpdateTriggersTask") {
                     classpath {
                         dirset(dir: project.getBuildDir().getAbsolutePath())
-                        pathelement(path: project.configurations.getByName("compile").asPath)
+                        pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
                 ant.generateUpdateTriggers(osName: config.objectStoreName, destDir: buildResourcesMainDir)
