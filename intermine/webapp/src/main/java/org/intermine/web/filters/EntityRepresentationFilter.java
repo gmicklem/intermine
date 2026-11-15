@@ -10,7 +10,6 @@ package org.intermine.web.filters;
  *
  */
 
-import org.apache.commons.httpclient.HttpStatus;
 import org.intermine.web.logic.export.ResponseUtil;
 import org.intermine.web.logic.results.RDFObject;
 import org.intermine.web.logic.session.SessionMethods;
@@ -54,10 +53,10 @@ public class EntityRepresentationFilter implements Filter
             RDFObject rdfObject = new RDFObject(lui, SessionMethods.getInterMineAPI(session),
                     request);
             if (!rdfObject.isValid()) {
-                response.setStatus(HttpStatus.SC_NOT_FOUND);
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                 chain.doFilter(req, res);
             } else {
-                response.setStatus(HttpStatus.SC_OK);
+                response.setStatus(HttpServletResponse.SC_OK);
                 ResponseUtil.setRDFXMLContentType(response);
                 PrintWriter out = new PrintWriter(response.getOutputStream());
                 rdfObject.serializeAsRDF(out);
@@ -66,7 +65,7 @@ public class EntityRepresentationFilter implements Filter
         } catch (InvalidPermanentURLException ex) {
             chain.doFilter(req, res);
         } catch (Exception ex) {
-            response.setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
         return;
     }
