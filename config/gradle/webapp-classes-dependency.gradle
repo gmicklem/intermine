@@ -1,0 +1,21 @@
+/*
+ * For a module that depends on intermine-webapp (`api project(':intermine-webapp')`): publish that dependency in the POM
+ * as intermine-webapp:<version>:classes (the jar of its classes, next to the war) instead of the war.
+ *
+ * Without the classifier the POM names the intermine-webapp artifact itself, which is a war (12 MB). Every mine that
+ * depends on the module (intermine-webtasks, intermine-jbrowse-endpoint) then got intermine-webapp-<version>.war in
+ * WEB-INF/lib of its own war, where Tomcat ignores it (im-ee7.46). The module still builds against the project, whose
+ * compile classpath is the classes directory; only the published metadata changes. intermine/webapp/build.gradle
+ * publishes the `classes` jar.
+ *
+ * Usage, in the module's build file: apply from: "${rootDir}/../config/gradle/webapp-classes-dependency.gradle"
+ */
+publishing.publications.configureEach {
+    pom.withXml {
+        asNode().dependencies.dependency.findAll { it.artifactId.text() == 'intermine-webapp' }.each { node ->
+            if (node.classifier.isEmpty()) {
+                node.appendNode('classifier', 'classes')
+            }
+        }
+    }
+}

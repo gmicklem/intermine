@@ -55,6 +55,16 @@ class DBModelUtils {
         project.layout.buildDirectory.file(path).get().asFile
     }
 
+    /**
+     * A path that the mine's build file gives to the plugin (soTermListFilePath, soAdditionFilePath), as an absolute path.
+     * A relative path is taken from the mine's root directory, which is where deployers run the build from and what
+     * Ant resolved it against until Gradle 8, whose daemon has its own working directory; an absolute path stays as it is.
+     * Null stays null (the property is not set).
+     */
+    static String rootPath(Project project, String path) {
+        path == null ? null : project.rootProject.file(path).absolutePath
+    }
+
     /** The main source set's resources output directory, where the InterMine runtime files live. */
     static String resourcesDir(Project project) {
         SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")

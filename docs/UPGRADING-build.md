@@ -79,12 +79,13 @@ This repository's `bio/sources` build publishes 44 `bio-source-*` modules. The o
    - `compile` to `implementation`, `testCompile` to `testImplementation`; `url '...'` to `url = '...'`, `description "..."` to `description = "..."`;
    - delete `compile('ant:ant:1.6.5')`: it is a 2005 Ant that ends up in `WEB-INF/lib` next to `ant-1.10.x`, and nothing in the mine needs it;
    - `copyMineProperties` writes into a directory of its own and `processResources` picks it up (explained below the example).
-4. **`dbmodel/build.gradle`.** `compile` to `implementation` (`bioModel` stays as it is); keep `srcDirs = ['build/gen']`. Make the two paths in `dbModelConfig` absolute: `soTermListFilePath = "$rootDir/dbmodel/resources/so_terms"` and `soAdditionFilePath = "$rootDir/dbmodel/build/so_additions.xml"` (the plugin hands these strings to Ant, which resolves them against the working directory of the JVM, and a Gradle 8 daemon's working directory is its own `daemon/8.14.6` directory: the symptom is `Could not find file containing SO terms to add to the model ... Property was: <gradle user home>/daemon/8.14.6/dbmodel/resources/so_terms`).
+4. **`dbmodel/build.gradle`.** `compile` to `implementation` (`bioModel` stays as it is); keep `srcDirs = ['build/gen']`. Leave the two paths in `dbModelConfig` (`soTermListFilePath = "dbmodel/resources/so_terms"`, `soAdditionFilePath = "dbmodel/build/so_additions.xml"`) as they are: the plugin resolves a relative path against the mine's root directory, absolute paths still work, and nothing needs `$rootDir` any more. (Plugins before this fix (the 5.1.1 builds of this branch included) handed the string to Ant, which resolves it against the working directory of the JVM, and a Gradle 8 daemon on JDK 9 or later has its own `daemon/8.14.6` directory as working directory: `Could not find file containing SO terms to add to the model ... Property was: <gradle user home>/daemon/8.14.6/dbmodel/resources/so_terms`. A mine that was converted with the `$rootDir/...` form keeps working.)
 5. **`webapp/build.gradle`.**
    - Delete the `apply from: "https://raw.githubusercontent.com/akhikhl/gretty/..."` line and the `gretty { }` block. The script resolves gretty 2.0.0 from jcenter, which now answers 403. The cargo plugin deploys. Gretty also passed `-Dorg.apache.el.parser.SKIP_IDENTIFIER_CHECK=true` to its Tomcat; your own Tomcat needs it too (`CATALINA_OPTS`, or `jvmArgs` in a cargo `local { }` block).
    - `compile` to `implementation`. Keep `implementation (project(":dbmodel")) {transitive = false}`; there is no need for `java-library` or `api`, because the webapp lists what it needs itself.
    - `JavaExec`: `main = ...` to `mainClass = ...` (`blueGenesStart`; Gradle 8.14 deprecates `main`, Gradle 9 removes it).
-   - War composition, three changes in the same place: delete the `copyWebappContent` task and the `dependsOn 'copyWebappContent'` of `warWebApp`; add `duplicatesStrategy = DuplicatesStrategy.EXCLUDE` to `warWebApp`; and add the two small blocks of the example (`mergeProperties` input, the `.war` filter). Why: `warWebApp` zips `build/explodedWebApp`, which `unwarBioWebApp` and `addStrutsConfig` fill (the unpacked `bio-webapp` war), and `copyWebappContent` then copied `src/main/webapp` into the same directory. On Gradle 8, the first run of a Copy task into a directory that other tasks wrote removes their files, with no message: the war was built (46 MB instead of 68 MB for FlyMine) without the bio-webapp content (no `web.xml`, `struts-config.xml` or `WEB-INF/lib` of bio-webapp; on the next run the directory had them again, so a build that is repeated hides it). Every `War` task in Gradle 8 also takes `src/main/webapp` by itself, listed before `from explodedWebApp`; with `EXCLUDE` the first entry wins, so the mine's own files still replace the bio-webapp ones, as the copy did.
+   - War composition: the plugin builds the war now, so delete everything in `webapp/build.gradle` that composed it: the `war { dependsOn ...; finalizedBy 'warWebApp' }` block, the `warWebApp` task, the `copyWebappContent` task, the `explodedWebAppDir` variable, the `tasks.named('mergeProperties') { inputs.files(...) }` block of the first conversions and any `tasks.withType(War) { classpath = classpath.filter { ... } }` block. `mergePropsDir` and `propsDir` in `webappConfig` can go as well: the plugin writes `web.properties` and `objectstoresummary.properties` to `build/props` unless `propsDir` says otherwise. What the plugin does instead: it applies the `war` plugin, and the `war` task takes, first the mine's own `src/main/webapp` (the war plugin adds it by itself), then `build/explodedWebApp`, which the `unwarBioWebApp` task fills (it is a Sync now: it unpacks the `bio-webapp` war and makes the struts, tiles, `web.xml` and message additions of the mine's model in the same task), then `WEB-INF/web.properties` (merged with `intermine.properties` by `mergeProperties`) and `objectstoresummary.properties` from `build/props`. Every part comes from the output of the task that makes it, so the war needs no `dependsOn`. `duplicatesStrategy` is `EXCLUDE` on the `war` task, so the first entry of a name wins: the mine's own files replace those of bio-webapp, and a jar that the mine's classpath and bio-webapp both carry is listed once; the unmerged `WEB-INF/web.properties` of the mine and of bio-webapp are excluded. Your cargo tasks keep `dependsOn war`; the `addStrutsConfig` task still exists, empty, for build files that mention it. A mine that does not update still gets the same war: a `warWebApp` that it keeps is rebuilt over the plugin's war from the same files, and a `war { dependsOn ... }` is harmless. A `copyWebappContent` has to go: it is a Copy into the directory that `unwarBioWebApp` now owns.
+   - Why this was a plugin job: `warWebApp` zipped `build/explodedWebApp`, which `unwarBioWebApp` and `addStrutsConfig` filled (the unpacked `bio-webapp` war; an Ant unzip that never removed anything, so a file of an earlier bio-webapp version stayed in the directory), and `copyWebappContent` then copied `src/main/webapp` into the same directory. On Gradle 8, the first run of a Copy task into a directory that other tasks wrote removes their files, with no message: the war was built (46 MB instead of 68 MB for FlyMine) without the bio-webapp content (no `web.xml`, `struts-config.xml` or `WEB-INF/lib` of bio-webapp; on the next run the directory had them again, so a build that is repeated hides it). (The POM of `intermine-webtasks` 5.1.0 on Maven Central, and the 5.1.1 builds of this branch before this change, named the 12 MB `intermine-webapp` war as a dependency (`intermine-jbrowse-endpoint` the same in the latter), so the war of every mine carried `intermine-webapp-<version>.war` in `WEB-INF/lib` and the first conversions filtered it out of the war's classpath. The POMs of this branch name `intermine-webapp:classes` instead.)
 6. **Check**, from a clean tree (`rm -rf build dbmodel/build webapp/build .gradle`):
 
    ```bash
@@ -174,10 +175,6 @@ The commit `build: convert HumanMine build files to the InterMine 6.0 line` of t
 --- dbmodel/build.gradle
 -    compile group: "org.intermine", name: "intermine-integrate", ...      # also intermine-resources, bio-core, fileTree(libs)
 +    implementation group: "org.intermine", name: "intermine-integrate", ...
--    soTermListFilePath = "dbmodel/resources/so_terms"
--    soAdditionFilePath = "dbmodel/build/so_additions.xml"
-+    soTermListFilePath = "$rootDir/dbmodel/resources/so_terms"
-+    soAdditionFilePath = "$rootDir/dbmodel/build/so_additions.xml"
 
 --- webapp/build.gradle
  apply plugin: "war"
@@ -185,19 +182,13 @@ The commit `build: convert HumanMine build files to the InterMine 6.0 line` of t
  apply plugin: "webapp"
 -    compile (project(":dbmodel")) {transitive = false}          # and the four org.intermine lines
 +    implementation (project(":dbmodel")) {transitive = false}
-+// intermine-webtasks depends on the intermine-webapp artifact itself, which Gradle resolves to its war (12 MB)
-+tasks.withType(War).configureEach {
-+    classpath = classpath.filter { !it.name.endsWith('.war') }
-+}
- task warWebApp(type: War) {
--    dependsOn 'copyWebappContent'
--    description "Create the war from the build/explodedWebAppDir directory"
-+    description = "Create the war from the build/explodedWebAppDir directory"
-     from "${explodedWebAppDir}"
-     exclude "WEB-INF/web.properties"
-+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-     webInf { from "${mergePropsDir}" }
- }
+-war {
+-    dependsOn 'mergeProperties', 'summariseObjectStore', 'unwarBioWebApp', 'addStrutsConfig'
+-    finalizedBy 'warWebApp'
+-}
+-task warWebApp(type: War) {       // the plugin's war takes the exploded bio-webapp, src/main/webapp and the properties itself
+-    ...
+-}
 -task copyWebappContent(type: Copy) {
 -    from "src/main/webapp/"
 -    into "${explodedWebAppDir}"
@@ -205,15 +196,13 @@ The commit `build: convert HumanMine build files to the InterMine 6.0 line` of t
 -gretty {
 -    jvmArgs = ['-Dorg.apache.el.parser.SKIP_IDENTIFIER_CHECK=true']
 -    contextPath = props.getProperty("webapp.path")
-+// the plugin's mergeProperties reads build/resources/main/intermine.properties, which processResources writes
-+tasks.named('mergeProperties') {
-+    inputs.files(tasks.named('processResources'))
- }
+-}
+ ...
 -    main = "bluegenes.core"
 +    mainClass = "bluegenes.core"
 ```
 
-Why `copyMineProperties` changed: with the old form (`into sourceSets.main.output.resourcesDir`, `dependsOn 'processResources'`) a build that runs `:webapp:copyMineProperties` and `:webapp:jar` fails on Gradle 8 with `Task ':webapp:jar' uses this output of task ':webapp:copyMineProperties' without declaring an explicit or implicit dependency`, because the file lands in a directory that `jar` reads. Keep the task and its name (the plugin's `mergeProperties` and the Ant tasks find the file through it), but let `processResources` take the file from the task's own directory, so that every reader of `build/resources/main` depends on it through its inputs. The plugin's `mergeProperties` task only lists the copy task as the producer of `intermine.properties`, so the mine adds `processResources` as an input of it (last hunk but one; without that line `:webapp:war` fails with `Task ':webapp:mergeProperties' uses this output of task ':webapp:processResources' without declaring an explicit or implicit dependency`).
+Why `copyMineProperties` changed: with the old form (`into sourceSets.main.output.resourcesDir`, `dependsOn 'processResources'`) a build that runs `:webapp:copyMineProperties` and `:webapp:jar` fails on Gradle 8 with `Task ':webapp:jar' uses this output of task ':webapp:copyMineProperties' without declaring an explicit or implicit dependency`, because the file lands in a directory that `jar` reads. Keep the task and its name (the plugin's `mergeProperties` and the Ant tasks find the file through it), but let `processResources` take the file from the task's own directory, so that every reader of `build/resources/main` depends on it through its inputs. The plugin's `mergeProperties` task takes the resources directory as the output of `processResources` and of `copyMineProperties`, so nothing else is needed. (Plugin builds before this change, the 5.1.1 builds of this branch included, listed only the copy task as the producer of `intermine.properties`: `:webapp:war` then failed with `Task ':webapp:mergeProperties' uses this output of task ':webapp:processResources' without declaring an explicit or implicit dependency` unless the mine added `tasks.named('mergeProperties') { inputs.files(tasks.named('processResources')) }`.)
 
 **FlyMine differences.** `imVersion=5.1.+` to the same value as above; the build files are indented by two spaces and have a `props.getProperty("webapp.port")`/`webapp.protocol` block in `cargo { }` (nothing to change); `dbmodel/build.gradle` has the same four `compile` lines in another order and an `extraModelsEnd` with two more additions files; the `blueGenesStart` task of FlyMine also sets `bluegenes-tool-path`. The 54 sources of FlyMine's `project.xml` need 19 jars from `flymine-bio-sources` (see above). With them the result is the same: `:dbmodel:buildDB` (tables in the production database), `:webapp:war` from a clean tree, 134 jars in `WEB-INF/lib`, none repeated.
 
@@ -228,15 +217,15 @@ The messages below were produced by running HumanMine at its upstream master on 
 | `No signature of method: ...TaskInputUnionFileCollection.stopExecutionIfEmpty() is applicable for argument types: () values: []` | delete the line (Gradle 5.0 removed the method); an empty `Copy` is skipped as `NO-SOURCE` by itself |
 | `Could not resolve org.akhikhl.gretty:gretty:2.0.0 ... Could not GET 'https://jcenter.bintray.com/...' Received status code 403` (line 2 of `webapp/build.gradle`) | the gretty `apply from`; delete it and the `gretty { }` block (step 5) |
 | `Could not find com.bmuschko:gradle-cargo-plugin:2.9.0 ... Searched in ... repo.maven.apache.org` | add `gradlePluginPortal()` to the `buildscript` repositories, or stay on 2.8.0 |
-| `Could not find file containing SO terms to add to the model, check the dbmodel/build.gradle file. Property was: <gradle home>/daemon/8.14.6/dbmodel/resources/so_terms` | relative `soTermListFilePath` / `soAdditionFilePath`; make them `$rootDir/...` (step 4) |
+| `Could not find file containing SO terms to add to the model, check the dbmodel/build.gradle file. Property was: <gradle home>/daemon/8.14.6/dbmodel/resources/so_terms` | relative `soTermListFilePath` / `soAdditionFilePath` with a plugin from before the fix of im-ee7.47: use the current plugin, or write the paths as `"$rootDir/dbmodel/..."` (step 4) |
 | `A problem was found with the configuration of task ':webapp:jar' ... uses this output of task ':webapp:copyMineProperties' without declaring an explicit or implicit dependency` (also `:webapp:mergeProperties` ... `:webapp:processResources`) | the old `copyMineProperties`; see the paragraph after the example |
-| `Entry model/images/favicon.ico is a duplicate but no duplicate handling strategy has been set` (task `:webapp:warWebApp`) | `duplicatesStrategy = DuplicatesStrategy.EXCLUDE` on `warWebApp` (step 5) |
-| a war of 46 MB without `WEB-INF/web.xml`, `struts-config.xml` or the bio-webapp libraries, and no error; `build/explodedWebApp` holding only the mine's own files | `copyWebappContent` emptied the directory on its first run: delete the task (step 5) |
+| `Entry model/images/favicon.ico is a duplicate but no duplicate handling strategy has been set` (task `:webapp:warWebApp`) | a `warWebApp` of your own: delete it, the plugin's `war` has `duplicatesStrategy = DuplicatesStrategy.EXCLUDE` (step 5) |
+| a war of 46 MB without `WEB-INF/web.xml`, `struts-config.xml` or the bio-webapp libraries, and no error; `build/explodedWebApp` holding only the mine's own files | `copyWebappContent` emptied the directory on its first run: delete the task (step 5); the plugin's `war` takes `src/main/webapp` itself |
 | `Could not find org.intermine:bio-source-redfly:9.9.9` in `:dbmodel:generateKeys` / `:dbmodel:mergeModels` | the source's jar is not in any repository: publish the mine's source repository (see above), or the `version` in `project.xml` is wrong |
 | `error: cannot find symbol  import org.intermine.model.bio.MicroArrayAssay;` in `:webapp:compileJava` | the model was generated from fewer sources than `project.xml` lists; restore the sources, delete `dbmodel/build` |
 | `Properties should be assigned using the 'propName = value' syntax ...` (Gradle 10); `The JavaExecSpec.main property has been deprecated` (Gradle 9); `The org.gradle.api.plugins.JavaPluginConvention type has been deprecated` | `url = ...`, `description = ...`, `mainClass = ...`, the `java { }` block (steps 3 and 5); they are warnings in 8.14 |
 | `Executing Gradle on JVM versions 16 and lower has been deprecated` | the build runs on JDK 8; use JDK 17 for Gradle (the mine's jars and war still run on JDK 8) |
-| `ant-1.6.5.jar` and `ant-1.10.x.jar`, or `intermine-webapp-<version>.war` (12 MB), in `WEB-INF/lib` | `compile('ant:ant:1.6.5')`, and the war filter (steps 3 and 5) |
+| `ant-1.6.5.jar` and `ant-1.10.x.jar`, or `intermine-webapp-<version>.war` (12 MB), in `WEB-INF/lib` | `compile('ant:ant:1.6.5')` (step 3); the war is in the POM of `intermine-webtasks` 5.1.0 (Maven Central) and no longer in those of this branch (a 6.0 build against a published 5.1.0 POM needs `classpath = classpath.filter { !it.name.endsWith('.war') }` on the `War` tasks) |
 | `Test of distribution url https://services.gradle.org/... failed` from `./gradlew wrapper` | a proxy that rejects the check; `--no-validate-url` (step 1) |
 
 A mine on Tomcat 8 can stay on it: `containerId = 'tomcat8x'` in the `cargo { }` block does not depend on the JDK or Gradle version of the build.

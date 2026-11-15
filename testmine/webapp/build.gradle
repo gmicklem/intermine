@@ -116,7 +116,8 @@ task summariseTestObjectStore {
 }
 
 
-task unwarIMWebApp(type: Copy) {
+// a Sync, not a Copy: a file of an earlier intermine-webapp version does not stay in the directory (im-ee7.41)
+task unwarIMWebApp(type: Sync) {
     description = "Unwar intermine-webapp under the build/explodedWebAppDir directory"
     from { zipTree(configurations.imWebApp.singleFile) }
     destinationDir = new File("$explodedWebAppDir")

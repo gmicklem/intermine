@@ -3,7 +3,11 @@ package org.intermine.plugin.webapp
 import groovy.ant.AntBuilder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.WarPlugin
+import org.gradle.api.tasks.Sync
+import org.gradle.api.tasks.bundling.War
 import org.intermine.plugin.TaskConstants
 import org.intermine.plugin.dbmodel.DBModelPlugin
 import org.intermine.plugin.dbmodel.DBModelUtils
@@ -17,7 +21,8 @@ class WebAppPlugin implements Plugin<Project> {
 
     void apply(Project project) {
         project.pluginManager.apply(JavaPlugin)
-        config = project.extensions.create('webappConfig', WebAppConfig)
+        project.pluginManager.apply(WarPlugin)
+        config = project.extensions.create('webappConfig', WebAppConfig, project)
         dbUtils = new DBModelUtils(project)
 
         // Resolvable only (see DBModelPlugin); the dependencies are added when they are resolved.
@@ -46,7 +51,9 @@ class WebAppPlugin implements Plugin<Project> {
             String webPropertiesPath = project.projectDir.absolutePath + File.separator + "src" + File.separator + "main" +
                     File.separator + "webapp" + File.separator + "WEB-INF" + File.separator + "web.properties"
             inputs.files(webPropertiesPath)
-            inputs.files(DBModelUtils.resource(project, 'copyMineProperties') { "intermine.properties" })
+            // intermine.properties as processResources leaves it in build/resources/main (a mine's copyMineProperties
+            // feeds processResources; a 5.x style one copies into the directory itself)
+            inputs.files(DBModelUtils.processedResources(project))
             outputs.file({ config.propsDir + File.separator + "web.properties" })
 
             doLast {
@@ -61,18 +68,18 @@ class WebAppPlugin implements Plugin<Project> {
             }
         }
 
-        project.tasks.register('addStrutsConfig') {
-            description = "Append the struts config modifications to the webapp"
-            // The struts and tiles fragments come from the resources.
-            inputs.files(DBModelUtils.processedResources(project))
-            // lifecycle: it edits, in place, the files unwarBioWebApp unpacks (neither declares outputs), so it
-            // must run after it every time. build/explodedWebApp is not declared as an input: a mine's own
-            // copyWebappContent copies into the same directory, and Gradle 8 would then fail addStrutsConfig
-            // for reading that task's output without depending on it. A single Sync task with filters should
-            // replace the pair once the plugin composes the war.
-            dependsOn 'unwarBioWebApp'
+        // build/explodedWebApp: the unpacked bio-webapp war with the model's struts, tiles, web.xml and message
+        // additions. A Sync, so that a file of an earlier bio-webapp version or of an earlier model does not stay in the
+        // directory (im-ee7.41); the additions are made in the same task, after the copy, so that a run that is
+        // up to date leaves the directory as the last run finished it (Gradle snapshots the outputs after the last action).
+        project.tasks.register('unwarBioWebApp', Sync) { Sync sync ->
+            sync.description = "Unpack bio-webapp into build/explodedWebApp and add the struts, tiles, web.xml and model configuration"
+            sync.from({ project.zipTree(project.configurations.getByName("bioWebApp").singleFile) })
+            sync.into(project.layout.buildDirectory.dir("explodedWebApp"))
+            // the struts, tiles and message fragments of the mine, from the resources
+            sync.inputs.files(DBModelUtils.processedResources(project))
 
-            doLast {
+            sync.doLast {
                 File buildResDir = DBModelUtils.buildFile(project, "resources/main")
                 File webInf = new File(explodedWebApp(project), "WEB-INF")
                 File strutsConfigModelPath = new File(buildResDir, "struts-config-model.xml")
@@ -112,11 +119,22 @@ class WebAppPlugin implements Plugin<Project> {
             }
         }
 
+        // Kept for the build files of plugin 5.x, whose war task depends on it: unwarBioWebApp makes the additions now.
+        project.tasks.register('addStrutsConfig') {
+            description = "Append the struts config modifications to the webapp (done by unwarBioWebApp)"
+            // lifecycle alias: it has no work of its own
+            dependsOn 'unwarBioWebApp'
+        }
+
         // this plugin requires a database to exist and be populated. However this plugin is run at compile time, not runtime.
         // We have no guarantee there will be a database. Hence the try/catch
         project.tasks.register('summariseObjectStore') {
             description = "Summarise ObjectStore into objectstoresummary.properties file"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            // the war takes the file from here. It depends on the database, which is no input, so the task always runs
+            // (and the file may be missing when there is no database yet)
+            outputs.file({ config.propsDir + File.separator + "objectstoresummary.properties" })
+            outputs.upToDateWhen { false }
 
             doLast {
                 try {
@@ -132,17 +150,6 @@ class WebAppPlugin implements Plugin<Project> {
                 } catch (Exception ex) {
                     println("Error: " + ex)
                 }
-            }
-        }
-
-        project.tasks.register('unwarBioWebApp') {
-            description = "Unwar bio-webapp under the build/explodedWebAppDir directory"
-
-            doLast {
-                String bioWebAppWar = project.configurations.getByName("bioWebApp").singleFile.absolutePath;
-                String destination = explodedWebApp(project).absolutePath
-                def ant = new AntBuilder()
-                ant.unzip(src: bioWebAppWar, dest: destination, overwrite: "true" )
             }
         }
 
@@ -236,6 +243,18 @@ class WebAppPlugin implements Plugin<Project> {
                         userProfileAlias: config.userProfileObjectStoreWriterName, minRows:0,
                         username: superUser)
             }
+        }
+
+        // The war: the mine's own src/main/webapp (which the war task takes by itself), then the exploded bio-webapp,
+        // then the merged web.properties and the object store summary. The first entry of a name wins, so the mine's own
+        // files replace those of bio-webapp, and a jar that the mine's classpath and bio-webapp both carry is listed once.
+        // Every part comes from the output of the task that makes it, so the war needs no dependsOn.
+        project.tasks.named('war', War) { War war ->
+            war.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            // the unmerged web.properties of the mine and of bio-webapp
+            war.exclude "WEB-INF/web.properties"
+            war.from(project.tasks.named('unwarBioWebApp'))
+            war.webInf.from(project.files({ config.propsDir }).builtBy('mergeProperties', 'summariseObjectStore'))
         }
     }
 

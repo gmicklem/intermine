@@ -221,7 +221,10 @@ class DBModelPlugin implements Plugin<Project> {
                         }
                     }
                 }
-                ant.createSoModel(soTermListFile: config.soTermListFilePath, outputFile: config.soAdditionFilePath)
+                // Ant resolves a relative path against the working directory of the JVM, which is the Gradle daemon's own
+                // directory since Gradle 8: resolve it against the mine's root directory first
+                ant.createSoModel(soTermListFile: DBModelUtils.rootPath(project, config.soTermListFilePath),
+                        outputFile: DBModelUtils.rootPath(project, config.soAdditionFilePath))
             }
         }
 
