@@ -23,6 +23,13 @@ def explodedWebAppDir = layout.buildDirectory.dir("explodedWebApp")
 
 configurations {
     imWebApp
+
+    all {
+        // biojava-core and biojava-ontology 4.2.0 depend on log4j-core, log4j-api and log4j-slf4j-impl 2.5 (Log4Shell,
+        // CVE-2021-44228), and the last one is a second SLF4J binding next to slf4j-reload4j. InterMine logs through
+        // the log4j 1.x API (reload4j); nothing needs log4j 2. Same exclusion as bio-core and bio-sources.
+        exclude group: 'org.apache.logging.log4j'
+    }
 }
 
 dependencies {
