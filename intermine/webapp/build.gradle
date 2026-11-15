@@ -29,19 +29,26 @@ dependencies {
     api group: 'org.apache.lucene', name: 'lucene-core', version: '3.0.2'
     api group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.4'
     api group: 'javax.mail', name: 'mail', version: '1.4'
-    api group: 'org.apache.struts', name: 'struts-core', version: '1.3.10'
-    api group: 'org.apache.struts', name: 'struts-taglib', version: '1.3.10'
-    api group: 'org.apache.struts', name: 'struts-extras', version: '1.3.10'
-    api group: 'org.apache.struts', name: 'struts-tiles', version: '1.3.10'
+    // Struts 1.3.10 asks for antlr 2.7.2, which would sit in WEB-INF/lib next to the antlr 2.7.6 that every mine's
+    // dbmodel brings (the parser of the InterMine query language); the antlr classes are the same library
+    ['struts-core', 'struts-taglib', 'struts-extras', 'struts-tiles'].each { strutsModule ->
+        api(group: 'org.apache.struts', name: strutsModule, version: '1.3.10') { exclude group: 'antlr', module: 'antlr' }
+    }
     api group: "javax.servlet", name: "jstl", version: "1.2"
     api group: 'commons-fileupload', name: 'commons-fileupload', version: '1.2.2'
     api group: 'com.github.erosb', name: 'everit-json-schema', version: '1.14.6' // formerly org.everit.json:org.everit.json.schema (same library, groupId moved)
     api 'org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:1.0.1'
     api 'com.fasterxml.jackson.core:jackson-databind:2.18.12'
     api 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.18.12' // align jersey-media-json-jackson's 2.8.4 Jackson modules
-    api group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: '2.25'
+    // Jersey's hk2 packages javax.inject twice: javax.inject:javax.inject:1 and its repackaging
+    // org.glassfish.hk2.external:javax.inject:2.5.0-b30 (same classes); keep the first only
+    api(group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: '2.25') {
+        exclude group: 'org.glassfish.hk2.external', module: 'javax.inject'
+    }
     api group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.0.1'
-    api group: 'org.glassfish.jersey.core', name: 'jersey-client', version: '2.25'
+    api(group: 'org.glassfish.jersey.core', name: 'jersey-client', version: '2.25') {
+        exclude group: 'org.glassfish.hk2.external', module: 'javax.inject'
+    }
     api group: 'org.apache.jena', name: 'jena-core', version: '3.16.0'
     api group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
 
