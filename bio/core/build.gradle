@@ -44,7 +44,7 @@ sourceSets {
 }
 
 configurations {
-    // Jars that are not in a public Maven repository (obo, bbop, mockrunner, antlr-2.7.6-caching). They are on
+    // Jars that are not in a public Maven repository (obo, bbop, antlr-2.7.6-caching). They are on
     // the compile and runtime classpaths and are packed into this module's jar (see jar {} below).
     bundled
     implementation.extendsFrom bundled
