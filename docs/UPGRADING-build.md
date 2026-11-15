@@ -261,9 +261,38 @@ A mine on Tomcat 8 can stay on it: `containerId = 'tomcat8x'` in the `cargo { }`
 ## Publishing and dependencies of the InterMine artifacts
 
 - The old OSSRH and `uploadArchives` publishing is gone from InterMine itself (see [RELEASING.md](RELEASING.md)); a mine only consumes the released artifacts from Maven Central.
-- With Gradle 5 and later, Gradle uses the POM's compile and runtime scopes separately, so a mine that compiles against a class that comes through an InterMine artifact depends on that artifact declaring it as `api`/compile. The planning notes expect a `package ... does not exist` error in a mine as the symptom if an artifact declared something as `implementation` where `api` was needed.
+- With Gradle 5 and later, Gradle uses the POM's compile and runtime scopes separately, so a mine that compiles against a class that comes through an InterMine artifact depends on that artifact declaring it as `api`/compile. The planning notes expect a `package ... does not exist` error in a mine as the symptom if an artifact declared something as `implementation` where `api` was needed. The next section is the case that matters for mines: the `bio-source-*` artifacts.
 - The plugin's internal configurations were renamed (`api` to `imApiJar`, `antlr` to `imAntlr`, `plugin` to `imPlugin`). Mines do not use them (checked in humanmine and flymine).
 - The Ant tasks that the plugin runs (integrate, buildDB, postprocess) now take their classpath from `runtimeClasspath` instead of `compile`; this is a superset (it also contains `runtimeOnly` dependencies), and the order of the jars can differ.
+
+## Dependency scopes in the bio-source POMs
+
+In the 5.1.0 release every dependency of a `bio-source-*` artifact was in the POM with scope `compile`. In 5.1.1 and 6.0.0 most are `runtime`: the `bio/sources` build declares them as `implementation` (it uses `api` only for types that appear in the converters' constructors and protected methods; see the comment in `bio/sources/build.gradle`), and the POM maps `implementation` to `runtime`. `bio/postprocess` has no `api` at all, so its POMs are `runtime` throughout. The mapping is described in [BUILDING.md](BUILDING.md).
+
+For a `bio-source-*` POM of this tree the scopes are:
+
+| Scope | Dependencies |
+|---|---|
+| `compile` | `bio-core`, `intermine-objectstore`, `intermine-model`, `ant`, `commons-collections`, `reload4j`, `slf4j-reload4j`, in most sources `intermine-integrate`, and what a source adds for its own API (for example `biojava-core` in `bio-source-fasta`) |
+| `runtime` | `HikariCP`, `intermine-resources`, `commons-io`, `commons-lang3`, `commons-lang` 2.6, `commons-logging`, `postgresql`, `jakarta.xml.bind-api`, `jaxb-runtime`, and `bio-model` in the sources that list it |
+
+Nothing changes for the plugin: it puts the bio-source jars on a runtime classpath, where both scopes arrive. It matters for a mine's own bio-source project (your `*-bio-sources` repository) that **compiles against classes of an `org.intermine` bio-source jar**, for example a processor that extends a class of `bio-source-chado-db`. Gradle gives such a project only the `compile` entries of that POM. A library that your code imports, and that used to arrive through the bio-source jar, may now be missing at compile time, and the build stops with `error: package org.apache.commons.logging does not exist` (or `org.postgresql`, `com.zaxxer.hikari`, `javax.xml.bind`, `org.apache.commons.lang`).
+
+What to do:
+
+- Declare every `org.intermine` bio-source jar that your classes use, with the same version as before. It is `implementation`, or `api` if its types appear in your own public signatures. This always was necessary, but it used to be hidden when the jar came in through another dependency.
+- Declare every library whose classes you import yourself, instead of relying on what a POM brings in. Use the versions of InterMine's catalog (`gradle/libs.versions.toml` in the InterMine repository) so that your war carries one copy:
+
+  ```groovy
+  dependencies {
+      implementation 'org.intermine:bio-source-chado-db:6.0.+'
+      implementation 'commons-logging:commons-logging:1.3.5'
+      implementation 'org.postgresql:postgresql:42.7.14'
+  }
+  ```
+
+- `commons-io` and `commons-lang3` are `compile` dependencies of `bio-core`, which a mine's bio-source project declares anyway, so they stay on your compile classpath. `commons-lang` 2.6 is `runtime` in the POMs of `bio-core`, `bio-model` and the bio-sources (and `implementation`, so `runtime`, in `intermine-objectstore`), but it still compiles today because `intermine-api` (a `compile` dependency of `bio-core`) brings `solr-solrj` and its POM lists lang 2.6 as `compile`. InterMine does not promise that; use `org.apache.commons.lang3`, or declare `implementation 'commons-lang:commons-lang:2.6'` (step 6 of the 6.0.0 list).
+- To see what a POM gives you: `./gradlew dependencies --configuration compileClasspath` in your project, or the `<scope>` entries of the POM on Maven Central.
 
 ## Removed from the webapp
 
