@@ -11,7 +11,9 @@ intermine = "5.1.1"
 # kept at 7.8.1 until the checkstyle bump (config/gradle/checkstyle-classpath.gradle)
 checkstyle = "7.8.1"
 
-ant = "1.7.0"
+# 1.10.x is the Java 8 line; 1.7.0 had 3 advisories. The InterMine tasks only use Task, BuildException, Project and
+# FileSet/DirectoryScanner (stable API). Gradle runs them on its own bundled Ant.
+ant = "1.10.18"
 antlr = "2.7.6"
 base64 = "2.3.8"
 bcprov-jdk15on = "1.50"
