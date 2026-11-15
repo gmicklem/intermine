@@ -2,9 +2,7 @@ apply plugin: 'antlr'
 
 sourceSets {
     main {
-        java {
-            srcDirs = ['src/main/java', 'build/generated-src/antlr/main']
-        }
+        // no java srcDirs override: the antlr plugin adds build/generated-src/antlr/main itself
         antlr {
             srcDirs = ['src/main/antlr']
         }
@@ -12,39 +10,42 @@ sourceSets {
 }
 
 configurations {
-    provided
-    compile.extendsFrom provided
+    // jars that are not resolved from a repository but packed into this module's own jar (see the jar block)
+    bundled
+    implementation.extendsFrom bundled
 
     all {
         exclude group: 'org.apache.logging.log4j'
     }
 }
 
+// the unit tests need the databases that testresources:buildDB creates (a side effect, so there is no file to wire as an input)
 tasks.test.dependsOn(':intermine-testresources:buildDB')
 
 dependencies {
-    compile project(':intermine-model')
-    compile group: 'org.postgresql', name: 'postgresql', version: '42.7.14'
-    compile group: 'commons-io', name: 'commons-io', version: '1.2'
-    compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
-    compile group: 'com.zaxxer', name: 'HikariCP', version: '4.0.3', transitive: false // conflict with log4j library this JAR needs
-    compile group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
-    compile group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
+    api project(':intermine-model')
+    api group: 'org.postgresql', name: 'postgresql', version: '42.7.14'
+    api group: 'commons-io', name: 'commons-io', version: '1.2'
+    api group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
+    implementation group: 'com.zaxxer', name: 'HikariCP', version: '4.0.3', transitive: false // conflict with log4j library this JAR needs
+    api group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
+    api group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
 
-    compile group: 'net.iharder', name: 'base64', version: '2.3.8' //not clear wich version is currently used
-    compile group: 'au.com.bytecode', name: 'opencsv', version: '2.4' //version 2.3 not available in maven
-    testCompile group: 'mockobjects', name: 'mockobjects-core', version: '0.09'
-    testCompile group: 'mockobjects', name: 'mockobjects-jdk1.3', version: '0.09'
-    provided fileTree(dir: 'libs', include: '*.jar') // eventually replace torque
-    testCompile project(path: ':intermine-testresources', configuration: 'testArtifacts')
+    api group: 'net.iharder', name: 'base64', version: '2.3.8' //not clear wich version is currently used
+    implementation group: 'au.com.bytecode', name: 'opencsv', version: '2.4' //version 2.3 not available in maven
+    testImplementation group: 'mockobjects', name: 'mockobjects-core', version: '0.09'
+    testImplementation group: 'mockobjects', name: 'mockobjects-jdk1.3', version: '0.09'
+    bundled fileTree(dir: 'libs', include: '*.jar') // eventually replace torque
+    testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')
     antlr name: 'antlr-2.7.6-caching'
 }
 
 jar {
-    dependsOn configurations.runtime
-    // put all the JARs included in `provided` config and include them in the JAR
+    // put all the JARs included in `bundled` config and include them in the JAR
+    // (the bundled jars all ship a META-INF/LICENSE.txt: keep the first one)
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     from {
-        (configurations.provided).collect {
+        (configurations.bundled).collect {
             it.isDirectory() ? it : zipTree(it)
         }
     }

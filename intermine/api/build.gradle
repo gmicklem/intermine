@@ -17,34 +17,21 @@ sourceSets {
     }
 }
 
+// the unit tests need the databases that testresources:buildDB creates (a side effect, so there is no file to wire as an input)
 tasks.test.dependsOn(':intermine-testresources:buildDB')
 
-configurations {
-    provided
-    compile.extendsFrom provided
-}
-
 dependencies {
-    compile project(':intermine-pathquery')
-    compile project(':intermine-integrate')
-    compile group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.4'
-    compile group: 'org.apache.lucene', name: 'lucene-core', version: '3.0.2'
-    compile group: 'org.apache.lucene', name: 'lucene-snowball', version: '3.0.2'
-    compile group: 'org.apache.lucene', name: 'lucene-highlighter', version: '3.0.2'
-    compile group: 'org.json', name: 'json', version: '20260814'
-    compile group: "org.apache.jena", name: "apache-jena-libs", version: "3.16.0"
-    testCompile project(path: ':intermine-testresources', configuration: 'testArtifacts')
-    testCompile group: 'xmlunit', name: 'xmlunit', version: '1.0'
-    testCompile project(':intermine-objectstore').sourceSets.test.output
-    testCompile project(':intermine-resources')
+    api project(':intermine-pathquery')
+    api project(':intermine-integrate')
+    api group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.4'
+    api group: 'org.apache.lucene', name: 'lucene-core', version: '3.0.2'
+    implementation group: 'org.apache.lucene', name: 'lucene-snowball', version: '3.0.2'
+    implementation group: 'org.apache.lucene', name: 'lucene-highlighter', version: '3.0.2'
+    api group: 'org.json', name: 'json', version: '20260814'
+    api group: "org.apache.jena", name: "apache-jena-libs", version: "3.16.0"
+    testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')
+    testImplementation group: 'xmlunit', name: 'xmlunit', version: '1.0'
+    testImplementation project(':intermine-objectstore').sourceSets.test.output
+    testImplementation project(':intermine-resources')
 }
 
-jar {
-    dependsOn configurations.runtime
-    // put all the JARs included in `provided` config and include them in the JAR
-    from {
-        (configurations.provided).collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
-}

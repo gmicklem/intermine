@@ -16,7 +16,13 @@ TESTMODEL_URL=$5
 export PSQL_USER=test
 export PSQL_PWD=test
 export PSQL_HOST=localhost
+# Database administrator for setup_postgres and the Gradle createUnitTestDatabases
+# tasks: connects directly, no sudo (newer sudo ignores -E, which dropped
+# PGPASSWORD and made every command prompt for a password). -w makes a wrong
+# or missing password fail at once instead of prompting.
+export PGUSER=${PGUSER:-postgres}
 export PGPASSWORD=${PGPASSWORD:-postgres}
+PG_ADMIN_USER=$PGUSER
 
 if [ -z "$(which wget)" ]; then
     # use curl
@@ -30,20 +36,20 @@ GIT_GET="git clone --single-branch --depth 1"
 export KEYSTORE=${PWD}/keystore.jks
 
 setup_postgres() {
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists flatmodetest
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists fulldatatest
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists notxmltest
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists truncunittest
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists unittest
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists userprofile-test
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists bio-test
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists bio-fulldata-test
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists intermine-demo
-    sudo -E -u postgres dropdb -h "$PSQL_HOST" --if-exists userprofile-demo
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists flatmodetest
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists fulldatatest
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists notxmltest
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists truncunittest
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists unittest
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists userprofile-test
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists bio-test
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists bio-fulldata-test
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists intermine-demo
+    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists userprofile-demo
 
-    sudo -E -u postgres dropuser -h "$PSQL_HOST" --if-exists test
-    sudo -E -u postgres createuser -h "$PSQL_HOST" test
-    sudo -E -u postgres psql -h "$PSQL_HOST" -c "alter user test with encrypted password 'test';"
+    dropuser -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists test
+    createuser -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" test
+    psql -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" -c "alter user test with encrypted password 'test';"
 }
 
 setup_python() {

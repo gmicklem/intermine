@@ -3,8 +3,9 @@ void createDbInternal(dbName) {
     def resultStream = new ByteArrayOutputStream()
     exec {
         ignoreExitValue true
-        environment PGPASSWORD: "postgres"
-        commandLine 'sudo', '-E', '-u', 'postgres', 'psql', '-h', 'localhost', '-c', "create database \"" + dbName + "\";"
+        // Admin connection without sudo (newer sudo ignores -E): PGUSER/PGPASSWORD, default postgres/postgres
+        environment PGPASSWORD: (System.getenv('PGPASSWORD') ?: 'postgres')
+        commandLine 'psql', '-w', '-h', 'localhost', '-U', (System.getenv('PGUSER') ?: 'postgres'), '-c', "create database \"" + dbName + "\";"
         standardOutput = resultStream
         errorOutput = resultStream
     }
@@ -25,8 +26,9 @@ void grantPrivileges(dbName) {
     def resultStream = new ByteArrayOutputStream()
     exec {
         ignoreExitValue true
-        environment PGPASSWORD: "postgres"
-        commandLine 'sudo', '-E', '-u', 'postgres', 'psql', '-h', 'localhost', '-c', "grant all privileges on database \"" + dbName + "\" to test;"
+        // Admin connection without sudo (newer sudo ignores -E): PGUSER/PGPASSWORD, default postgres/postgres
+        environment PGPASSWORD: (System.getenv('PGPASSWORD') ?: 'postgres')
+        commandLine 'psql', '-w', '-h', 'localhost', '-U', (System.getenv('PGUSER') ?: 'postgres'), '-c', "grant all privileges on database \"" + dbName + "\" to test;"
         standardOutput = resultStream
         errorOutput = resultStream
     }
@@ -37,6 +39,21 @@ void grantPrivileges(dbName) {
         println 'Granted.'
     } else {
         throw new GradleException("FAILED:\n${result}")
+    }
+
+    // PostgreSQL 15 and later: only the database owner may create objects in the public schema, so a
+    // non-superuser test user needs an explicit grant (the superuser used locally does not).
+    def schemaStream = new ByteArrayOutputStream()
+    exec {
+        ignoreExitValue true
+        environment PGPASSWORD: (System.getenv('PGPASSWORD') ?: 'postgres')
+        commandLine 'psql', '-w', '-h', 'localhost', '-U', (System.getenv('PGUSER') ?: 'postgres'), '-d', dbName, '-c', "grant all on schema public to test;"
+        standardOutput = schemaStream
+        errorOutput = schemaStream
+    }
+    def schemaResult = schemaStream.toString().trim()
+    if (!schemaResult.contains("GRANT")) {
+        throw new GradleException("FAILED:\n${schemaResult}")
     }
 
 }
