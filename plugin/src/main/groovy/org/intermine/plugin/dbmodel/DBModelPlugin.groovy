@@ -73,6 +73,11 @@ class DBModelPlugin implements Plugin<Project> {
             }
         }
 
+        // The mine's intermine.properties (database user and password) reaches build/resources/main through
+        // processResources, where the Ant tasks and the tests read it from. It must not be packed into the jar,
+        // which is published or copied into a war.
+        project.tasks.named('jar').configure { exclude 'intermine.properties' }
+
         // The model tasks write into build/resources/main, which processResources also writes:
         // they must run after it so that processResources does not overwrite their files. That is
         // ordering only; processResources is scheduled by whatever reads the files. These tasks do
