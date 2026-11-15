@@ -1,15 +1,16 @@
+// the unit tests need the databases that testresources:buildDB creates (a side effect, so there is no file to wire as an input)
 tasks.test.dependsOn(':intermine-testresources:buildDB')
 
 dependencies {
-    compile project(':intermine-objectstore')
-    testCompile group: 'xmlunit', name: 'xmlunit', version: '1.6'
-    testCompile project(':intermine-objectstore').sourceSets.test.output
-    testCompile project(path: ':intermine-testresources', configuration: 'testArtifacts')
-    testCompile project(':intermine-resources')
+    api project(':intermine-objectstore')
+    testImplementation group: 'xmlunit', name: 'xmlunit', version: '1.6'
+    testImplementation project(':intermine-objectstore').sourceSets.test.output
+    testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')
+    testImplementation project(':intermine-resources')
 }
 
 task testClassesJar(type: Jar) {
-    classifier = 'testClasses'
+    archiveClassifier.set('testClasses')
     from sourceSets.test.output
 }
 
