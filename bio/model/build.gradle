@@ -3,7 +3,7 @@ buildscript {
         ivy {
             // define in ~/.gradle/gradle.properties
             // intermine.plugin.repo=file:///your/intermine/repo/plugin/build/libs
-            url project.getProperty("intermine.plugin.repo")
+            url = project.getProperty("intermine.plugin.repo")
             patternLayout {
                 artifact  "[artifact]-[revision].[ext]"
             }
@@ -12,7 +12,7 @@ buildscript {
             }
         }
         maven {
-            url project.getProperty("intermine.maven.central")
+            url = project.getProperty("intermine.maven.central")
         }
     }
     dependencies {

@@ -33,7 +33,7 @@ mergeModels {
         ant.taskdef(name: "mergeBioSourceModel", classname: "org.intermine.task.ModelMergerTask") {
             classpath {
                 pathelement(path: configurations.mergeModel.asPath)
-                dirset(dir: buildDir)
+                dirset(dir: layout.buildDirectory.get().asFile)
             }
         }
         ant.mergeBioSourceModel(inputModelFile: "$sourceSets.main.output.resourcesDir/genomic_model.xml",
