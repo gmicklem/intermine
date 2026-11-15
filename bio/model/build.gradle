@@ -62,10 +62,16 @@ dbModelConfig {
     defaultInterminePropertiesFile = "default.intermine.bio-test.properties"
 }
 
+// The test mine's intermine.properties goes into the resources output through processResources (the plugin's
+// tasks read it from there by the task name).
 task copyMineProperties(type: Copy) {
     from "${System.env.HOME}/.intermine/intermine-bio-test.properties"
-    into sourceSets.main.output.resourcesDir
+    into layout.buildDirectory.dir('im/mine-properties')
     rename { fileName -> fileName.replace('intermine-bio-test.properties', 'intermine.properties') }
+}
+
+processResources {
+    from copyMineProperties
 }
 
 // Gradle 6 forbids replacing a task the plugin has already created (overwrite: true); genomic_model.xml
@@ -74,7 +80,6 @@ tasks.named('copyGenomicModel') { enabled = false }
 
 // lifecycle: buildDB needs the (empty) test databases to exist; no file output to wire.
 tasks.named('buildDB') { dependsOn ':bio-testresources:createUnitTestDatabases' }
-// kept: both tasks write intermine.properties / default.intermine.properties into the resources dir
-// that the jar packs, and copyDefaultInterMineProperties (plugin) declares no outputs, so there is
-// nothing to wire as an input.
-tasks.named('mergeModels') { dependsOn 'copyMineProperties', 'copyDefaultInterMineProperties' }
+// kept: copyDefaultInterMineProperties (plugin) writes default.intermine.properties into the resources dir
+// that the jar packs and declares no outputs, so there is nothing to wire as an input.
+tasks.named('mergeModels') { dependsOn 'copyDefaultInterMineProperties' }

@@ -90,10 +90,16 @@ dbModelConfig {
     defaultInterminePropertiesFile = "default.intermine.bio-test.properties"
 }
 
+// The test mine's intermine.properties goes into the resources output through processResources (the plugin's
+// tasks read it from there by the task name).
 task copyMineProperties(type: Copy) {
     from "${System.env.HOME}/.intermine/intermine-bio-test.properties"
-    into sourceSets.main.output.resourcesDir
+    into layout.buildDirectory.dir('im/mine-properties')
     rename { fileName -> fileName.replace('intermine-bio-test.properties', 'intermine.properties') }
+}
+
+processResources {
+    from copyMineProperties
 }
 
 // lifecycle: the unit tests need the (empty) test databases, which have no file output to wire
@@ -110,4 +116,6 @@ jar {
     // the entries of the bundled jars (META-INF, ...) may overlap: keep the first, as Gradle 6 did by default
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude 'genomic_model.xml'
+    // the test mine's properties (database credentials) are on the test classpath only
+    exclude 'intermine.properties'
 }
