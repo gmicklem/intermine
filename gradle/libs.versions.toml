@@ -14,6 +14,7 @@ checkstyle = "7.8.1"
 ant = "1.7.0"
 base64 = "2.3.8"
 bcprov-jdk15on = "1.50"
+biojava = "4.2.0"
 cglib = "3.1"
 commons-beanutils = "1.9.3"
 # one version for intermine/webapp and testmine/webapp (testmine used 1.9)
@@ -29,6 +30,10 @@ easymock = "3.2"
 everit-json-schema = "1.14.6"
 hikaricp = "4.0.3"
 jackson = "2.18.12"
+# bio/webapp and bio/sources/psi-complexes (jami-core) both use this
+jami = "3.2.12"
+# jami-commons, jami-mitab, jami-xml as used by bio/sources/psi-complexes (3.0.0, not bumped with jami-core)
+jami-v3 = "3.0.0"
 javax-annotation-api = "1.3.2"
 javax-mail = "1.4"
 javax-servlet-api = "3.1.0"
@@ -36,6 +41,7 @@ javax-ws-rs-api = "2.0.1"
 # jakarta.xml.bind-api and jaxb-runtime are released together
 jaxb = "2.3.2"
 jaxb-api = "2.3.1"
+je = "4.0.92"
 jena = "3.16.0"
 jersey = "2.25"
 jopenid = "1.08"
@@ -63,6 +69,8 @@ xmlunit = "1.6"
 ant = { module = "org.apache.ant:ant", version.ref = "ant" }
 base64 = { module = "net.iharder:base64", version.ref = "base64" }
 bcprov-jdk15on = { module = "org.bouncycastle:bcprov-jdk15on", version.ref = "bcprov-jdk15on" }
+biojava-core = { module = "org.biojava:biojava-core", version.ref = "biojava" }
+biojava-ontology = { module = "org.biojava:biojava-ontology", version.ref = "biojava" }
 cglib = { module = "cglib:cglib", version.ref = "cglib" }
 commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "commons-beanutils" }
 commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
@@ -76,15 +84,25 @@ dwr = { module = "org.directwebremoting:dwr", version.ref = "dwr" }
 easymock = { module = "org.easymock:easymock", version.ref = "easymock" }
 everit-json-schema = { module = "com.github.erosb:everit-json-schema", version.ref = "everit-json-schema" }
 hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson" }
+jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-jaxrs-json-provider = { module = "com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider", version.ref = "jackson" }
 jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jaxb" }
+jami-bridges-core = { module = "psidev.psi.mi.jami.bridges:bridges-core", version.ref = "jami" }
+jami-commons = { module = "psidev.psi.mi.jami:jami-commons", version.ref = "jami-v3" }
+jami-core = { module = "psidev.psi.mi.jami:jami-core", version.ref = "jami" }
+jami-interactionviewer-json = { module = "psidev.psi.mi.jami:jami-interactionviewer-json", version.ref = "jami" }
+jami-mitab = { module = "psidev.psi.mi.jami:jami-mitab", version.ref = "jami-v3" }
+jami-ols = { module = "psidev.psi.mi.jami.bridges:jami-ols", version.ref = "jami" }
+jami-xml = { module = "psidev.psi.mi.jami:jami-xml", version.ref = "jami-v3" }
 javax-annotation-api = { module = "javax.annotation:javax.annotation-api", version.ref = "javax-annotation-api" }
 javax-mail = { module = "javax.mail:mail", version.ref = "javax-mail" }
 javax-servlet-api = { module = "javax.servlet:javax.servlet-api", version.ref = "javax-servlet-api" }
 javax-ws-rs-api = { module = "javax.ws.rs:javax.ws.rs-api", version.ref = "javax-ws-rs-api" }
 jaxb-api = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb-api" }
 jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "jaxb" }
+je = { module = "com.sleepycat:je", version.ref = "je" }
 jena-core = { module = "org.apache.jena:jena-core", version.ref = "jena" }
 jena-libs = { module = "org.apache.jena:apache-jena-libs", version.ref = "jena" }
 jersey-client = { module = "org.glassfish.jersey.core:jersey-client", version.ref = "jersey" }

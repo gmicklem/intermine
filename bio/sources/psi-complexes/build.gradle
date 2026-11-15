@@ -30,10 +30,10 @@ dependencies {
     api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
     //compile group: 'uk.ac.ebi.chebi.webapps.chebiWS.client', name: 'chebiWS-client', version: '2.4'
     localJars fileTree(dir: 'libs', include: '*.jar')
-    implementation group: 'psidev.psi.mi.jami', name: 'jami-commons', version: '3.0.0'
-    implementation group: 'psidev.psi.mi.jami', name: 'jami-core', version: '3.0.0'
-    implementation group: 'psidev.psi.mi.jami', name: 'jami-mitab', version: '3.0.0'
-    implementation group: 'psidev.psi.mi.jami', name: 'jami-xml', version: '3.0.0'
+    implementation libs.jami.commons
+    implementation libs.jami.core
+    implementation libs.jami.mitab
+    implementation libs.jami.xml
     bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
 }
 
