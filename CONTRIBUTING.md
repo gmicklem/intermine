@@ -12,6 +12,7 @@ InterMine has a [Code of Conduct](http://intermine.org/code-of-conduct/), which 
 
 - Branch from `dev` and open your pull request against `dev`. `master` only receives releases.
 - Keep each pull request to a single purpose, with detailed commit messages.
+- Build with JDK 17 (JDK 8 also works until 6.0.0 is released), see [docs/BUILDING.md](docs/BUILDING.md).
 - Before you push, run Checkstyle and the tests for the builds you changed. The back end is a set of separate Gradle builds (`plugin`, `intermine`, `bio`, `bio/sources`, `bio/postprocess`, `bio/postprocess-test`, `testmine`). From the build's directory:
 
   ```bash
