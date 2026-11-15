@@ -24,10 +24,10 @@ tasks.test.dependsOn(':intermine-testresources:buildDB')
 
 dependencies {
     compile project(':intermine-model')
-    compile group: 'org.postgresql', name: 'postgresql', version: '42.2.2'
+    compile group: 'org.postgresql', name: 'postgresql', version: '42.7.14'
     compile group: 'commons-io', name: 'commons-io', version: '1.2'
     compile group: 'commons-beanutils', name: 'commons-beanutils', version: '1.9.3'
-    compile group: 'com.zaxxer', name: 'HikariCP', version: '3.2.0', transitive: false // conflict with log4j library this JAR needs
+    compile group: 'com.zaxxer', name: 'HikariCP', version: '4.0.3', transitive: false // conflict with log4j library this JAR needs
     compile group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
     compile group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
 
