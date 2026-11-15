@@ -42,7 +42,6 @@ dependencies {
     api libs.jena.core
     api libs.javax.servlet.api
 
-    api files('libs/stringtree-json-2.0.5.jar')
     providedCompile libs.jsp.api
     api libs.commons.math3
 
