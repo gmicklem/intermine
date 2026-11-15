@@ -2,6 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="/WEB-INF/functions.tld" prefix="imf" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="im"%>
@@ -143,7 +144,7 @@ if (!im.bagWorks) {
               <td class="sorting"><im:displaypath path="${savedBag.value.type}"/></td>
               <td id="size_${savedBag.value.name}" class="sorting" align="right">
                 <c:out value="${savedBag.value.size}"/>&nbsp;<c:choose>
-                  <c:when test="${fn:endsWith(savedBag.value.class.name, 'InterMineIdBag')}">object</c:when>
+                  <c:when test="${fn:endsWith(imf:className(savedBag.value), 'InterMineIdBag')}">object</c:when>
                   <c:otherwise>value</c:otherwise>
                 </c:choose>
                 <c:if test="${savedBag.value.size != 1}">s</c:if>
