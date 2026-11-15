@@ -28,6 +28,8 @@ commons-fileupload = "1.6.0"
 # 2.x still runs on Java 8. IOUtils.toString/copy/toCharArray without a charset are deprecated in 2.x,
 # so the InterMine callers pass "UTF-8"
 commons-io = "2.22.0"
+# kept only for the torque 3.2-dev jars bundled in intermine-objectstore (lang.enum.Enum, lang.exception.NestableException,
+# lang.StringUtils at run time); no InterMine code imports org.apache.commons.lang any more. Goes with torque.
 commons-lang = "2.6"
 # 3.x runs on Java 8; org.apache.commons.lang3 replaces org.apache.commons.lang (commons-lang 2.6, last release 2011).
 # StringEscapeUtils and StrTokenizer/StrMatcher are deprecated in 3.x (moved to commons-text) but still there

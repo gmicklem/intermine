@@ -106,7 +106,7 @@ cd intermine && ./gradlew -Dmaven.repo.local=/tmp/im-m2 publishToMavenLocal
 Every third-party library the module build files use is declared once in the version catalog `gradle/libs.versions.toml`. Each of the seven `settings.gradle` files loads it as `libs`, so a module declares a dependency as
 
 ```groovy
-api libs.commons.lang                                   // alias commons-lang
+api libs.commons.lang3                                  // alias commons-lang3
 implementation(libs.hikaricp) { transitive = false }    // options go in a closure
 ```
 
