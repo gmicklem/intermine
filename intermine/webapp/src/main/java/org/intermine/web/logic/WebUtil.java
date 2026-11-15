@@ -635,6 +635,25 @@ public abstract class WebUtil
     }
 
     /**
+     * Get the fully qualified class name of an object, so JSPs do not need <code>obj.class</code>.
+     * Tomcat 8.5 rejects the Java keyword <code>class</code> as an EL property name.
+     * @param o The object, possibly null
+     * @return The class name, or null if the object is null
+     */
+    public static String className(Object o) {
+        return (o == null) ? null : o.getClass().getName();
+    }
+
+    /**
+     * Get the unqualified class name of an object, so JSPs do not need <code>obj.class</code>.
+     * @param o The object, possibly null
+     * @return The simple class name, or null if the object is null
+     */
+    public static String simpleClassName(Object o) {
+        return (o == null) ? null : o.getClass().getSimpleName();
+    }
+
+    /**
      * Return a string suitable for displaying a PathQuery's path, taking any
      * path descriptions it has configured into account.
      *

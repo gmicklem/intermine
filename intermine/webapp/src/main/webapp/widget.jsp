@@ -4,6 +4,7 @@
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ taglib uri="/WEB-INF/functions.tld" prefix="imf" %>
 <%@ taglib tagdir="/WEB-INF/tags" prefix="im" %>
 <%@ taglib uri="http://flymine.org/imutil" prefix="imutil" %>
 <%@ taglib uri="http://jakarta.apache.org/taglibs/string-1.1" prefix="str" %>
@@ -13,8 +14,8 @@
 <tiles:importAttribute name="bag" ignore="false" />
 
 <html:xhtml/>
-<c:set var="split" value="${fn:split(widget.class,'.')}"/>
-<c:set var="type" value="${split[fn:length(split)-1]}"/>
+<%-- no widget.class: Tomcat 8.5 rejects the keyword "class" as an EL identifier --%>
+<c:set var="type" value="${imf:simpleClassName(widget)}"/>
 
 <c:choose>
     <c:when test="${type == 'GraphWidgetConfig'}" >
