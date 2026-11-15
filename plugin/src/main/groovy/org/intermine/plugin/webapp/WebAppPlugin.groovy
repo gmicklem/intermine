@@ -63,11 +63,14 @@ class WebAppPlugin implements Plugin<Project> {
 
         project.tasks.register('addStrutsConfig') {
             description = "Append the struts config modifications to the webapp"
-            // Edits, in place, the files unwarBioWebApp unpacks, so it must run right after it every
-            // time (neither declares outputs). The struts and tiles fragments come from the resources.
-            // A single Sync task with filters should replace the pair once the plugin composes the war.
+            // The struts and tiles fragments come from the resources.
             inputs.files(DBModelUtils.processedResources(project))
-            inputs.files(project.files({ explodedWebApp(project) }).builtBy('unwarBioWebApp'))
+            // lifecycle: it edits, in place, the files unwarBioWebApp unpacks (neither declares outputs), so it
+            // must run after it every time. build/explodedWebApp is not declared as an input: a mine's own
+            // copyWebappContent copies into the same directory, and Gradle 8 would then fail addStrutsConfig
+            // for reading that task's output without depending on it. A single Sync task with filters should
+            // replace the pair once the plugin composes the war.
+            dependsOn 'unwarBioWebApp'
 
             doLast {
                 File buildResDir = DBModelUtils.buildFile(project, "resources/main")
