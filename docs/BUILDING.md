@@ -100,6 +100,27 @@ cd intermine && ./gradlew -Dmaven.repo.local=/tmp/im-m2 publishToMavenLocal
 
 `config/gradle/central-bundle.gradle` adds the `centralBundle` task; see [RELEASING.md](RELEASING.md).
 
+## Dependency versions: `gradle/libs.versions.toml`
+
+Every third-party library the module build files use is declared once in the version catalog `gradle/libs.versions.toml`. Each of the seven `settings.gradle` files loads it as `libs`, so a module declares a dependency as
+
+```groovy
+api libs.commons.lang                                   // alias commons-lang
+implementation(libs.hikaricp) { transitive = false }    // options go in a closure
+```
+
+The `[versions]` table holds one entry per library, or per family that is released together (`jackson`, `struts`, `lucene`, `jena`, `biojava`, `jami`, `jersey`, `jaxb`); `[libraries]` maps the alias to the Maven coordinate and a `version.ref`. The InterMine release itself (`intermine`) and the Checkstyle version (`checkstyle`) are in the same table.
+
+To change a version, edit its line in `[versions]` and nothing else; every module that uses the library follows. To add a library, add a `[versions]` entry and a `[libraries]` entry (aliases are lower case; dashes become dots in the accessor, so `struts-core` is `libs.struts.core`), then use `libs.<alias>` in the module. One catalog entry means one version for the whole tree: if two modules need different versions of a library, add a second alias with its own `[versions]` entry and a comment saying why (as `jami-v3` does for `bio/sources/psi-complexes`).
+
+Outside the catalog:
+
+- `buildscript { }` blocks cannot see `libs` (Gradle 7.6). They keep literal coordinates, for example the Cargo plugin in `testmine/webapp/build.gradle` and the InterMine `plugin` classpath in `bio/core` and `bio/model`. Change those by hand.
+- `org.intermine:*` modules are resolved from the build's own jars and use `System.getProperty("imVersion")` (or `imVersion`), which the `gradle.properties.in` templates set. They are not in the catalog.
+- The `.in` templates (`gradle.properties.in`, `gradle-wrapper.properties.in`) are not Gradle files, so they cannot read the catalog. The Gradle version and the generated `systemProp.imVersion` are changed there (see "Generated files" above).
+- Vendored jars (`libs/*.jar`, the antlr caching jar in `flatDir`) have no coordinates and stay as file dependencies.
+- The `@zip` Tomcat distribution that Cargo installs (`testmine/webapp/build.gradle`) takes its version from the catalog but adds the `zip` artifact type in the build file, because a catalog entry cannot carry an artifact type.
+
 ## Dependency configuration conventions
 
 The build files use the Gradle 7 configuration names; `compile`, `testCompile`, `runtime` and `provided` are no longer used (removed in Gradle 7). What the build files do today:
