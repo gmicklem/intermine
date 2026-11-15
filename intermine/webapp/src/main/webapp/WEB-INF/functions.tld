@@ -96,4 +96,16 @@
     </function-signature>
   </function>
 
+  <function>
+    <name>className</name>
+    <function-class>org.intermine.web.logic.WebUtil</function-class>
+    <function-signature>java.lang.String className(java.lang.Object)</function-signature>
+  </function>
+
+  <function>
+    <name>simpleClassName</name>
+    <function-class>org.intermine.web.logic.WebUtil</function-class>
+    <function-signature>java.lang.String simpleClassName(java.lang.Object)</function-signature>
+  </function>
+
 </taglib>
