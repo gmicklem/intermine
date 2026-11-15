@@ -166,7 +166,7 @@ class IntermineBuilder:
         os.chdir(module_dir)
         if self.clean:
             run(["./gradlew", "clean", "--stacktrace"], check=True)
-        run(["./gradlew", "install", "--stacktrace"], check=True)
+        run(["./gradlew", "publishToMavenLocal", "--stacktrace"], check=True)
 
 
 def main() -> None:

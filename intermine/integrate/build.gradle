@@ -14,6 +14,7 @@ task testClassesJar(type: Jar) {
     from sourceSets.test.output
 }
 
-artifacts {
-    archives testClassesJar
+// published next to the jar, as the 'testClasses' classifier (deployers' tests use it)
+publishing.publications.configureEach {
+    artifact testClassesJar
 }

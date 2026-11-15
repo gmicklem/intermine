@@ -1,0 +1,177 @@
+/*
+ * Maven publishing for one InterMine module (im-89g.3). Replaces the old `maven` plugin,
+ * `uploadArchives { mavenDeployer }` and the OSSRH (s01.oss.sonatype.org) settings.
+ *
+ * Usage, from the build file that owns the module (the root project of a single-project build, or a
+ * `subprojects { }` block), after the `java` plugin is applied:
+ *
+ *     ext.imPublicationDescription = 'InterMine core modules'
+ *     apply from: "${rootDir}/../config/gradle/publishing.gradle"   // ../../ for bio/sources and below
+ *
+ * Provides, per module:
+ *   - a MavenPublication `mavenJava`: components.java (jar), or components.web (war) when the `war` plugin is
+ *     applied, plus the sources and javadoc jars, with the POM metadata the old uploadArchives block set;
+ *   - `publishToMavenLocal` (honours -Dmaven.repo.local) and an `install` alias for it, kept so existing
+ *     callers (gate scripts, install_intermine.py, testmine/setup.sh, deployer habits) keep working;
+ *   - a file repository `centralBundle` under <root>/build/central-bundle/m2 for config/gradle/central-bundle.gradle;
+ *   - PGP signing, required only when the root `centralBundle` task is in the task graph, never for local installs.
+ *
+ * Needs Gradle 6.0 or later (java { withSourcesJar() }) and stays valid on 7.x and 8.x.
+ */
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+// Publish the POM only, like the 5.1.0 releases on Maven Central. Gradle 6+ would otherwise add a .module file that
+// consumers prefer over the POM, which changes how the war and the classifier jars resolve for deployers.
+tasks.withType(GenerateModuleMetadata).configureEach {
+    enabled = false
+}
+
+// The publication is created once the module's own build file has run: whether it is a war module is known by then, and its artifacts are added by `publishing.publications.configureEach`
+// in that build file. (register() would not help: maven-publish observes the container, so it realises at once.)
+afterEvaluate {
+    publishing {
+        publications {
+            create('mavenJava', MavenPublication) {
+                // components.java carries the jar, the sources and javadoc jars and the dependencies (api -> compile scope,
+                // implementation and runtimeOnly -> runtime scope), the same scope mapping the old maven plugin produced.
+                from components.java
+
+                def key = { dep -> "${dep.group ?: project.group}:${dep.name}".toString() }
+                // what the module declares for compile scope (apiElements): `compile` is the legacy name, removed in Gradle 7
+                def compileDeclared = ['api', 'compile'].collect { project.configurations.findByName(it) }.findAll { it != null }
+                        .collectMany { it.dependencies.collect(key) } as Set
+
+                // a module whose `jar` task is disabled names the task that builds its main jar instead (testresources)
+                if (project.hasProperty('imMainJarTask')) {
+                    artifacts.removeAll { it.classifier == null && it.extension == 'jar' }
+                    artifact project.imMainJarTask
+                }
+
+                if (project.plugins.hasPlugin('war')) {
+                    // A war module publishes the war, not the plain jar (as the 5.1.0 release did). components.web would
+                    // do that too but carries no dependencies at all, and deployers resolve intermine-webapp:classes
+                    // through this POM. providedCompile has no scope of its own in a component: the war plugin makes it
+                    // part of implementation, so it would come out as runtime; restore the `provided` scope it had.
+                    artifacts.removeAll { it.classifier == null && it.extension == 'jar' }
+                    artifact project.tasks.war
+                    pom.packaging = 'war'
+                    // (for a project dependency, name is the project name, which is the artifactId it publishes under)
+                    def provided = (project.configurations.providedCompile.allDependencies +
+                            project.configurations.providedRuntime.allDependencies).collect(key) as Set
+                    // a dependency that is also declared as api/compile (a newer version of a provided one) stays compile
+                    provided.removeAll(compileDeclared)
+                    pom.withXml {
+                        asNode().dependencies.dependency.each { node ->
+                            if (provided.contains("${node.groupId.text()}:${node.artifactId.text()}".toString())) {
+                                node.scope*.value = 'provided'
+                            }
+                        }
+                    }
+                }
+
+                // Transitional, while modules still declare the legacy `runtime` configuration (removed in Gradle 7): the java
+                // plugin of Gradle 6 lets apiElements extend `runtime`, so such dependencies would be published with compile
+                // scope instead of runtime. Put them back, unless the module also declares them as api/compile.
+                def legacyRuntime = project.configurations.findByName('runtime')
+                if (legacyRuntime != null) {
+                    def runtimeOnly = legacyRuntime.dependencies.collect(key).findAll { !compileDeclared.contains(it) } as Set
+                    pom.withXml {
+                        asNode().dependencies.dependency.each { node ->
+                            if (runtimeOnly.contains("${node.groupId.text()}:${node.artifactId.text()}".toString())) {
+                                node.scope*.value = 'runtime'
+                            }
+                        }
+                    }
+                }
+
+                pom {
+                    // Dependencies without coordinates (the flatDir antlr-2.7.6-caching jar of the antlr plugin) are not valid
+                    // in a POM and are not resolvable by consumers; the old maven plugin left them out too.
+                    withXml {
+                        asNode().dependencies.dependency.findAll { it.groupId.text().isEmpty() || it.version.text().isEmpty() }.each {
+                            it.parent().remove(it)
+                        }
+                    }
+
+                    name = project.name
+                    description = project.ext.imPublicationDescription
+                    url = 'https://github.com/intermine/intermine'
+
+                    scm {
+                        connection = 'scm:git:git://github.com/intermine/intermine.git'
+                        developerConnection = 'scm:git:ssh://github.com:intermine/intermine.git'
+                        url = 'https://github.com/intermine/intermine'
+                    }
+
+                    licenses {
+                        license {
+                            name = 'LGPL-2.1'
+                            url = 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            name = 'InterMine core team and contributors'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+publishing {
+    repositories {
+        // Staging area for the Central Portal bundle (config/gradle/central-bundle.gradle).
+        maven {
+            name = 'centralBundle'
+            url = rootProject.layout.buildDirectory.dir('central-bundle/m2')
+        }
+    }
+}
+
+// `install` used to come from the old maven plugin. It is an alias now; callers should use publishToMavenLocal.
+tasks.register('install') {
+    group = 'publishing'
+    description = 'Deprecated alias of publishToMavenLocal.'
+    dependsOn tasks.named('publishToMavenLocal')
+}
+
+// ---- signing: only for a Central bundle, with the key taken from the environment ----
+
+// The root build declares the bundle task (central-bundle.gradle); look it up lazily, it may not exist yet.
+def bundleInGraph = {
+    def bundle = rootProject.tasks.findByName('centralBundle')
+    bundle != null && gradle.taskGraph.hasTask(bundle)
+}
+
+signing {
+    required = bundleInGraph
+}
+// lazy: each publication is signed when it is realised, after the module build file has added its artifacts
+publishing.publications.configureEach { publication ->
+    signing.sign publication
+}
+
+gradle.taskGraph.whenReady {
+    if (bundleInGraph()) {
+        def key = System.getenv('SIGNING_KEY')
+        if (!key) {
+            throw new GradleException('centralBundle needs the armoured PGP private key in the SIGNING_KEY environment variable ' +
+                    '(and SIGNING_PASSWORD, optionally SIGNING_KEY_ID); see docs/RELEASING.md')
+        }
+        def keyId = System.getenv('SIGNING_KEY_ID')
+        if (keyId) {
+            signing.useInMemoryPgpKeys(keyId, key, System.getenv('SIGNING_PASSWORD'))
+        } else {
+            signing.useInMemoryPgpKeys(key, System.getenv('SIGNING_PASSWORD'))
+        }
+    }
+}

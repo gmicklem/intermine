@@ -1,0 +1,56 @@
+/*
+ * `centralBundle`: build the zip that is uploaded to the Maven Central Portal (im-89g.3).
+ *
+ * Applied to the ROOT project of each publishing build (plugin, intermine, bio, bio/sources, bio/postprocess).
+ * Every module that applied config/gradle/publishing.gradle publishes into build/central-bundle/m2 (signed, with the
+ * .md5/.sha1 checksums the Portal requires); this task zips that repository layout:
+ *
+ *     SIGNING_KEY=... SIGNING_PASSWORD=... ./gradlew centralBundle   ->  build/central-bundle/<build>-<version>.zip
+ *
+ * The zip is then uploaded with `curl` to the Portal publisher API (docs/RELEASING.md). Nothing here talks to the network.
+ */
+def bundleRepoDir = layout.buildDirectory.dir('central-bundle/m2')
+
+// Lifecycle ordering, not a data dependency: the staging repository must be emptied before any module publishes into
+// it, otherwise files of an earlier version or of a module that is no longer built end up in the zip.
+def cleanBundleRepo = tasks.register('cleanCentralBundleRepo', Delete) {
+    delete bundleRepoDir
+}
+
+def bundleFiles = files(bundleRepoDir)
+// every publish task of every module, resolved lazily because the modules are configured after this script
+bundleFiles.builtBy {
+    allprojects.collectMany { p ->
+        p.tasks.matching { it.name == 'publishAllPublicationsToCentralBundleRepository' }.toList()
+    }
+}
+
+allprojects {
+    tasks.withType(PublishToMavenRepository).configureEach {
+        // by name: the repository is not set yet when the task is created
+        if (name.endsWith('ToCentralBundleRepository')) {
+            // lifecycle: see cleanCentralBundleRepo
+            dependsOn cleanBundleRepo
+        }
+    }
+}
+
+tasks.register('centralBundle', Zip) {
+    group = 'publishing'
+    description = 'Zips all signed publications of this build for upload to the Maven Central Portal.'
+    from(bundleFiles) {
+        // the Portal rejects bundles that contain maven-metadata.xml
+        exclude '**/maven-metadata*'
+        // checksums as nmcp 1.6.1 sends them: .md5 and .sha1 are required by the Portal, .sha512 is what Gradle verifies;
+        // signatures need none, and .sha256 is surplus
+        exclude '**/*.asc.*', '**/*.sha256'
+    }
+    destinationDirectory = layout.buildDirectory.dir('central-bundle')
+    archiveFileName = "${rootProject.name}-bundle.zip"
+    // fail on an empty bundle instead of uploading nothing
+    doFirst {
+        if (bundleRepoDir.get().asFile.list()?.length == 0) {
+            throw new GradleException('No publications were staged in ' + bundleRepoDir.get().asFile)
+        }
+    }
+}

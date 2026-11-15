@@ -69,8 +69,11 @@ task classesJar(type: Jar) {
     from sourceSets.main.output
 }
 
-artifacts {
-    archives classesJar
+// published next to the war, as the 'classes' classifier
+publishing.publications.configureEach {
+    artifact classesJar
 }
 
-tasks.signArchives.dependsOn('warBioWebApp')
+// lifecycle: warBioWebApp (the finalizer of war) rewrites the war file, so signing and publishing must wait for it
+tasks.withType(Sign).configureEach { dependsOn 'warBioWebApp' }
+tasks.withType(AbstractPublishToMaven).configureEach { dependsOn 'warBioWebApp' }
