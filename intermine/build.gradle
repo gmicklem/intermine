@@ -6,10 +6,8 @@ subprojects {
     apply plugin: "checkstyle"
     apply plugin: "idea"
 
-    java {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
+    // Java 8 bytecode whatever the build JDK; --release 8 and the test JVM options on JDK 9+
+    apply from: "${rootDir}/../config/gradle/java-target.gradle"
 
     repositories {
         maven {

@@ -146,7 +146,10 @@ cargo {
             downloadDir = layout.buildDirectory.dir("downloads").get().asFile
             extractDir = layout.buildDirectory.dir("extracts").get().asFile
         }
-        jvmArgs = '-Dorg.apache.el.parser.SKIP_IDENTIFIER_CHECK=true'
+        // Cargo starts Tomcat without catalina.sh, so on JDK 9+ it also needs the java.lang opening that catalina.sh adds
+        // (cglib, see config/gradle/java-target.gradle)
+        jvmArgs = '-Dorg.apache.el.parser.SKIP_IDENTIFIER_CHECK=true' +
+                (JavaVersion.current().isJava9Compatible() ? ' --add-opens=java.base/java.lang=ALL-UNNAMED' : '')
     }
 }
 

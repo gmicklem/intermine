@@ -40,10 +40,8 @@ subprojects {
     apply plugin: 'biosource-dbmodel'
     apply plugin: "checkstyle"
 
-    java {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
+    // Java 8 bytecode whatever the build JDK; --release 8 and the test JVM options on JDK 9+
+    apply from: "${rootDir}/../../config/gradle/java-target.gradle"
 
     // -------------------------
     // Build localDirs list
