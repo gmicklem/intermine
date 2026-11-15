@@ -1,2 +1,10 @@
 rootProject.name = 'plugin'
 
+// one version catalog for all seven builds, at the repository root (Gradle 7.4+)
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            from(files('../gradle/libs.versions.toml'))
+        }
+    }
+}

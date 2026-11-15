@@ -1,5 +1,5 @@
 ext {
-    imVersion = "5.1.1"
+    imVersion = libs.versions.intermine.get()
     taskGroup = "InterMine"
     minePropertyFileName = "testmodel.properties"
     minePropertyFile = "${System.env.HOME}/.intermine/$minePropertyFileName"
@@ -61,9 +61,9 @@ subprojects {
 
     dependencies {
         // api, not implementation: webapp compiles against dbmodel and has always seen these through it
-        api group: 'org.apache.ant', name: 'ant', version: '1.7.0'
-        api group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
-        api group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
+        api libs.ant
+        api libs.reload4j
+        api libs.slf4j.reload4j
         commonResources group: "org.intermine", name: "intermine-resources", version: imVersion
     }
 

@@ -1,6 +1,6 @@
 subprojects {
     group = 'org.intermine'
-    version = '5.1.1'
+    version = libs.versions.intermine.get()
 
     apply plugin: "java-library"
     apply plugin: "checkstyle"
@@ -31,10 +31,10 @@ subprojects {
             // ant: the task classes (org.intermine.task.*) extend org.apache.tools.ant.Task, so it is public API.
             // reload4j / slf4j-reload4j: log4j and slf4j types are used by deployer and bio code that gets them
             // transitively, so they stay on the consumers' compile classpath (api).
-            api group: 'org.apache.ant', name: 'ant', version: '1.7.0'
-            api group: 'ch.qos.reload4j', name: 'reload4j', version: '1.2.22'
-            api group: 'org.slf4j', name: 'slf4j-reload4j', version: '1.7.36'
-            testImplementation group: 'junit', name: 'junit', version: '4.8.2'
+            api libs.ant
+            api libs.reload4j
+            api libs.slf4j.reload4j
+            testImplementation libs.junit
         }
 
         if (it.name != 'intermine-testresources') {
@@ -60,7 +60,7 @@ subprojects {
     }
 
     checkstyle {
-        toolVersion = '7.8.1'
+        toolVersion = libs.versions.checkstyle.get()
         configFile = file("${rootDir}/../config/checkstyle/checkstyle.xml")
         sourceSets = [sourceSets.main]
         showViolations = true
