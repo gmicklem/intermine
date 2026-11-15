@@ -49,6 +49,10 @@ def generateTestModel = tasks.register('generateTestModel') {
 }
 sourceSets.test.java.srcDir(generateTestModel)
 
+// Until 2026-11 generateTestModel wrote into src/test/java (gitignored). A checkout that still has
+// those files gets "duplicate class" errors, so clean removes the legacy directory. Drop in 2027.
+tasks.named('clean') { delete 'src/test/java' }
+
 void insertDataModel(model, osname) {
     ant.taskdef(name: 'insertModelTask', classname: 'org.intermine.task.StoreMetadataTask') {
         classpath {
