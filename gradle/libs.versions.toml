@@ -49,7 +49,6 @@ jaxb = "2.3.2"
 jaxb-api = "2.3.1"
 je = "4.0.92"
 jena = "3.16.0"
-jopenid = "1.08"
 json = "20260814"
 jsonassert = "1.2.3"
 jsp-api = "2.3.1"
@@ -108,7 +107,6 @@ jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "jaxb
 je = { module = "com.sleepycat:je", version.ref = "je" }
 jena-core = { module = "org.apache.jena:jena-core", version.ref = "jena" }
 jena-libs = { module = "org.apache.jena:apache-jena-libs", version.ref = "jena" }
-jopenid = { module = "org.expressme:JOpenId", version.ref = "jopenid" }
 json = { module = "org.json:json", version.ref = "json" }
 jsonassert = { module = "org.skyscreamer:jsonassert", version.ref = "jsonassert" }
 jsp-api = { module = "javax.servlet.jsp:javax.servlet.jsp-api", version.ref = "jsp-api" }

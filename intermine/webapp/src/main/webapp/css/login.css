@@ -1,8 +1,6 @@
 #pagecontentcontainer.login-page div.body { width:60%; margin:0 auto; }
 #pagecontentcontainer.login-page div.body h2 { text-align:left; width:60%; margin-bottom:10px; }
 #pagecontentcontainer.login-page div.body h3 { margin-bottom:10px; }
-#pagecontentcontainer.login-page div.body h3.openid { background:url('../images/icons/openid.png') no-repeat top right;
-  padding-right:20px; }
 #pagecontentcontainer.login-page div.body input[type="submit"] { float:right; }
 
 #pagecontentcontainer.login-page div.body #login { width:60%; float:left; }

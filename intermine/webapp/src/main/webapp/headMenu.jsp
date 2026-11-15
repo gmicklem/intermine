@@ -94,21 +94,7 @@
             <li>
 
               <!-- display (optionally trimmed) username -->
-              <c:choose>
-                <c:when test="${! empty PROVIDER}">
-                  <c:choose>
-                    <c:when test="${empty USERNAME || USERNAME == 'nullnull'}">
-                      <c:set var="displayUserName" value="logged in with OpenID"/>
-                    </c:when>
-                   <c:otherwise>
-                     <c:set var="displayUserName" value="${USERNAME}"/>
-                   </c:otherwise>
-                  </c:choose>
-                </c:when>
-                <c:otherwise>
-                  <c:set var="displayUserName" value="${PROFILE.name}"/>
-                </c:otherwise>
-              </c:choose>
+              <c:set var="displayUserName" value="${PROFILE.name}"/>
 
               <c:choose>
                 <c:when test="${fn:length(displayUserName) > 25}">

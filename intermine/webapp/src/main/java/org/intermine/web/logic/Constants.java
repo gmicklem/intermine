@@ -252,19 +252,6 @@ public final class Constants
     /** Key for the upgrading bag on the session **/
     public static final String UPGRADING_BAG = "UPGRADING";
 
-    /** The replay-attack prevention nonces **/
-    public static final String NONCES = "NONCES";
-
-    /** The display name of the current user **/
-    public static final String USERNAME = "USERNAME";
-    /** The name of the current open-id provider **/
-    public static final String PROVIDER = "PROVIDER";
-
-    /**
-     * The key for the open-id providers located in the servlet context.
-     */
-    public static final String OPENID_PROVIDERS = "OPENID_PROVIDERS";
-
     /* The names of various user preferences known to the web application */
 
     /** The preference set if the user does not like lots of emails */
