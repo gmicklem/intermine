@@ -2,31 +2,65 @@
 
 <dwr>
   <allow>
-    <create creator="new" javascript="JDate">
-      <param name="class" value="java.util.Date"/>
-    </create>
+    <!--  Only the AjaxServices methods that the JSPs and js/ files (intermine/webapp and
+          bio/webapp) call are exposed to the browser: DWR otherwise publishes every public
+          method of a created class. Add a method here when a page starts calling it. -->
     <create creator="new" javascript="AjaxServices">
       <param name="class" value="org.intermine.dwr.AjaxServices"/>
+      <include method="addTag"/>
+      <include method="addToSortOrder"/>
+      <include method="addUserToShareBag"/>
+      <include method="changeViewPathDescription"/>
+      <include method="deSelectId"/>
+      <include method="deleteApiKey"/>
+      <include method="deleteTag"/>
+      <include method="deleteUserToShareBag"/>
+      <include method="filterWebSearchables"/>
+      <include method="generateApiKey"/>
+      <include method="getColumnSummary"/>
+      <include method="getConstraintLogic"/>
+      <include method="getContent"/>
+      <include method="getConvertCountForBag"/>
+      <include method="getCustomConverterCounts"/>
+      <include method="getFriendlyMineLinks"/>
+      <include method="getNewsPreview"/>
+      <include method="getObjectTags"/>
+      <include method="getRatDiseases"/>
+      <include method="getResultsSize"/>
+      <include method="getSavedBagStatus"/>
+      <include method="getTags"/>
+      <include method="getToggledElements"/>
+      <include method="getUsersSharingBag"/>
+      <include method="preCompute"/>
+      <include method="rename"/>
+      <include method="reorder"/>
+      <include method="reorderConstraints"/>
+      <include method="saveBagDescription"/>
+      <include method="saveToggleState"/>
+      <include method="selectAll"/>
+      <include method="selectId"/>
+      <include method="setConstraintLogic"/>
+      <include method="setFavourite"/>
+      <include method="setState"/>
+      <include method="summarise"/>
+      <include method="updateTemplate"/>
+      <include method="validateBagName"/>
+      <include method="validateBagOperations"/>
     </create>
     <create creator="new" javascript="TrackAjaxServices">
       <param name="class" value="org.intermine.dwr.TrackAjaxServices"/>
     </create>
 
-    <!--  Convert exceptions when debugging - disable in production -->
-    <convert match="java.lang.Exception" converter="exception"/>
+    <!--  No converter for java.lang.Exception on purpose: with one, the browser receives the
+          exception class, message and Java stack trace. Without it DWR returns a generic
+          error. -->
 
     <!--  Allow DWR to send actual objects, and not just strings. -->
     <convert converter="collection" match="java.util.Collection"/>
     <convert converter="map" match="java.util.Map"/>
 
-    <!--  Allow any of our beans to be marshalled. -->
-    <convert converter="bean" match="org.intermine.web.logic.bean.*"/>
+    <!--  The only bean AjaxServices returns: PartnerLink (getFriendlyMineLinks) and the
+          ObjectDetails it contains. -->
     <convert converter="bean" match="org.intermine.api.beans.*"/>
-
-    <convert converter="bean" match="org.intermine.dwr.AjaxServices"/>
-    <convert converter="bean" match="org.intermine.dwr.TrackAjaxServices"/>
-    <convert converter="bean" match="org.intermine.web.logic.results.*"/>
-    <convert converter="bean" match="org.intermine.web.logic.widget.*"/>
-
   </allow>
 </dwr>
