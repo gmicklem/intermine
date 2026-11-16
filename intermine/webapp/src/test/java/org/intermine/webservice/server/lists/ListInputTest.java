@@ -4,7 +4,7 @@ import static org.easymock.EasyMock.createNiceMock;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +31,6 @@ public class ListInputTest {
     @Test
     public void temporaryListNamesOfConcurrentRequestsForOneListDiffer() {
         // two uploads of the same list name used to share l0_temp (im-jqz.57)
-        assertNotEquals(input("l0").getTemporaryListName(), input("l0").getTemporaryListName());
+        assertFalse(input("l0").getTemporaryListName().equals(input("l0").getTemporaryListName()));
     }
 }
