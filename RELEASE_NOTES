@@ -7,6 +7,113 @@
  * information or http://www.gnu.org/copyleft/lesser.html.
  *
  */
+InterMine 5.1.1 (unreleased)
+
+Non-breaking release for mines on JDK 8. A mine can stay on Gradle 4.9 or move to 6.9.4
+(recommended). The only edit that does not depend on InterMine is the one every mine needs for
+any Gradle from 5.0 on. To upgrade: docs/UPGRADING-build.md, section "5.0.x or 5.1.0 to 5.1.1";
+to release: docs/RELEASING.md, "5.1.1 changes" and "Release 5.1.1".
+
+Build and upgrading
+- The Gradle wrapper of every InterMine build is 6.9.4 (downloaded with its checksum verified).
+  The plugin still runs on Gradle 4.9, so a mine does not have to move.
+- Set imVersion and bioVersion to 5.1.1 in the mine's gradle.properties. Delete
+  inputs.sourceFiles.stopExecutionIfEmpty() from the mine's build.gradle, and remove the gretty
+  line (it needs jcenter, which is gone); make soTermListFilePath and soAdditionFilePath absolute
+  ("$rootDir/..."). A mine that builds its war on this line also sets webXml on its War task
+  and runs :webapp:copyWebappContent once before the first :webapp:war. The steps and the errors you
+  will meet are in UPGRADING-build.md.
+- Publishing: the maven plugin and OSSRH uploadArchives are replaced by maven-publish and a signed
+  bundle for the Central Portal (centralBundle task). Generated POMs keep the scopes of 5.1.0, except
+  that most dependencies of bio-source-* jars are scope runtime (see UPGRADING-build.md).
+- The plugin builds with lazy task configuration and runs its Ant tasks on runtimeClasspath.
+
+Security and dependency updates
+- intermine.properties (the developer's test database user and password) is no longer in
+  bio-model-5.1.1.jar and intermine-testresources-5.1.1.jar, and the plugin excludes it from the jar
+  of every project that applies a dbmodel plugin.
+- bio-webapp war: log4j-core, log4j-api and log4j-slf4j-impl 2.5 (Log4Shell, CVE-2021-44228, brought
+  by biojava) are gone; junit, hamcrest-core and spring-test are gone.
+- commons-fileupload 1.2.2 to 1.6.0 (six advisories) and commons-collections 3.2 to 3.2.2
+  (CVE-2015-6420, CVE-2015-7501).
+- PostgreSQL JDBC 42.7.14, HikariCP 4.0.3, Jackson 2.18.12 (one version), org.json, everit
+  json-schema 1.14.6 (groupId com.github.erosb); the 2005 ant:ant 1.6.5 is replaced by Apache Ant
+  1.7.0 (6.0.0 has 1.10.18). Jena is 3.17.0 (the last release for
+  Java 8) as jena-core plus jena-arq instead of apache-jena-libs, so TDB, TDB2 and SHACL are no
+  longer in the war; solr-solrj comes without Netty, the Jetty HTTP/2 client and snappy-java.
+  RDF and Solr output are unchanged.
+- DWR hardening: the dwr-invoker servlet runs with debug=false, no GET remoting and no reverse
+  Ajax (/dwr/index.html and /dwr/test/* answer 501), and dwr.xml publishes only the 39
+  AjaxServices methods that the pages call, including the autocompleter's getContent. A mine
+  with its own web.xml or dwr.xml needs the same changes; a page of your own that calls another
+  AjaxServices method needs an <include method="..."/> line.
+
+Jar and war contents
+- intermine-webapp war has one antlr and one javax.inject; bio-webapp war has no second Jackson 2.7,
+  commons-lang3 3.4, jcl-over-slf4j 1.7.19 or logback (from ols-client), and the oltu OAuth2 jars are
+  one version (1.0.2).
+- The POMs of intermine-webtasks and intermine-jbrowse-endpoint name intermine-webapp:classes, not
+  the 12 MB war, so a mine's war no longer carries intermine-webapp-<version>.war in WEB-INF/lib.
+  (A build against the 5.1.0 POM still needs classpath = classpath.filter { !it.name.endsWith('.war') }
+  on the War task.)
+- The plugin leaves the legacy ant:ant jar (compile('ant:ant:1.6.5') of a mine) out of the war,
+  with a warning, and sets duplicatesStrategy = EXCLUDE on the mine's War tasks.
+- 14 unused dependency declarations and a vendored orphan jar (bobo-browse) are removed.
+
+Web pages and web services
+- Tomcat 8.5.100+ and current 9.0.x reject Java keywords as EL property names (widget.class,
+  dec.boolean). Widget, template and My Data list pages no longer use them (new EL functions
+  imf:className and imf:simpleClassName). A mine that overrides widget.jsp, template.jsp or
+  historyBagView.jsp needs the same change; docs/tools/ElSweep.java finds the others.
+- The dead cdn.intermine.org is gone: the webapp serves jQuery, imjs, im-tables, Font Awesome and the
+  displayer libraries from its own vendor/ directory (6.9 MB, byte-for-byte from the intermine/CDN
+  repository; checksums in vendor/SHA256SUMS). head.cdn.location is ignored with a warning: remove it
+  from your global.web.properties or <mine>.properties. The JavaScript code generated for a
+  query loads im-tables from the mine itself, and the code snippets link <mine>/css/im-tables-fonts.css.
+- The default InterMine logo ships with the webapp instead of coming from the dead cdn.rawgit.com,
+  and /service/branding returns a full URL for scheme-less branding.images.* values. The legacy
+  pages no longer load www.google.com/jsapi (the tracks tab draws its charts without Google
+  Charts); the footer has no Google Play badge.
+- DELETE /service/user no longer returns HTTP 500 for a user who owns a list with a null extra
+  value, and /service/list/tags is safe under concurrent requests for the same tag.
+- Keyword search (/service/search, keywordSearchResults.do): facet selections are exact phrase filters,
+  so a value with a space (organism.shortName=H. sapiens) returns its hits and a:b or a"b no longer
+  raises a Solr syntax error; unknown facets are ignored; a list restriction is one filter (it used
+  to be two that matched nothing); facet values are no longer HTML-escaped before they go into the
+  filter (values with & or quotes matched nothing); web config fields that the model lacks are
+  skipped.
+- RDF export: format=rdf (RDF/XML) no longer fails with HTTP 500 for classes without an ontology
+  term (GOTerm, Pathway, ...): ontology CURIEs of the class term attribute are expanded to valid
+  IRIs, bad terms are ignored with a warning, N-Triples no longer contain rdf:type <>. A mine
+  whose merged model already has the bad terms is repaired without a rebuild of the model.
+- Lists: the temporary list of a list upload or query-to-list request has a name unique to the
+  request, and renaming is atomic, so two concurrent requests for one list name no longer fail
+  with HTTP 500 or delete each other's temporary list; the loser gets HTTP 400 (the list exists).
+- Sessions: the Struts form beans have a serialVersionUID, so Tomcat can restore persisted sessions
+  after a redeploy (the first redeploy after upgrading still cannot read sessions written by the
+  old classes); loadQuery.do?method=xml&skipBuilder=true without trail no longer throws a
+  NullPointerException.
+
+Data loading
+- User profile ids: the objectstore no longer hands out ids that rows inserted by hand into
+  savedbag, savedtemplatequery, tag and the other userprofile tables already use (it moves the
+  sequence past them and logs a warning, and its id batches are safe across threads); a profile
+  whose bag, query or template shares an id with an object of another class logs an error naming the
+  id and skips that object instead of stopping the webapp from starting with a ClassCastException.
+- psi-complexes reads complexes with participants, names and identifiers again (the bio-source
+  class path had jaxb-runtime 2.3.2, which silently produced empty complexes); the converter test
+  asserts the 254 items again.
+- DataTracker: a failed background or flush write is reported with a message and the SQL error as
+  cause, the batch stays in the cache and the next flush() retries it, instead of staying
+  broken for good. PostgresDataOutputStream, XmlUtil and FullXmlConverterTask use UTF-8
+  explicitly, so a data load no longer needs LANG=C.UTF-8 for non-ASCII characters.
+
+Documentation, CI
+- New: docs/UPGRADING-build.md, docs/BUILDING.md, docs/TESTING.md, docs/RELEASING.md and the
+  docs/tools/ElSweep.java tool.
+- GitHub Actions workflows modernised (PostgreSQL 15+ privileges, current action versions),
+  Dependabot for Gradle and Actions, README badges and contributing documents updated.
+
 InterMine 5.1.0 (August 2022)
 
 #2025 - FAIR: PURLs come from config file
