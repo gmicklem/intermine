@@ -5,7 +5,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
-<%  String abbreviated = org.intermine.util.StringUtil.wrapLines(value, length.intValue(), 1).getString(); %>
+<%  String abbreviated = org.intermine.metadata.StringUtil.wrapLines(value, length.intValue(), 1).getString(); %>
 
 <c:if test="${!empty var}">
 <% String varName = (String) jspContext.getAttribute("var");

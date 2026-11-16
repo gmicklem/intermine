@@ -206,7 +206,6 @@
   <definition name="objectTrail.tile" path="/objectTrail.jsp" controllerUrl="/initObjectTrail.do"/>
 
   <definition name="htmlHead.tile" path="/htmlHead.jsp" controllerUrl="/initHtmlHead.do"/>
-  <definition name="objectView.tile" path="/objectView.jsp" controllerUrl="/initObjectView.do"/>
 
   <definition name="reportPage.tile" path="/report.jsp" controllerUrl="/initReport.do"/>
   <definition name="attributeLinks.tile" path="/attributeLinks.jsp" controllerUrl="/initAttributeLinks.do"/>
@@ -218,8 +217,6 @@
   <definition name="noResults.tile" path="/noResults.jsp"/>
   <definition name="singleResult.tile" path="/singleResult.jsp"
               controllerUrl="/initSingleResult.do"/>
-  <definition name="tableCountEstimate.tile" path="/tableCountEstimate.jsp"
-              controllerUrl="/initTableCountEstimate.do"/>
   <definition name="aspect.tile" path="/aspect.jsp" controllerUrl="/initAspect.do"/>
   <definition name="webSearchableList.tile" path="/webSearchableList.jsp"
               controllerUrl="/initWebSearchableList.do"/>
@@ -252,7 +249,6 @@
   <definition name="errorMessages.tile" path="errorMessages.jsp" controllerUrl="/initErrorMessages.do" />
   <definition name="errorMessagesContainers.tile" path="errorMessagesContainers.jsp" />
   <definition name="resultsTable.tile" path="/resultsTable.jsp"/>
-  <definition name="paging.tile" path="paging.jsp" />
   <definition name="widget.tile" path="widget.jsp" />
   <definition name="linkPopUp.tile" path="linkPopUp.jsp" />
   <definition name="reportInList.tile" path="reportInList.jsp" controllerUrl="/initReportInList.do"/>

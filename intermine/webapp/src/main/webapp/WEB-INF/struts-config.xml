@@ -475,7 +475,6 @@
     <action path="/initSubMenu" type="org.intermine.web.struts.SubMenuController">
     </action>
     <action path="/initSingleResult" type="org.intermine.web.struts.SingleResultController"/>
-    <action path="/initTableCountEstimate" type="org.intermine.web.struts.CountTableController"/>
     <action path="/initConvertBag" type="org.intermine.web.struts.ConvertBagController"/>
     <action path="/initErrorMessages" type="org.intermine.web.struts.ErrorMessagesController"/>
     <action path="/initTable" name="changeTableSizeForm" type="org.intermine.web.struts.TableController"/>
@@ -484,7 +483,6 @@
     <action path="/initAvailableColumns" type="org.intermine.web.struts.AvailableColumnsController"/>
     <action path="/initTemplates" type="org.intermine.web.struts.TemplatesController"/>
     <action path="/initPasswordReset" type="org.intermine.web.struts.PasswordResetController"/>
-    <action path="/initObjectView" type="org.intermine.web.struts.ObjectViewController"/>
     <action path="/initKeywordSearchResults" type="org.intermine.web.struts.KeywordSearchResultsController"/>
     <action path="/initAttributeLinks" type="org.intermine.bio.web.AttributeLinksController"/>
     <action path="/initReportDisplayer" type="org.intermine.web.struts.ReportDisplayerController"/>
