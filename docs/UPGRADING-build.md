@@ -26,6 +26,89 @@ HumanMine and FlyMine needed these three changes in their own build files, on ei
 2. **Gretty.** `webapp/build.gradle` applies gretty from a script on raw.githubusercontent.com, and that script fetches gretty 2.0.0 from jcenter, which is dead. The mine does not configure on any Gradle. Remove the `apply from` line and the `gretty { }` block; the `cargo` plugin deploys. On Gradle 4.9 only, you can instead copy the script and point it at `mavenCentral()` (step 4 below).
 3. **The Sequence Ontology paths** `soTermListFilePath` and `soAdditionFilePath` in `dbModelConfig { }` of `dbmodel/build.gradle`. The 5.1.1 plugin (this branch) hands these strings to Ant unchanged (`createSoModel` in `plugin/src/main/groovy/org/intermine/plugin/dbmodel/DBModelPlugin.groovy`), and Ant resolves a relative path against the working directory of the Gradle daemon's JVM. That is the mine's root only by luck of how the daemon was started: on a Gradle 8 daemon on JDK 9 or later it is the daemon's own directory (`Could not find file containing SO terms ...`). Write them as absolute paths: `"$rootDir/dbmodel/resources/so_terms"` and `"$rootDir/dbmodel/build/so_additions.xml"` (or `rootProject.file('dbmodel/resources/so_terms').absolutePath`; `file(...)` and `project.file(...)` inside `dbmodel/build.gradle` are relative to `dbmodel/`, not to the root). The 6.0.0 plugin resolves relative paths against the mine's root itself, so both forms work there.
 
+## Two deployer warnings for the webapp (both lines)
+
+These are about what runs in Tomcat, not about the build. They apply to the 5.1.1 line (this branch) and to 6.0.0 alike, and to any mine that has its own JSPs, displayers or `web.properties` entries.
+
+### Tomcat rejects Java keywords as EL property names
+
+Tomcat 8.5.100 and later, and 9.0.x, refuse an EL expression that uses a Java keyword as a property name, such as `widget.class`, `dec.boolean` or `${short ...}`. Older 8.5.x releases accepted them. The message in `catalina.out` is a `JasperException` that ends:
+
+```
+The identifier [class] is not a valid Java identifier as required by section 1.19 of the EL specification
+```
+
+**How it looks.** The server starts and most pages work. A page that contains the bad expression either fails with a 500, or returns 200 with the failing tile left blank. In InterMine itself the list widgets, the template pages and the My Data lists were affected (`widget.jsp`, `template.jsp`, `historyBagView.jsp`, `objectView.jsp` and `tablePageLinks.jsp` in intermine-webapp, and `model/dataSourceShort.jsp` in bio-webapp; the sweep below found 10 expressions in these six files, before the fixes). The pages are compiled when they are first requested, so a deploy that "works" can still hide the problem until someone opens the page.
+
+**InterMine's own JSPs are fixed**: commits `9f2076d604` (`widget.jsp`, and the two functions), `08d84fdd0f` (`template.jsp`) and `9fe4cc40b2` (`historyBagView.jsp`, `objectView.jsp`, `tablePageLinks.jsp`, `dataSourceShort.jsp`) on `release/5.1.1-candidate`; 6.0.0 has the same fixes in its own commits. A mine that takes the fixed InterMine webapp is clean for the pages that come from InterMine. **A mine's own JSPs can still have the same patterns**: the files in `webapp/src/main/webapp/model/*.jsp`, custom displayers, and any JSP or tag that overrides one of InterMine's.
+
+**The fix patterns:**
+
+| Before | After |
+|---|---|
+| `${dec.boolean}` | `${dec['boolean']}` (bracket notation, for any keyword: `dec['short']`, `pageScope['short']`) |
+| `${object.class.name}` | `${imf:className(object)}` |
+| `${object.class.simpleName}` or a type name taken from `.class` | `${imf:simpleClassName(object)}` |
+| `${short}` or another keyword used as a variable name (`<c:set var="short" ...>`) | rename the variable (`shortName`) everywhere it is used |
+
+`imf:className` and `imf:simpleClassName` are in `WEB-INF/functions.tld` of the InterMine webapp (functions of `WebUtil`). A JSP needs the usual directive, which most InterMine JSPs already have:
+
+```
+<%@ taglib uri="/WEB-INF/functions.tld" prefix="imf" %>
+```
+
+**Find them before your users do: `ElSweep`.** `ElSweep.java` parses every `${...}` and `#{...}` expression in the `.jsp`, `.jspf`, `.jspx`, `.tag` and `.tagx` files of a source tree with Tomcat's own EL parser (`jasper-el`), without deploying anything. It is part of this repository, in [`docs/tools/`](tools/) of this branch: [`ElSweep.java`](tools/ElSweep.java) and its [README](tools/README-el-sweep.md). It needs a JDK (8 or later) and two jars from the `lib/` directory of the Tomcat you deploy on, `el-api.jar` and `jasper-el.jar`; use the jars of that Tomcat version, because the check differs between versions. Run it from a directory that holds no untrusted `.class` files (the commands below take `docs/tools/ElSweep.java` from an InterMine checkout, `$IM`):
+
+```bash
+IM=/path/to/intermine                              # a checkout of this repository
+TOMCAT_LIB=/path/to/apache-tomcat-9.0.x/lib        # or copy the two jars out of the container image
+CP=$TOMCAT_LIB/el-api.jar:$TOMCAT_LIB/jasper-el.jar
+mkdir -p /tmp/elsweep/out
+javac -cp $CP -d /tmp/elsweep/out $IM/docs/tools/ElSweep.java
+java -cp /tmp/elsweep/out:$CP ElSweep /path/to/mine/webapp/src/main/webapp
+```
+
+Pass one or more directories (for example also a checkout of `intermine/webapp/src` to see InterMine's own). Each failure is one line, `BAD file:line expression -> message`, followed by `files=N expressions=M failures=K`; the exit status is 1 if there is any failure. It takes seconds: with the `el-api.jar` and `jasper-el.jar` of Tomcat 8.5.100 it reads 239 files and about 3780 expressions in `intermine/webapp/src` and `bio/webapp/src` of this branch, found 10 failures at `e8035a509e` (before the fixes), and finds none at the head of the branch. `fn:` and `imf:` functions are not loaded, so the tool answers them with a stub and drops the resulting argument-count messages; that cannot hide a keyword failure.
+
+**Stop-gap.** Tomcat can be told not to check identifiers, by a system property in `CATALINA_OPTS` (or `JAVA_OPTS`):
+
+```
+-Dorg.apache.el.parser.SKIP_IDENTIFIER_CHECK=true
+```
+
+This only hides the problem: it switches off a check in the container that every later Tomcat configuration, and every other EL implementation, may apply again. Use it to get a site back while you fix the JSPs, then remove it.
+
+### cdn.intermine.org is gone
+
+`https://cdn.intermine.org` no longer answers. Up to 5.1.0 the InterMine webapp took its JavaScript and CSS from it in three places, so a mine built from an InterMine without the fix loses its scripts and styles (`jQuery is not defined` in the browser, and the list upload confirmation page waits for ever on "Verifying identifiers"):
+
+- `head.cdn.location = https://cdn.intermine.org` in `WEB-INF/global.web.properties`, and every `head.js.*` / `head.css.*` property whose value starts with `CDN/` (`CDN` was replaced by `head.cdn.location` in `WebUtil.getHeadResources`): imjs, jQuery, underscore, Backbone, Q, the API loader, im-tables, the list widgets, pomme.js, font-awesome, bootstrap for the list pages, and the component-400 bundle that the bag upload confirm page loads;
+- `htmlHead.jsp` and `layout.jsp`, which passed the same location on to the JavaScript libraries as `CDN.server`;
+- the JavaScript code generator for queries and templates (`WebserviceJavaScriptCodeGenerator`), whose generated `<script src>` defaulted to `http://cdn.intermine.org`.
+
+**What the fix does** (issues im-jqz.43, im-jqz.45 and im-jqz.46; commits `5f6fa46a56` and `698ef08a70` (assets and generated JavaScript), `24ce5ae361` (logo) and `18179fbc2a` (third-party hosts) on `release/5.1.1-candidate`; 6.0.0 has the same behaviour). The webapp serves its own copies, byte for byte from the public `intermine/CDN` repository, so a mine needs no external CDN for its own pages and works on an intranet:
+
+- The files are in `<webapp>/vendor/` (`intermine/webapp/src/main/webapp/vendor/`, same layout as the old CDN). `vendor/README.md` lists every library with its version, path and the pages that use it; `vendor/SHA256SUMS` has the SHA-256 of each file (`sha256sum -c SHA256SUMS` from that directory checks the copy).
+- A `head.js.*` / `head.css.*` value that starts with `CDN/` is served from `<webapp>/vendor/...`: `head.js.all.Ae = CDN/js/intermine/imjs/3.18.1/im.js` becomes `<webapp>/vendor/js/intermine/imjs/3.18.1/im.js` (`WebUtil.resolveHeadResourceUrl`). The `global.web.properties` of InterMine keep their `CDN/` values.
+- `head.cdn.location` is removed. A mine that still sets it in its `web.properties` gets one warning in the log (`The web property head.cdn.location (...) is ignored: the libraries are served by the webapp itself from /vendor/`) and the value is not used.
+- An absolute `http(s)://cdn.intermine.org/...` URL in a mine's own `head.*` property is mapped to the bundled copy of the same path, with a warning (`Head resource ... names the defunct cdn.intermine.org, using the copy bundled in the webapp instead`). It works, but only for files that `vendor/` has; change the value to the `CDN/` form.
+- `htmlHead.jsp` and `layout.jsp` point the JavaScript libraries (`CDN.server`, the API loader's root) at `<context>/vendor`, and the code snippet generator now emits the mine's own im-tables 2.2.0-beta (`<mine>/vendor/js/intermine/im-tables/2.2.0-beta/imtables.js` and `main.sandboxed.css`, with the 2.x `imtables.loadTable` API) instead of a script from a third-party host. It also links the mine's `css/im-tables-fonts.css`, and `/vendor/fonts/*` is served with CORS headers, so a snippet pasted into another site contacts no host but the mine.
+- `branding.images.logo` defaults to `images/intermine-logo-45x45.png`, a file of the webapp (rawgit, where the old default lived, has been shut down). The `/service/branding` web service is read by clients on other sites, so it turns every `branding.images.*` value without a scheme into a full URL under the mine's base URL (`images/logo.png` becomes `<base URL of the webapp>/images/logo.png`); an absolute or protocol-relative value is returned as it is.
+- The only third-party script left is the Google Charts loader, `https://www.gstatic.com/charts/loader.js` (`head.js.bagDetails.Ca`), and only on the list analysis page (`bagDetails.do`): the vendored list-widgets 2.1.4 draws its charts with `google.visualization` and does not start without it. No other page contacts Google. A mine that must not contact Google has to replace the list widgets app: without the loader the list analysis page stops with `google is not defined`. Google Analytics only loads when `google.analytics.id` is set and the visitor agreed to tracking.
+- Two things stay as shipped inside the vendored files: a json3 fallback for Internet Explorer 7 and older in imjs and im-tables that names `cdn.intermine.org` and never runs in a supported browser, and the im-tables stylesheet's request to `netdna.bootstrapcdn.com` for icon fonts, which `css/im-tables-fonts.css` overrides with the fonts in `vendor/fonts`. See `vendor/README.md`, "Known remaining external references".
+
+**What a deployer checks**, in the mine's own source tree:
+
+```bash
+grep -rn cdn.intermine.org webapp/                  # JSPs, JS, CSS, properties
+grep -rn "head.cdn.location\|CDN/" webapp/src/main/webapp/WEB-INF/web.properties
+```
+
+- A mine that does not touch `head.*` needs nothing.
+- A mine that overrides `head.js.*` or `head.css.*` and keeps a `CDN/` prefix gets the bundled copy, so the entry works if the file is in `vendor/`. Check the path against `vendor/README.md`: a `CDN/` path that the old CDN had and `vendor/` has not is a 404.
+- A mine that **hosts its own CDN mirror** (it sets `head.cdn.location` to its own server) must change the entries: `head.cdn.location` is ignored now, so `CDN/` no longer reaches the mirror. Write those entries as absolute URLs of the mirror (`https://static.example.org/js/...`), which are used as they are, or as `CDN/` to take the bundled copy.
+- A custom JSP, displayer or JavaScript file of the mine that loads from `cdn.intermine.org` must be edited by hand; the mapping above only covers `head.*` properties. Replace the reference with a path under the mine's own `js/` and `css/`, with a `vendor/` file (`<c:url value="/vendor/js/..."/>`), or with a pinned cdnjs URL (`https://cdnjs.cloudflare.com/ajax/libs/<library>/<exact version>/<file>`, with an `integrity=` hash if it is written into a JSP).
+
 ## 5.0.x or 5.1.0 to 5.1.1
 
 This is the non-breaking release. This branch (the last Gradle 6.9.4 state; its plugin is compiled with Gradle 6.9.4) was checked in a mine on **Gradle 4.9**: the plugin loads, the build configures, and the tasks `tasks`, `createSoModel` and (in `webapp`) `mergeProperties` start. It was also checked on **Gradle 6.9.4**, with the changes below. Those checks do not cover the packaging and security fixes listed under "What else changes for a mine", which were added to the branch later; the only plugin change among them is that `DBModelPlugin` excludes `intermine.properties` from the jar of the mine's `dbmodel` project (`project.tasks.named('jar')`, available since Gradle 4.9), and it has not been run in a mine. Loading data, `buildDB` of a full mine and deploying to Tomcat were not run for this line, and this branch needs JDK 8.
