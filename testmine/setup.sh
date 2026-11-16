@@ -103,7 +103,7 @@ echo "------> Running ./gradlew loadsadata"
 ./gradlew loadsadata --stacktrace --no-daemon
 
 echo "------> Building search index..."
-echo "------> (this step will fail if indexes not created -- see config/travis/init-solr.sh) "
+echo "------> (this step will fail if indexes not created -- see config/ci/init-solr-docker.sh) "
 ./gradlew createSearchIndex --stacktrace --no-daemon
 
 echo "------> Loading userprofile..."

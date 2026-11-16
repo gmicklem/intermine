@@ -4,7 +4,7 @@ This guide is for people who run a mine (humanmine, flymine and similar) whose `
 
 The breaking release, **6.0.0** (Gradle 8.14.6, JDK 17), is on the `maint-2026` branch, and its guide is there; see [5.1.1 to 6.0.0](#511-to-600).
 
-Neither has been released yet. The tree of `maint-2026` still carries the version number `5.1.1` for what will be 6.0.0 (the number is changed when the release is cut), so artifacts built from it are also called 5.1.1 although they are not the 5.1.1 release. If you test against `mavenLocal()`, make sure that the 5.1.1 artifacts in `~/.m2` come from this branch (or use `-Dmaven.repo.local=<dir>` for each line).
+Neither has been released yet. `maint-2026` is the 6.0.0 line: its tree is versioned 6.0.0, so its artifacts are called 6.0.0 and are not mistaken for the 5.1.1 release. If you test against `mavenLocal()`, make sure that the 5.1.1 artifacts in `~/.m2` come from this branch (or use `-Dmaven.repo.local=<dir>` for each line).
 
 The sources are the maintainers' planning notes (`decisions/gradle-upgrade-path.md` and `baselines/intermine-gradle-6.9.4-deprecations.md` in https://github.com/gmicklem/intermine-planning), a smoke build of a copy of flymine on Gradle 6.9.4 with the 5.1.1 plugin, and the conversion of HumanMine and FlyMine to the 6.0 line. Line numbers below are those of the flymine copy (humanmine is the same, a few lines apart).
 
@@ -14,7 +14,7 @@ The sources are the maintainers' planning notes (`decisions/gradle-upgrade-path.
 |---|---|---|---|
 | 5.0.x, 5.1.0 | 4.9 | 8 | the current mines |
 | 5.1.1 | 4.9 (checked) or 6.9.4 (checked); **6.9.4 is recommended** | 8 (Gradle 6.9.4 does not run on JDK 17) | this branch, `release/5.1.1-candidate`; not yet released |
-| 6.0.0 | 8.14.6 | build: 17 (8 still works, 21 checked); run: 8, 17 or 21 | branch `maint-2026`, version number `5.1.1` until the release is cut; not yet released; see [5.1.1 to 6.0.0](#511-to-600) |
+| 6.0.0 | 8.14.6 | build: 17 (8 still works, 21 checked); run: 8, 17 or 21 | branch `maint-2026`, the 6.0.0 line; not yet released; see [5.1.1 to 6.0.0](#511-to-600) |
 
 Plugin 6.0.0 needs Gradle 8.14 in the mine: the plugin is compiled against Gradle's own Groovy, and a plugin built for a newer Groovy fails on an older Gradle. Plugin 5.1.1 is built so that it still runs on Gradle 4.9. A mine that pins `imVersion=5.1.+` (flymine does) picks up any 5.1.x plugin automatically, and cannot pick up 6.0.0 by accident; a mine that pins `5.0.+` stays on 5.0.x.
 
