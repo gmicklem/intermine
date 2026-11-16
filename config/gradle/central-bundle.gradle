@@ -5,8 +5,10 @@
  * Every module that applied config/gradle/publishing.gradle publishes into build/central-bundle/m2 (signed, with the
  * .md5/.sha1 checksums the Portal requires); this task zips that repository layout:
  *
- *     SIGNING_KEY=... SIGNING_PASSWORD=... ./gradlew centralBundle   ->  build/central-bundle/<build>-<version>.zip
+ *     SIGNING_KEY=... SIGNING_PASSWORD=... ./gradlew centralBundle   ->  build/central-bundle/<name>-bundle.zip
  *
+ * (<name> is the name of the root project: plugin-bundle.zip, intermine-bundle.zip, bio-bundle.zip, ...; the file
+ * name has no version.)
  * The zip is then uploaded with `curl` to the Portal publisher API (docs/RELEASING.md). Nothing here talks to the network.
  */
 def bundleRepoDir = layout.buildDirectory.dir('central-bundle/m2')

@@ -97,6 +97,7 @@ Smoke test with a deployer: in a checkout of a mine (for example `humanmine` or 
 Releasing needs only JDK 8, the build wrappers and `curl`.
 
 1. Make sure the working tree is the tagged release commit and the environment of "One-time setup" is exported.
+   The `gradle.properties` and `gradle-wrapper.properties` files of the builds are generated and git-ignored, and `./gradlew` stops without them (`Could not get unknown property 'intermine.maven.central'`). A fresh clone needs `PSQL_HOST=localhost PSQL_USER=test PSQL_PWD=test python3 -I config/lib/install_intermine.py` once (section 2 does it too); the `centralBundle` builds below need no other install step, each one builds the jars of its own modules.
 2. Create the five bundles, in build order:
 
 ```bash
