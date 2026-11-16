@@ -233,7 +233,7 @@ public class ResultsFlatOuterJoinsImpl extends AbstractList<MultiRow<ResultsRow<
                     }
                 }
             } else {
-                retval.add(new Integer(columnCount++));
+                retval.add(Integer.valueOf(columnCount++));
             }
         }
         return retval;

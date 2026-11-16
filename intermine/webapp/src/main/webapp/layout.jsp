@@ -13,7 +13,7 @@
 
 <html:html lang="true" xhtml="true">
 
-<c:set var="iePre7" value='<%= new Boolean(request.getHeader("user-agent").matches(".*MSIE [123456].*")) %>' scope="request"/>
+<c:set var="iePre7" value='<%= Boolean.valueOf(request.getHeader("user-agent").matches(".*MSIE [123456].*")) %>' scope="request"/>
 
   <tiles:importAttribute name="pageName" scope="request"/>
 

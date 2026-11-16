@@ -46,10 +46,10 @@ public class AgeSalaryLdr implements DataSetLdr {
 
             List<Object> rowList = new LinkedList<Object>();
             List<Double> point = new LinkedList<Double>();
-            rowList.add(new Double(ceo.getAge()));
-            point.add(new Double(ceo.getAge()));
-            rowList.add(new Double(ceo.getSalary()));
-            point.add(new Double(ceo.getSalary()));
+            rowList.add(Double.valueOf(ceo.getAge()));
+            point.add(Double.valueOf(ceo.getAge()));
+            rowList.add(Double.valueOf(ceo.getSalary()));
+            point.add(Double.valueOf(ceo.getSalary()));
             points.add(point);
             resultTable.add(rowList);
 

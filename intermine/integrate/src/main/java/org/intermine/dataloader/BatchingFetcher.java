@@ -234,7 +234,8 @@ public class BatchingFetcher extends HintingFetcher
                         boolean classNotExists = hints.classNotExists(cld.getType());
                         String className = Util.getFriendlyName(cld.getType());
                         if (!savedTimes.containsKey(className)) {
-                            savedTimes.put(className, new Long(System.currentTimeMillis() - time));
+                            savedTimes.put(className,
+                                    Long.valueOf(System.currentTimeMillis() - time));
                         }
                         if (!classNotExists) {
                             //LOG.error("Inspecting class " + className);
@@ -421,9 +422,9 @@ public class BatchingFetcher extends HintingFetcher
                                     String summaryName = Util.getFriendlyName(cld
                                             .getType()) + "." + fieldName;
                                     if (!savedTimes.containsKey(summaryName)) {
-                                        savedTimes.put(summaryName, new Long(System
+                                        savedTimes.put(summaryName, Long.valueOf(System
                                                     .currentTimeMillis() - time));
-                                        savedCounts.put(summaryName, new Integer(0));
+                                        savedCounts.put(summaryName, Integer.valueOf(0));
                                     }
                                     if (pkQueryFruitless) {
                                         skipObject = true;

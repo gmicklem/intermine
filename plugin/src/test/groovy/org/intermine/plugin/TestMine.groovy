@@ -13,7 +13,9 @@ import java.util.zip.ZipOutputStream
  * `copyMineProperties` into build/im/mine-properties, taken by processResources), and a file Maven repository with
  * the artifacts that the plugin resolves, faked: intermine-resources (default.intermine.properties), bio-webapp (a war
  * with web.xml, struts-config.xml, tiles-defs.xml, web-bio.xml, InterMineWebApp.properties, a jar and a JSP), bio-model
- * (the stand-in SOToModelTask of src/testKitTasks), org.example:foo:1.0 and the legacy ant:ant:1.6.5.
+ * (the stand-in SOToModelTask of src/testKitTasks, and the genomic model and keys), org.example:foo:1.0 and the legacy
+ * ant:ant:1.6.5. {@link #createModelMine} adds what the model, key and pipeline tasks need: a project.xml, the plugin's own
+ * jar, a jar of the other stand-in Ant tasks as intermine-integrate and fake bio-source and bio-postprocess jars.
  *
  * Each mine is a directory of its own under build/testkit/mines, emptied when the test starts and left behind for
  * inspection. The builds run in TestKit daemons whose Gradle user home is build/testkit/gradle.
@@ -112,10 +114,111 @@ class TestMine {
         mine.publish('org.intermine', 'intermine-resources', VERSION, 'jar', zip([
                 'default.intermine.webapp.properties': 'default.only=from-defaults\nshared.key=from-defaults\n']))
         mine.publishBioWebApp(VERSION, ['old-version-only.jsp': '<p>only in this version of bio-webapp</p>'])
+        // the stand-in tasks, with genomic_model.xml and genomic_keyDefs.properties
         mine.publish('org.intermine', 'bio-model', VERSION, 'jar', new File(System.getProperty('testkit.tasksJar')).bytes)
         mine.publish('org.example', 'foo', '1.0', 'jar', zip(['foo.txt': 'foo']))
         mine.publish('ant', 'ant', '1.6.5', 'jar', zip(['org/apache/tools/ant/legacy.txt': 'ant 1.6.5']))
         mine
+    }
+
+    /**
+     * A mine for the tests of mergeModels, generateModel, generateKeys, integrate and postProcess: the standard mine with
+     * the project.xml {@code projectXml} (wrapped in the project element) and a dbmodel project that also applies
+     * mine-dbmodel, with the model name genomic, its generated classes in build/gen (as in a mine) and intermine-integrate
+     * (the stand-ins of ModelMergerTask, ModelOutputTask and PostProcessorTask) on its class path. The plugin's own jar is
+     * published as org.intermine:plugin, where mine-dbmodel's mergeModels finds MergeSourceModelsTask. Bio sources are
+     * published by the test with {@link #publishBioSource}.
+     */
+    static TestMine createModelMine(String name, String projectXml) {
+        TestMine mine = create(name)
+        // @MINE@ is the mine's directory, for the locations of source data
+        mine.write('project.xml', '<project type="bio">\n' + projectXml.stripIndent().replace('@MINE@', mine.root.path) +
+                '\n</project>\n')
+        mine.publish('org.intermine', 'plugin', VERSION, 'jar', new File(System.getProperty('testkit.pluginJar')).bytes)
+        mine.publish('org.intermine', 'intermine-integrate', VERSION, 'jar',
+                new File(System.getProperty('testkit.tasksJar')).bytes)
+        File dbmodel = mine.file('dbmodel/build.gradle')
+        dbmodel.text += '''
+            apply plugin: 'mine-dbmodel'
+            dbModelConfig {
+                modelName = 'genomic'
+                // what buildDB, integrate and postProcess read as default.intermine.properties
+                defaultInterminePropertiesFile = 'default.intermine.webapp.properties'
+            }
+            mineDBModelConfig {
+                modelName = 'genomic'
+            }
+            dependencies {
+                // the model that mergeModels starts from, and the classes of generateModel's Ant task
+                bioModel 'org.intermine:bio-model:5.1.1'
+                implementation 'org.intermine:intermine-integrate:5.1.1'
+            }
+            sourceSets {
+                main {
+                    java {
+                        srcDirs = ['build/gen']
+                    }
+                }
+            }
+            '''.stripIndent()
+        mine
+    }
+
+    /**
+     * A build of bio sources, as bio/sources is: a root project and one project, bio-source-&lt;name&gt;, per source, which applies
+     * dbmodel and biosource-dbmodel and gets bio-model (bioModel) and the Ant tasks of ModelMergerTask (mergeModel) as
+     * the leaf builds of bio/sources declare them. {@code sourceBuild} is appended to the build.gradle of each.
+     */
+    static TestMine createBioSources(String name, List<String> sources, String sourceBuild = '') {
+        TestMine mine = new TestMine(name)
+        mine.write('settings.gradle', "rootProject.name = 'sources'\ninclude " + sources.collect { "'bio-source-${it}'" }.join(', ') + '\n')
+        mine.write('gradle.properties', """\
+            systemProp.imVersion=${VERSION}
+            systemProp.bioVersion=${VERSION}
+            org.gradle.jvmargs=-Xmx512m -Dfile.encoding=UTF-8
+            """)
+        mine.write('build.gradle', """\
+            plugins {
+                id 'dbmodel' apply false
+                id 'biosource-dbmodel' apply false
+            }
+            subprojects {
+                apply plugin: 'java'
+                repositories {
+                    maven { url = uri('${mine.repo.toURI()}') }
+                }
+            }
+            """)
+        sources.each { String source ->
+            mine.write("bio-source-${source}/build.gradle", """\
+                apply plugin: 'dbmodel'
+                apply plugin: 'biosource-dbmodel'
+                dbModelConfig {
+                    modelName = 'genomic'
+                }
+                dependencies {
+                    bioModel 'org.intermine:bio-model:${VERSION}'
+                    mergeModel 'org.intermine:intermine-integrate:${VERSION}'
+                    mergeModel files('${path(System.getProperty('testkit.reload4jJar'))}')
+                }
+                """ + sourceBuild.stripIndent())
+        }
+        mine.publish('org.intermine', 'bio-model', VERSION, 'jar', new File(System.getProperty('testkit.tasksJar')).bytes)
+        mine.publish('org.intermine', 'intermine-integrate', VERSION, 'jar', new File(System.getProperty('testkit.tasksJar')).bytes)
+        mine
+    }
+
+    /**
+     * A bio-source jar with the files that the plugin reads from it: &lt;type&gt;_keys.properties, &lt;type&gt;_additions.xml
+     * (a model fragment that names the type) and what {@code extra} adds or, for a null value, leaves out.
+     */
+    void publishBioSource(String type, Map<String, Object> extra = [:]) {
+        Map<String, Object> entries = [
+                (type + '_keys.properties'): "Gene.key_${type} = ${type}Id\n".toString(),
+                (type + '_additions.xml'): "<class name=\"${type}Gene\" extends=\"Gene\"/>\n".toString(),
+        ]
+        entries.putAll(extra)
+        publish('org.intermine', 'bio-source-' + type, VERSION, 'jar', zip(entries.findAll { it.value != null }))
     }
 
     /** A bio-webapp war: the files that unwarBioWebApp edits, a jar, a JSP and {@code extra}. */

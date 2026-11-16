@@ -299,8 +299,8 @@ public abstract class BioFileConverter extends FileConverter
     protected Item makeLocation(String chromosomeId, String sequenceFeatureId, String startString,
             String endString, String strand, boolean store) {
         Item location = createItem("Location");
-        Integer start = new Integer(Integer.parseInt(startString));
-        Integer end = new Integer(Integer.parseInt(endString));
+        Integer start = Integer.valueOf(Integer.parseInt(startString));
+        Integer end = Integer.valueOf(Integer.parseInt(endString));
 
         if (start.compareTo(end) <= 0) {
             location.setAttribute("start", startString);

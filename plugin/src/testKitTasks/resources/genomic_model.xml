@@ -1,0 +1,3 @@
+<model name="genomic" package="org.example.model">
+<class name="Gene" is-interface="true"/>
+</model>

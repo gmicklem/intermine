@@ -12,7 +12,7 @@
 <!-- queryBuilderViewElement.jsp -->
 <html:xhtml/>
 
-<c:set var="iePre7" value='<%= new Boolean(request.getHeader("user-agent").matches(".*MSIE [123456].*")) %>'/>
+<c:set var="iePre7" value='<%= Boolean.valueOf(request.getHeader("user-agent").matches(".*MSIE [123456].*")) %>'/>
 
 <im:viewableDiv path="${pathString}" viewPaths="${viewPaths}" idPrefix="showing" idPostfix="_${viewIndex}">
 

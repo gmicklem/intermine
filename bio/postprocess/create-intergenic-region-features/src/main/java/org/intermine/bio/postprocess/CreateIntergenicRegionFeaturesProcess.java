@@ -261,8 +261,8 @@ public class CreateIntergenicRegionFeaturesProcess extends PostProcessor
                         .createObject(Collections.singleton(igCls));
                 Location location = (Location) DynamicUtil.createObject(
                         Collections.singleton(Location.class));
-                location.setStart(new Integer(newLocStart));
-                location.setEnd(new Integer(newLocEnd));
+                location.setStart(Integer.valueOf(newLocStart));
+                location.setEnd(Integer.valueOf(newLocEnd));
                 location.setStrand("1");
 
                 location.setFeature(intergenicRegion);
@@ -274,7 +274,7 @@ public class CreateIntergenicRegionFeaturesProcess extends PostProcessor
                 intergenicRegion.addDataSets(dataSet);
 
                 int length = location.getEnd().intValue() - location.getStart().intValue() + 1;
-                intergenicRegion.setLength(new Integer(length));
+                intergenicRegion.setLength(Integer.valueOf(length));
 
                 String primaryIdentifier = "intergenic_region_chr"
                         + chr.getPrimaryIdentifier() + "_"
@@ -283,7 +283,7 @@ public class CreateIntergenicRegionFeaturesProcess extends PostProcessor
 
                 Set<Gene> adjacentGenes = new HashSet<Gene>();
 
-                Set<Gene> nextGenes = locToGeneMap.get(new Integer(newLocEnd + 1));
+                Set<Gene> nextGenes = locToGeneMap.get(Integer.valueOf(newLocEnd + 1));
                 if (nextGenes != null) {
                     Iterator<?> nextGenesIter = nextGenes.iterator();
 
@@ -306,7 +306,7 @@ public class CreateIntergenicRegionFeaturesProcess extends PostProcessor
                     }
                 }
 
-                Set<Gene> prevGenes = locToGeneMap.get(new Integer(newLocStart - 1));
+                Set<Gene> prevGenes = locToGeneMap.get(Integer.valueOf(newLocStart - 1));
                 if (prevGenes != null) {
                     Iterator<?> prevGenesIter = prevGenes.iterator();
 

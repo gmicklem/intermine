@@ -40,8 +40,13 @@ class CreateSoModelTest {
      * Relative paths in dbModelConfig are taken from the mine's root directory (the 6.0 behaviour), not from the
      * project directory and not from the JVM's working directory, against which Ant resolves a relative File
      * attribute: on JDK 9+ that is the daemon's own directory, and the stand-in task then fails with "Could not find
-     * file containing SO terms" as SOToModelTask does. (On JDK 8 Gradle sets user.dir to the build's directory, so
-     * there this part only shows that the root is used rather than dbmodel/.)
+     * file containing SO terms" as SOToModelTask does.
+     *
+     * NOTE: only on JDK 17 (JDK 9+) does this test catch a regression to Ant's own resolution of the path against the
+     * working directory. On JDK 8 Gradle sets user.dir to the directory of the project that runs the task, so a path
+     * that is left relative still fails there, but only because it is then taken from dbmodel/ and not from the root: the
+     * daemon's own directory plays no part. CI runs the plugin tests on both JDKs of its matrix, so the 17 cells are the
+     * ones that guard this.
      */
     @Test
     void relativeSoPathsAreTakenFromTheMineRoot() {

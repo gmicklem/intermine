@@ -40,7 +40,7 @@ public class GFF3RecordTest extends TestCase
         assertEquals("promoter", gff3Record.getType());
         assertEquals(5, gff3Record.getStart());
         assertEquals(100, gff3Record.getEnd());
-        assertEquals(new Double(1000.0), gff3Record.getScore());
+        assertEquals(Double.valueOf(1000.0), gff3Record.getScore());
         assertEquals("+", gff3Record.getStrand());
         assertNull(gff3Record.getPhase());
         assertEquals("id;test", gff3Record.getId());

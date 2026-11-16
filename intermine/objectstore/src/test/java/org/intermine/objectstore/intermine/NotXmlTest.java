@@ -35,9 +35,9 @@ public class NotXmlTest extends TestCase
     public void test1() throws Exception {
         Employee e = new Employee();
         Department d = new Department();
-        e.setId(new Integer(1234));
+        e.setId(Integer.valueOf(1234));
         e.setName("Employee1");
-        d.setId(new Integer(5678));
+        d.setId(Integer.valueOf(5678));
         e.setDepartment(d);
 
         String expected = NotXmlParser.DELIM + "org.intermine.model.testmodel.Employee"
@@ -60,13 +60,13 @@ public class NotXmlTest extends TestCase
         Employee obj1 = (Employee) NotXmlParser.parse(s, os);
 
         assertEquals("Employee1", obj1.getName());
-        assertEquals(new Integer(1234), obj1.getId());
+        assertEquals(Integer.valueOf(1234), obj1.getId());
         Class c = Employee.class;
         java.lang.reflect.Field f = c.getDeclaredField("department");
         f.setAccessible(true);
         ProxyReference o = (ProxyReference) f.get(obj1);
         assertNotNull(o);
-        assertEquals(new Integer(5678), o.getId());
+        assertEquals(Integer.valueOf(5678), o.getId());
     }
 
     public void testParseDynamic() throws Exception {
@@ -84,11 +84,11 @@ public class NotXmlTest extends TestCase
         assertEquals("CompanyC", obj1.getName());
         assertEquals(100, obj1.getVatNumber());
         assertEquals(42, ((Broke) obj1).getDebt());
-        assertEquals(new Integer(74350), obj1.getId());
+        assertEquals(Integer.valueOf(74350), obj1.getId());
         Map fieldMap = ((DynamicBean) ((DynamicObject) obj1).dynamicHandler()).getMap();
         ProxyReference addressRef = (ProxyReference) fieldMap.get("address");
         assertNotNull(addressRef);
-        assertEquals(new Integer(74328), addressRef.getId());
+        assertEquals(Integer.valueOf(74328), addressRef.getId());
 
         // and back: the same classes and fields
         String rendered = NotXmlRenderer.render(obj1).toString();
@@ -100,8 +100,8 @@ public class NotXmlTest extends TestCase
         assertEquals(42, ((Broke) obj2).getDebt());
         assertEquals(100, obj2.getVatNumber());
         assertEquals("CompanyC", obj2.getName());
-        assertEquals(new Integer(74350), obj2.getId());
-        assertEquals(new Integer(74328), ((ProxyReference) ((DynamicBean) ((DynamicObject) obj2)
+        assertEquals(Integer.valueOf(74350), obj2.getId());
+        assertEquals(Integer.valueOf(74328), ((ProxyReference) ((DynamicBean) ((DynamicObject) obj2)
                 .dynamicHandler()).getMap().get("address")).getId());
     }
 
@@ -115,13 +115,13 @@ public class NotXmlTest extends TestCase
         Company obj1 = (Company) NotXmlParser.parse(s, os);
 
         assertEquals("CompanyC", obj1.getName());
-        assertEquals(new Integer(74350), obj1.getId());
+        assertEquals(Integer.valueOf(74350), obj1.getId());
         assertFalse(obj1 instanceof DynamicObject);
     }
 
     public void testHandleDelims() throws Exception {
         Employee e = new Employee();
-        e.setId(new Integer(2874));
+        e.setId(Integer.valueOf(2874));
         e.setName("Flibble $_^ Wotsit");
 
         String notXml = NotXmlRenderer.render(e).toString();

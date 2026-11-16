@@ -82,28 +82,28 @@ public class CreateChromosomeLocationsProcessTest extends TestCase
     public void testSetChromosomeLocationsAndLengths() throws Exception {
         Chromosome chr1 = (Chromosome) DynamicUtil.createObject(Collections.singleton(Chromosome.class));
         chr1.setPrimaryIdentifier("1");
-        chr1.setId(new Integer(101));
+        chr1.setId(Integer.valueOf(101));
         Chromosome chr2 = (Chromosome) DynamicUtil.createObject(Collections.singleton(Chromosome.class));
         chr1.setPrimaryIdentifier("2");
-        chr1.setId(new Integer(102));
+        chr1.setId(Integer.valueOf(102));
 
         Exon exon1 = (Exon) DynamicUtil.createObject(Collections.singleton(Exon.class));
-        exon1.setId(new Integer(107));
-        exon1.setLength(new Integer(1000));
+        exon1.setId(Integer.valueOf(107));
+        exon1.setLength(Integer.valueOf(1000));
         Exon exon2 = (Exon) DynamicUtil.createObject(Collections.singleton(Exon.class));
-        exon2.setId(new Integer(108));
+        exon2.setId(Integer.valueOf(108));
         Exon exon3 = (Exon) DynamicUtil.createObject(Collections.singleton(Exon.class));
-        exon3.setId(new Integer(109));
+        exon3.setId(Integer.valueOf(109));
 
         // exon 2 has two chromosome locations, shouldn't get chromosome[Location] references
         Location exon1OnChr = createLocation(chr1, exon1, "1", 51, 100, Location.class);
-        exon1OnChr.setId(new Integer(1010));
+        exon1OnChr.setId(Integer.valueOf(1010));
         Location exon2OnChr = createLocation(chr2, exon2, "1", 201, 250, Location.class);
-        exon2OnChr.setId(new Integer(1011));
+        exon2OnChr.setId(Integer.valueOf(1011));
         Location exon2OnChrDup = createLocation(chr1, exon2, "1", 501, 550, Location.class);
-        exon2OnChrDup.setId(new Integer(1012));
+        exon2OnChrDup.setId(Integer.valueOf(1012));
         Location exon3OnChr = createLocation(chr2, exon3, "1", 601, 650, Location.class);
-        exon3OnChr.setId(new Integer(1013));
+        exon3OnChr.setId(Integer.valueOf(1013));
 
         Set<InterMineObject> toStore =
             new HashSet<InterMineObject>(Arrays.asList(new InterMineObject[] {
@@ -119,9 +119,9 @@ public class CreateChromosomeLocationsProcessTest extends TestCase
         cl.postProcess();
 
         ObjectStore os = osw.getObjectStore();
-        Exon resExon1 = (Exon) os.getObjectById(new Integer(107));
-        Exon resExon2 = (Exon) os.getObjectById(new Integer(108));
-        Exon resExon3 = (Exon) os.getObjectById(new Integer(109));
+        Exon resExon1 = (Exon) os.getObjectById(Integer.valueOf(107));
+        Exon resExon2 = (Exon) os.getObjectById(Integer.valueOf(108));
+        Exon resExon3 = (Exon) os.getObjectById(Integer.valueOf(109));
 
         assertEquals(chr1.getId(), resExon1.getChromosome().getId());
         assertEquals(exon1OnChr.getId(), resExon1.getChromosomeLocation().getId());
@@ -133,8 +133,8 @@ public class CreateChromosomeLocationsProcessTest extends TestCase
         assertEquals(exon3OnChr.getId(), resExon3.getChromosomeLocation().getId());
 
         // exon1 has length set so should stay as 1000, exon3 should get length 50 set from location
-        assertEquals(new Integer(1000), resExon1.getLength());
-        assertEquals(new Integer(50), resExon3.getLength());
+        assertEquals(Integer.valueOf(1000), resExon1.getLength());
+        assertEquals(Integer.valueOf(50), resExon3.getLength());
         // nothing done to exon2
         assertNull(resExon2.getLength());
     }
@@ -146,8 +146,8 @@ public class CreateChromosomeLocationsProcessTest extends TestCase
         loc.setLocatedOn(object);
         loc.setFeature(subject);
         loc.setStrand(strand);
-        loc.setStart(new Integer(start));
-        loc.setEnd(new Integer(end));
+        loc.setStart(Integer.valueOf(start));
+        loc.setEnd(Integer.valueOf(end));
         loc.setStrand(strand);
         return loc;
     }
@@ -156,8 +156,8 @@ public class CreateChromosomeLocationsProcessTest extends TestCase
         if (chromosome == null) {
             chromosome = (Chromosome) DynamicUtil.createObject(Collections.singleton(Chromosome.class));
             chromosome.setPrimaryIdentifier("X");
-            chromosome.setLength(new Integer(10000));
-            chromosome.setId(new Integer(101));
+            chromosome.setLength(Integer.valueOf(10000));
+            chromosome.setId(Integer.valueOf(101));
         }
         return chromosome;
     }

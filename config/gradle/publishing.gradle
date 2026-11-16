@@ -16,7 +16,8 @@
  *   - a file repository `centralBundle` under <root>/build/central-bundle/m2 for config/gradle/central-bundle.gradle;
  *   - PGP signing, required only when the root `centralBundle` task is in the task graph, never for local installs.
  *
- * Needs Gradle 6.0 or later (java { withSourcesJar() }) and stays valid on 7.x and 8.x.
+ * Written for the Gradle of each branch: 8.14 on maint-2026 (the wrapper of every build), 6.9.4 on release/5.1.1-candidate. It
+ * uses nothing newer than Gradle 6.0 (java { withSourcesJar() }), so it also runs on 7.x.
  */
 apply plugin: 'maven-publish'
 apply plugin: 'signing'

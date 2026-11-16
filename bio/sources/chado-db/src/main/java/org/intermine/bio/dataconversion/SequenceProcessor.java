@@ -201,13 +201,13 @@ public class SequenceProcessor extends ChadoProcessor
         ResultSet res = getFeatureTableResultSet(connection);
         int count = 0;
         while (res.next()) {
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
             String name = res.getString("name");
             String uniqueName = res.getString("uniquename");
             String type = res.getString("type");
             String residues = res.getString("residues");
             String checksum = res.getString("md5checksum");
-            Integer organismId = new Integer(res.getInt("organism_id"));
+            Integer organismId = Integer.valueOf(res.getInt("organism_id"));
             if (chromosomeFeatureTypesSet.contains(type)) {
                 addToChromosomeMaps(organismId, uniqueName, featureId);
             }
@@ -456,9 +456,9 @@ public class SequenceProcessor extends ChadoProcessor
             int organismId) throws ObjectStoreException {
         String interMineType = TypeUtil.javaiseClassName(fixFeatureType(chadoType));
         OrganismData organismData =
-                getChadoDBConverter().getChadoIdToOrgDataMap().get(new Integer(organismId));
+                getChadoDBConverter().getChadoIdToOrgDataMap().get(Integer.valueOf(organismId));
 
-        Item feature = makeFeature(new Integer(featureId), chadoType, interMineType, name,
+        Item feature = makeFeature(Integer.valueOf(featureId), chadoType, interMineType, name,
                 uniqueName, seqlen, organismData.getTaxonId());
         if (feature == null) {
             return null;
@@ -615,9 +615,9 @@ public class SequenceProcessor extends ChadoProcessor
         int count = 0;
         int featureWarnings = 0;
         while (res.next()) {
-            Integer featureLocId = new Integer(res.getInt("featureloc_id"));
-            Integer featureId = new Integer(res.getInt("feature_id"));
-            Integer srcFeatureId = new Integer(res.getInt("srcfeature_id"));
+            Integer featureLocId = Integer.valueOf(res.getInt("featureloc_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
+            Integer srcFeatureId = Integer.valueOf(res.getInt("srcfeature_id"));
             int start = res.getInt("fmin") + 1;
             int end = res.getInt("fmax");
             if (start < 1 || end < 1) {
@@ -732,9 +732,9 @@ public class SequenceProcessor extends ChadoProcessor
         int count = 0;
         int collectionTotal = 0;
         while (res.next()) {
-            Integer featRelationshipId = new Integer(res.getInt("feature_relationship_id"));
-            Integer firstFeature1Id = new Integer(res.getInt("feature1_id"));
-            Integer secondFeatureId = new Integer(res.getInt("feature2_id"));
+            Integer featRelationshipId = Integer.valueOf(res.getInt("feature_relationship_id"));
+            Integer firstFeature1Id = Integer.valueOf(res.getInt("feature1_id"));
+            Integer secondFeatureId = Integer.valueOf(res.getInt("feature2_id"));
             String relationTypeName = res.getString("type_name");
 
             if (lastSubjectId != null && !firstFeature1Id.equals(lastSubjectId)) {
@@ -1020,12 +1020,18 @@ public class SequenceProcessor extends ChadoProcessor
         int count = 0;
 
         while (res.next()) {
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
             String accession = res.getString("accession");
             String dbName = res.getString("db_name");
             Boolean isCurrent = res.getBoolean("is_current");
 
-            if (currentFeatureId != null && currentFeatureId != featureId) {
+            // im-ee7.43: this was `currentFeatureId != featureId`, a comparison of two
+            // distinct Integer objects (each row made a new one), which is always true: the
+            // set is reset on every row after the first. Integer.valueOf would make it false
+            // for ids up to 127, so the old behaviour is kept explicitly. Resetting only when
+            // the feature changes (`!currentFeatureId.equals(featureId)`) looks like the
+            // intent, but would change which attributes are set.
+            if (currentFeatureId != null) {
                 existingAttributes = new HashSet<String>();
             }
 
@@ -1104,7 +1110,7 @@ public class SequenceProcessor extends ChadoProcessor
         ResultSet res = getFeaturePropResultSet(connection);
         int count = 0;
         while (res.next()) {
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
             String identifier = res.getString("value");
 
             if (identifier == null) {
@@ -1176,7 +1182,7 @@ public class SequenceProcessor extends ChadoProcessor
         ResultSet res = getLibraryFeatureResultSet(connection);
         while (res.next()) {
 
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
             String identifier = res.getString("value");
 
             if (identifier == null) {
@@ -1237,7 +1243,7 @@ public class SequenceProcessor extends ChadoProcessor
 
         while (res.next()) {
 
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
             String identifier = res.getString("term_identifier");
 
             if (identifier == null) {
@@ -1290,7 +1296,7 @@ public class SequenceProcessor extends ChadoProcessor
         Map<String, List<Item>> dataMap = new HashMap<String, List<Item>>();
 
         while (res.next()) {
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
             String cvtermName = res.getString("cvterm_name");
             String cvName = res.getString("cv_name");
 
@@ -1449,7 +1455,7 @@ public class SequenceProcessor extends ChadoProcessor
         Integer currentFeatureId = null;
         int count = 0;
         while (res.next()) {
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
             String identifier = res.getString("synonym_name");
             String synonymTypeName = res.getString("type_name");
 
@@ -1468,7 +1474,13 @@ public class SequenceProcessor extends ChadoProcessor
             }
             identifier = fixIdentifier(featureMap.get(featureId), identifier);
 
-            if (currentFeatureId != null && currentFeatureId != featureId) {
+            // im-ee7.43: this was `currentFeatureId != featureId`, a comparison of two
+            // distinct Integer objects (each row made a new one), which is always true: the
+            // set is reset on every row after the first. Integer.valueOf would make it false
+            // for ids up to 127, so the old behaviour is kept explicitly. Resetting only when
+            // the feature changes (`!currentFeatureId.equals(featureId)`) looks like the
+            // intent, but would change which attributes are set.
+            if (currentFeatureId != null) {
                 existingAttributes = new HashSet<String>();
             }
 
@@ -1567,7 +1579,7 @@ public class SequenceProcessor extends ChadoProcessor
         int count = 0;
 
         while (res.next()) {
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
             if (!featureMap.containsKey(featureId)) {
                 if (featureWarnings <= 20) {
                     if (featureWarnings < 20) {

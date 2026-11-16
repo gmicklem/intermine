@@ -49,13 +49,13 @@ class FeatureData
     private static final Map<String, Short> NAME_MAP = new HashMap<String, Short>();
 
     static {
-        NAME_MAP.put(SequenceProcessor.PRIMARY_IDENTIFIER_STRING, new Short(IDENTIFIER_SET));
+        NAME_MAP.put(SequenceProcessor.PRIMARY_IDENTIFIER_STRING, Short.valueOf(IDENTIFIER_SET));
         NAME_MAP.put(SequenceProcessor.SECONDARY_IDENTIFIER_STRING,
-                     new Short(SECONDARY_IDENTIFIER_SET));
-        NAME_MAP.put(SequenceProcessor.SYMBOL_STRING, new Short(SYMBOL_SET));
-        NAME_MAP.put(SequenceProcessor.NAME_STRING, new Short(NAME_SET));
-        NAME_MAP.put(SequenceProcessor.SEQUENCE_STRING, new Short(SEQUENCE_SET));
-        NAME_MAP.put(SequenceProcessor.LENGTH_STRING, new Short(LENGTH_SET));
+                     Short.valueOf(SECONDARY_IDENTIFIER_SET));
+        NAME_MAP.put(SequenceProcessor.SYMBOL_STRING, Short.valueOf(SYMBOL_SET));
+        NAME_MAP.put(SequenceProcessor.NAME_STRING, Short.valueOf(NAME_SET));
+        NAME_MAP.put(SequenceProcessor.SEQUENCE_STRING, Short.valueOf(SEQUENCE_SET));
+        NAME_MAP.put(SequenceProcessor.LENGTH_STRING, Short.valueOf(LENGTH_SET));
     }
 
     /**

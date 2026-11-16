@@ -609,8 +609,8 @@ public class PsiConverter extends BioFileConverter
 
                 int c;
                 try {
-                    Integer a = new Integer(start);
-                    Integer b = new Integer(end);
+                    Integer a = Integer.valueOf(start);
+                    Integer b = Integer.valueOf(end);
                     c = a.compareTo(b);
                 } catch (NumberFormatException e) {
                     return false;
@@ -866,7 +866,7 @@ public class PsiConverter extends BioFileConverter
              */
             protected void setConfidence(String confidence) {
                 try {
-                    this.confidence = new Double(confidence);
+                    this.confidence = Double.valueOf(confidence);
                 } catch (NumberFormatException e) {
                     confidenceText = (confidenceText != null
                                     ? confidenceText + ' ' + confidence : confidence);

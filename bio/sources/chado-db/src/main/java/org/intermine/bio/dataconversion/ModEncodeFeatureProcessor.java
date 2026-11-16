@@ -329,10 +329,10 @@ public class ModEncodeFeatureProcessor extends SequenceProcessor
      */
     @Override
     protected Map<MultiKey, List<ConfigAction>> getConfig(String taxonId) {
-        MultiKeyMap map = config.get(new Integer(taxonId));
+        MultiKeyMap map = config.get(Integer.valueOf(taxonId));
         if (map == null) {
             map = new MultiKeyMap();
-            config.put(new Integer(taxonId), map);
+            config.put(Integer.valueOf(taxonId), map);
             //feature configuration example: for features of class "Gene", from "modENCODE",
             //set the Gene.symbol to be the "name" field from the chado feature
             // map.put(new MultiKey("feature", "Gene", MODENCODE_SOURCE_NAME, "name"),

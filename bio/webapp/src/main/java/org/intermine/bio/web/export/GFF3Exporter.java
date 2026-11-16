@@ -471,12 +471,12 @@ public class GFF3Exporter implements Exporter
                 seenAttributeValues.add(el.getId());
                 Integer version = attributeVersions.get(attributeName);
                 if (version == null) {
-                    version = new Integer(1);
+                    version = Integer.valueOf(1);
                     attributes.put(attributeName, formatElementValue(el));
                 } else {
                     attributes.put(attributeName + version, formatElementValue(el));
                 }
-                attributeVersions.put(attributeName, new Integer(version.intValue() + 1));
+                attributeVersions.put(attributeName, Integer.valueOf(version.intValue() + 1));
             }
         }
     }

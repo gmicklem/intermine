@@ -172,10 +172,10 @@ public class RegulatoryRegionsDisplayer extends ReportDisplayer
         String type = DynamicUtil.getSimpleClass(feature).getSimpleName();
         Integer count = regionCounts.get(type);
         if (count == null) {
-            count = new Integer(0);
+            count = Integer.valueOf(0);
             regionCounts.put(type, count);
         }
-        regionCounts.put(type, new Integer(count.intValue() + 1));
+        regionCounts.put(type, Integer.valueOf(count.intValue() + 1));
     }
 
 }

@@ -32,7 +32,7 @@ Both jobs have a 45 minute timeout, cache `~/.gradle/caches` and `~/.gradle/wrap
 
 `config/ci/init.sh <workspace> <python> <suite> <client> <testmodel_url>` installs the Python requirements, drops the test databases and the `test` role and recreates the role (`dropuser`, `createuser`, then `alter user test with encrypted password 'test'`; for the suites `intermine`, `bio` and `ws`), and runs `config/lib/install_intermine.py` with `PSQL_USER=test`, `PSQL_PWD=test`, `PSQL_HOST=localhost`. For `ws` it also creates the unit test databases, runs `testmine/setup.sh` and clones the client.
 
-`config/ci/run.sh` (same arguments) runs, for each build, `./gradlew -Dorg.gradle.jvmargs=-Xmx4g --max-workers=4 --no-daemon --warning-mode all --stacktrace build`: `intermine` for the suite `intermine`; `bio`, `bio/sources`, `bio/postprocess`, `bio/postprocess-test` for the suite `bio`.
+`config/ci/run.sh` (same arguments) runs, for each build, `./gradlew -Dorg.gradle.jvmargs=-Xmx4g --max-workers=4 --no-daemon --warning-mode all --stacktrace build`: for the suite `intermine` first `test` in `plugin` (the TestKit tests of the Gradle plugin, which `publishToMavenLocal` does not run; they need no database, so one suite runs them, on both JDKs; `config/lib/parse_test_report.py` on the workspace fails if no plugin test ran) and then `intermine`; `bio`, `bio/sources`, `bio/postprocess`, `bio/postprocess-test` for the suite `bio`.
 
 ### `checkstyle.yml` ("Checkstyle")
 

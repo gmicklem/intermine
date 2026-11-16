@@ -104,6 +104,7 @@ task summariseTestObjectStore {
         try {
             ant.taskdef(name: "summarizeObjectStoreTask", classname: "org.intermine.task.SummariseObjectStoreTask") {
                 classpath {
+                    pathelement(location: antLoggingDir()) // log4j.properties of the Ant tasks (root build file)
                     dirset(dir: layout.buildDirectory.get().asFile)
                     pathelement(path: configurations.runtimeClasspath.asPath)
                 }

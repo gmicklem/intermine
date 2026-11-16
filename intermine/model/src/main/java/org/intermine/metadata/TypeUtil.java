@@ -772,7 +772,7 @@ public final class TypeUtil
             return Byte.valueOf(value.replace(",", ""));
         }
         if (clazz.equals(Character.class) || clazz.equals(Character.TYPE)) {
-            return new Character(value.charAt(0));
+            return Character.valueOf(value.charAt(0));
         }
         if (clazz.equals(Date.class)) {
             if (value.matches("^\\d+$")) {

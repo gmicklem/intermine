@@ -69,14 +69,14 @@ dependencies {
     api libs.commons.collections
     api libs.commons.io
 
-    // never compiled against (no imports): the JDBC driver, the pool, the logging binding and bridge, and
-    // the resources jar. Declared implementation, not runtimeOnly, since the old maven plugin ignored runtimeOnly;
-    // maven-publish writes either as runtime scope, so runtimeOnly would do now (kept to leave the compile classpath alone).
-    implementation(libs.hikaricp) { transitive = false }
-    implementation libs.postgresql
-    implementation group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")
-    implementation libs.slf4j.reload4j
-    implementation libs.commons.logging
+    // never compiled against (no imports; im-ee7.63 checked that bio-core compiles with them off its compile classpath): the
+    // JDBC driver, the pool, the logging binding and bridge, and the resources jar. runtimeOnly and implementation both map to
+    // the runtime scope of the POM.
+    runtimeOnly(libs.hikaricp) { transitive = false }
+    runtimeOnly libs.postgresql
+    runtimeOnly group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")
+    runtimeOnly libs.slf4j.reload4j
+    runtimeOnly libs.commons.logging
 
     bundled fileTree(dir: 'libs', include: '*.jar') // obo and bbop not available in the public maven repo
     // the patched antlr that intermine/libs holds (one copy for all builds); it is packed into this jar, so the bio

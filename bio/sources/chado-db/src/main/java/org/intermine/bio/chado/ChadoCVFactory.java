@@ -46,7 +46,7 @@ public class ChadoCVFactory
 
         ResultSet cvtermRes = getCVTermResultSet(connection, cvName);
         while (cvtermRes.next()) {
-            Integer cvtermId = new Integer(cvtermRes.getInt("cvterm_id"));
+            Integer cvtermId = Integer.valueOf(cvtermRes.getInt("cvterm_id"));
             String cvtermName = cvtermRes.getString("cvterm_name");
             ChadoCVTerm cvTerm = new ChadoCVTerm(cvtermName);
             cv.addByChadoId(cvtermId, cvTerm);
@@ -54,8 +54,8 @@ public class ChadoCVFactory
 
         ResultSet cvrelRes = getCVTermRelationshipResultSet(connection, cvName);
         while (cvrelRes.next()) {
-            Integer subjectId = new Integer(cvrelRes.getInt("subject_id"));
-            Integer objectId = new Integer(cvrelRes.getInt("object_id"));
+            Integer subjectId = Integer.valueOf(cvrelRes.getInt("subject_id"));
+            Integer objectId = Integer.valueOf(cvrelRes.getInt("object_id"));
             ChadoCVTerm subject = cv.getByChadoId(subjectId);
             ChadoCVTerm object = cv.getByChadoId(objectId);
 

@@ -2,7 +2,8 @@ apply plugin: 'groovy'
 apply plugin: 'java'
 
 group = 'org.intermine'
-version = '5.1.1'
+// the release number is set once, in gradle/libs.versions.toml, as for the other builds
+version = libs.versions.intermine.get()
 
 // Java 8 bytecode whatever the build JDK; --release 8 on JDK 9+
 apply from: "${rootDir}/../config/gradle/java-target.gradle"
@@ -22,8 +23,9 @@ dependencies {
 // of this build (see docs/BUILDING.md, "Tests of the plugin"). The mines resolve only from a file Maven repository that
 // each test writes, so the tests need no network and no InterMine artifact.
 sourceSets {
-    // Stand-ins for the InterMine Ant tasks that the tests run (org.intermine.bio.task.SOToModelTask), packed into the
-    // fake bio-model jar of the tests
+    // Stand-ins for the InterMine Ant tasks that the tests run (SOToModelTask, ModelMergerTask, ModelOutputTask,
+    // PostProcessorTask and the pre-retrieve and loader tasks of fake bio sources), with the genomic model and keys of the fake
+    // bio-model, packed into the fake bio-model and intermine-integrate jars of the tests
     testKitTasks
 }
 
@@ -63,13 +65,16 @@ dependencies {
 
 tasks.named('test', Test) {
     inputs.files(testKitTasksJar).withPropertyName('testKitTasksJar')
+    // this plugin's own jar, which a mine's mergeModels puts on the Ant class path (MergeSourceModelsTask)
+    inputs.files(tasks.named('jar')).withPropertyName('pluginJar')
     inputs.files(configurations.testKitReload4j).withPropertyName('testKitReload4j')
     def testKitDir = layout.buildDirectory.dir('testkit').get().asFile
     def tasksJar = testKitTasksJar.flatMap { it.archiveFile }
     def reload4j = configurations.testKitReload4j
+    def pluginJar = tasks.named('jar').flatMap { it.archiveFile }
     jvmArgumentProviders.add({
         ["-Dtestkit.dir=${testKitDir}", "-Dtestkit.tasksJar=${tasksJar.get().asFile}",
-         "-Dtestkit.reload4jJar=${reload4j.singleFile}"]
+         "-Dtestkit.reload4jJar=${reload4j.singleFile}", "-Dtestkit.pluginJar=${pluginJar.get().asFile}"]
     } as CommandLineArgumentProvider)
     testLogging {
         exceptionFormat = 'full'

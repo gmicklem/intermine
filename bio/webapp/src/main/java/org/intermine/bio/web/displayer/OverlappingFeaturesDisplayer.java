@@ -171,10 +171,10 @@ public class OverlappingFeaturesDisplayer extends ReportDisplayer
         String type = DynamicUtil.getSimpleClass(feature).getSimpleName();
         Integer count = featureCounts.get(type);
         if (count == null) {
-            count = new Integer(0);
+            count = Integer.valueOf(0);
             featureCounts.put(type, count);
         }
-        featureCounts.put(type, new Integer(count.intValue() + 1));
+        featureCounts.put(type, Integer.valueOf(count.intValue() + 1));
     }
 
 }

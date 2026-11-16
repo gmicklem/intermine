@@ -91,8 +91,8 @@ public class CreateGeneFlankingFeaturesProcessTest extends TestCase {
         Chromosome chr =
                 (Chromosome) DynamicUtil.createObject(Collections.singleton(Chromosome.class));
         chr.setPrimaryIdentifier("X");
-        chr.setLength(new Integer(200000));
-        chr.setId(new Integer(101));
+        chr.setLength(Integer.valueOf(200000));
+        chr.setId(Integer.valueOf(101));
         chr.setOrganism(organism);
 
         toStore.add(chr);
@@ -106,8 +106,8 @@ public class CreateGeneFlankingFeaturesProcessTest extends TestCase {
         toStore.add(gene);
 
         Location loc =  (Location) DynamicUtil.createObject(Collections.singleton(Location.class));
-        loc.setStart(new Integer(100000));
-        loc.setEnd(new Integer(101000));
+        loc.setStart(Integer.valueOf(100000));
+        loc.setEnd(Integer.valueOf(101000));
         loc.setStrand("-1");
         loc.setLocatedOn(chr);
         loc.setFeature(gene);

@@ -161,7 +161,7 @@ public class CreateIntergenicRegionFeaturesProcessTest extends TestCase
 
                 int locStart = loc.getStart().intValue();
                 if (locStart > 0) {
-                    Integer newLoc = new Integer(locStart - 1);
+                    Integer newLoc = Integer.valueOf(locStart - 1);
                     Collection prevGeneIds;
                     if (ir.getChromosome().getId().equals(chr1Id)) {
                         prevGeneIds = getByLoc(newLoc, chr1locMap);
@@ -191,7 +191,7 @@ public class CreateIntergenicRegionFeaturesProcessTest extends TestCase
 
                 int locEnd = loc.getEnd().intValue();
                 if (locEnd < ir.getChromosome().getLength().intValue()) {
-                    Integer newLoc = new Integer(locEnd + 1);
+                    Integer newLoc = Integer.valueOf(locEnd + 1);
                     Collection nextGeneIds;
                     if (ir.getChromosome().getId().equals(chr1Id)) {
                         nextGeneIds = getByLoc(newLoc, chr1locMap);
@@ -251,8 +251,8 @@ public class CreateIntergenicRegionFeaturesProcessTest extends TestCase
         Chromosome chr =
                 (Chromosome) DynamicUtil.createObject(Collections.singleton(Chromosome.class));
         chr.setPrimaryIdentifier("X");
-        chr.setLength(new Integer(1000));
-        chr.setId(new Integer(101));
+        chr.setLength(Integer.valueOf(1000));
+        chr.setId(Integer.valueOf(101));
         chr.setOrganism(organism);
 
         Set toStore = new HashSet();
@@ -275,11 +275,11 @@ public class CreateIntergenicRegionFeaturesProcessTest extends TestCase
             int geneId = geneInfo[i][0] + idStart;
             int start = geneInfo[i][1];
             int end = geneInfo[i][2];
-            genes[i].setId(new Integer(geneId));
-            genes[i].setLength(new Integer(end - start + 1));
+            genes[i].setId(Integer.valueOf(geneId));
+            genes[i].setLength(Integer.valueOf(end - start + 1));
             genes[i].setChromosome(chr);
             geneLocs[i] = createLocation(chr, genes[i], "1", start, end, Location.class);
-            geneLocs[i].setId(new Integer(100 + geneId));
+            geneLocs[i].setId(Integer.valueOf(100 + geneId));
             genes[i].setChromosomeLocation(geneLocs[i]);
             Util.addToSetMap(chrXlocMap, geneLocs[i].getStart(), genes[i]);
             Util.addToSetMap(chrXlocMap, geneLocs[i].getEnd(), genes[i]);
@@ -302,8 +302,8 @@ public class CreateIntergenicRegionFeaturesProcessTest extends TestCase
         Chromosome chr =
                 (Chromosome) DynamicUtil.createObject(Collections.singleton(Chromosome.class));
         chr.setPrimaryIdentifier("I");
-        chr.setLength(new Integer(2000));
-        chr.setId(new Integer(102));
+        chr.setLength(Integer.valueOf(2000));
+        chr.setId(Integer.valueOf(102));
         chr.setOrganism(organism);
 
         Set toStore = new HashSet();
@@ -330,11 +330,11 @@ public class CreateIntergenicRegionFeaturesProcessTest extends TestCase
             int geneId = geneInfo[i][0] + idStart;
             int start = geneInfo[i][1];
             int end = geneInfo[i][2];
-            genes[i].setId(new Integer(geneId));
-            genes[i].setLength(new Integer(end - start + 1));
+            genes[i].setId(Integer.valueOf(geneId));
+            genes[i].setLength(Integer.valueOf(end - start + 1));
             genes[i].setChromosome(chr);
             geneLocs[i] = createLocation(chr, genes[i], "1", start, end, Location.class);
-            geneLocs[i].setId(new Integer(100 + geneId));
+            geneLocs[i].setId(Integer.valueOf(100 + geneId));
             genes[i].setChromosomeLocation(geneLocs[i]);
             Util.addToSetMap(chr1locMap, geneLocs[i].getStart(), genes[i]);
             Util.addToSetMap(chr1locMap, geneLocs[i].getEnd(), genes[i]);
@@ -359,8 +359,8 @@ public class CreateIntergenicRegionFeaturesProcessTest extends TestCase
         loc.setLocatedOn(object);
         loc.setFeature(subject);
         loc.setStrand(strand);
-        loc.setStart(new Integer(start));
-        loc.setEnd(new Integer(end));
+        loc.setStart(Integer.valueOf(start));
+        loc.setEnd(Integer.valueOf(end));
         return loc;
     }
 }

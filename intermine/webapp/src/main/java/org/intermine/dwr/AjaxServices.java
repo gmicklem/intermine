@@ -843,7 +843,7 @@ public class AjaxServices
         HttpSession session = ctx.getSession();
         final InterMineAPI im = SessionMethods.getInterMineAPI(session);
         PagedTable pt = SessionMethods.getResultsTable(session, tableId);
-        pt.selectId(new Integer(selectedId), (new Integer(columnIndex)).intValue());
+        pt.selectId(Integer.valueOf(selectedId), (Integer.valueOf(columnIndex)).intValue());
         Map<String, List<FieldDescriptor>> classKeys = im.getClassKeys();
         ObjectStore os = im.getObjectStore();
         return pt.getFirstSelectedFields(os, classKeys);
@@ -860,7 +860,7 @@ public class AjaxServices
         HttpSession session = ctx.getSession();
         final InterMineAPI im = SessionMethods.getInterMineAPI(session);
         PagedTable pt = SessionMethods.getResultsTable(session, tableId);
-        pt.deSelectId(new Integer(deSelectId));
+        pt.deSelectId(Integer.valueOf(deSelectId));
         Map<String, List<FieldDescriptor>> classKeys = im.getClassKeys();
         ObjectStore os = im.getObjectStore();
         return pt.getFirstSelectedFields(os, classKeys);

@@ -41,7 +41,22 @@ gradlew_build() {
     run_gradle "$dir" build
 }
 
+# The TestKit tests of the Gradle plugin (plugin/src/test: synthetic mines that apply the plugin, see
+# docs/BUILDING.md "Tests of the plugin"). publishToMavenLocal, which init.sh runs, does not run them. They need
+# no database, so they run once per Java version, with the intermine suite; unlike the intermine tests they are not
+# run with ignoreFailures, so a failure fails this step at once.
+plugin_tests() {
+    run_gradle plugin test
+
+    # parse_test_report.py takes a directory of Gradle builds and reads <build>/build/test-results/test: with the
+    # workspace root that is plugin/build/test-results/test (and fails if no test was run)
+    "${WORKSPACE_DIR}"/config/lib/parse_test_report.py "${WORKSPACE_DIR}"
+}
+
 if [ "$TEST_SUITE" = "intermine" ]; then
+    echo "RUNNING plugin tests"
+    plugin_tests
+
     echo "RUNNING intermine unit tests"
     gradlew_build intermine
 

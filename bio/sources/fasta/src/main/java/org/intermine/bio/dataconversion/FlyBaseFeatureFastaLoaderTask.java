@@ -74,8 +74,8 @@ public class FlyBaseFeatureFastaLoaderTask extends FastaLoaderTask
             int min = getMin(locationString);
             int max = getMax(locationString);
             Location loc = getDirectDataLoader().createObject(Location.class);
-            loc.setStart(new Integer(min));
-            loc.setEnd(new Integer(max));
+            loc.setStart(Integer.valueOf(min));
+            loc.setEnd(Integer.valueOf(max));
             if (isComplement(locationString)) {
                 loc.setStrand("-1");
             } else {

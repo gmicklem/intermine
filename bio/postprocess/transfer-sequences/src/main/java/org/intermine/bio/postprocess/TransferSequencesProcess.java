@@ -98,7 +98,7 @@ public class TransferSequencesProcess extends PostProcessor
         osw.store(sequence);
         feature.proxySequence(new ProxyReference(osw.getObjectStore(),
                 sequence.getId(), Sequence.class));
-        feature.setLength(new Integer(sequenceString.length()));
+        feature.setLength(Integer.valueOf(sequenceString.length()));
         osw.store(feature);
     }
 
@@ -276,7 +276,7 @@ public class TransferSequencesProcess extends PostProcessor
                 osw.store(sequence);
                 SequenceFeature cloneLsf = PostProcessUtil.cloneInterMineObject(feature);
                 cloneLsf.setSequence(sequence);
-                cloneLsf.setLength(new Integer(featureSeq.length()));
+                cloneLsf.setLength(Integer.valueOf(featureSeq.length()));
                 osw.store(cloneLsf);
                 i++;
                 if (i % 1000 == 0) {

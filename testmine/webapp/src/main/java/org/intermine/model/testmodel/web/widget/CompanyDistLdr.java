@@ -40,7 +40,7 @@ public class CompanyDistLdr implements DataSetLdr {
 
     private static final Factory defaultValueFactory = new Factory() {
         public Object create() {
-            return new Integer(0);
+            return Integer.valueOf(0);
         }
     };
 
