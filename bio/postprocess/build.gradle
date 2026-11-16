@@ -117,7 +117,6 @@ subprojects {
 
         testImplementation libs.junit
         testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
-        testImplementation libs.xmlunit
         mergeModel group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
     }
 

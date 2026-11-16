@@ -18,6 +18,8 @@ sourceSets {
 }
 
 dependencies {
+    // UniprotXmlFilterTest compares XML documents (assertXMLEqual); no other source test does
+    testImplementation libs.xmlunit
     runtimeOnly group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
     api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
     bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false

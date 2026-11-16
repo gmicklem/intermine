@@ -1,0 +1,58 @@
+{
+ "id": 15377,
+ "chebi_accession": "CHEBI:15377",
+ "name": "water",
+ "stars": 3,
+ "definition": "An oxygen hydride consisting of an oxygen atom that is covalently bonded to two hydrogen atoms",
+ "ascii_name": "water",
+ "chemical_data": {
+  "formula": "H2O",
+  "charge": 0,
+  "mass": "18.015",
+  "monoisotopic_mass": "18.01056"
+ },
+ "modified_on": "2022-06-28T16:33:13Z",
+ "secondary_ids": [
+  "CHEBI:5585",
+  "CHEBI:10743",
+  "CHEBI:13352",
+  "CHEBI:27313",
+  "CHEBI:42043",
+  "CHEBI:42857",
+  "CHEBI:43228",
+  "CHEBI:44292",
+  "CHEBI:44701",
+  "CHEBI:44819"
+ ],
+ "default_structure": {
+  "id": 2018,
+  "smiles": "[H]O[H]",
+  "standard_inchi": "InChI=1S/H2O/h1H2",
+  "standard_inchi_key": "XLYOFNOQVPJJNP-UHFFFAOYSA-N",
+  "wurcs": null,
+  "is_r_group": false
+ },
+ "is_released": true,
+ "names": {
+  "SYNONYM": [
+   {
+    "name": "acqua",
+    "status": "C",
+    "type": "SYNONYM",
+    "source": "ChEBI",
+    "ascii_name": "acqua",
+    "adapted": false,
+    "language_code": "en"
+   },
+   {
+    "name": "agua",
+    "status": "C",
+    "type": "SYNONYM",
+    "source": "ChEBI",
+    "ascii_name": "agua",
+    "adapted": false,
+    "language_code": "es"
+   }
+  ]
+ }
+}

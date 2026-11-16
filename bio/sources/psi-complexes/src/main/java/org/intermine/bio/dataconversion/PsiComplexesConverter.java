@@ -64,6 +64,7 @@ public class PsiComplexesConverter extends BioFileConverter
     private static final String DEFAULT_INTERACTOR_TYPE = "BioEntity";
     // TODO put this in config file instead
     private static final String PROTEIN = "MI:0326";
+    private static final String SMALL_MOLECULE = "MI:0328";
     private static final String BINDING_SITE = "binding region";
     private static final String DIRECT_BINDING = "direct binding";
     private static final String GENE_ONTOLOGY = "go";
@@ -78,6 +79,8 @@ public class PsiComplexesConverter extends BioFileConverter
     // accession to stored object ID
     private Map<String, String> interactors = new HashMap<String, String>();
     private Map<String, String> publications = new HashMap<String, String>();
+    // names of the small molecules, from the ChEBI REST API
+    private ChebiNameLookup chebi = new ChebiNameLookup();
 
     // See #1168
     static {
@@ -103,6 +106,20 @@ public class PsiComplexesConverter extends BioFileConverter
      */
     public void setComplexesSource(String identifierSource) {
         xrefDatabase = identifierSource;
+    }
+
+    /**
+     * Sets the ChEBI REST API that gives small molecules their names. The default is
+     * https://www.ebi.ac.uk/chebi/backend/api/public/compound/ ; the compound's accession and a
+     * slash are added to it (CHEBI:15377/). An empty value switches the lookup off, for a load
+     * that has no network: the small molecules then have no name. If ChEBI cannot be reached
+     * the names are left out and the load goes on (project.xml property chebi.url).
+     *
+     * @param url the URL of the compound endpoint
+     */
+    public void setChebiUrl(String url) {
+        chebi = new ChebiNameLookup(url, ChebiNameLookup.CONNECT_TIMEOUT,
+                ChebiNameLookup.READ_TIMEOUT);
     }
 
     /**
@@ -152,28 +169,7 @@ public class PsiComplexesConverter extends BioFileConverter
                     // most of the interactions will have experimental data attached to them
                     // so they will be of type InteractionEvidence
                     if (entry instanceof Complex) {
-
-                        Complex interactionEvidence = (Complex) entry;
-
-                        Item complex = createItem("Complex");
-
-                        processIdentifiers(interactionEvidence, complex);
-
-                        // parse annotations
-                        processAnnotations(interactionEvidence, complex);
-
-                        DetailHolder detail = new DetailHolder();
-
-                        // type, e.g. "physical association", "direct interaction"
-                        processType(interactionEvidence, detail);
-
-                        // parse participants and interactions
-                        processInteractions(interactionEvidence, detail, complex);
-
-                        // parse GO terms
-                        processXrefs(interactionEvidence, complex);
-
-                        store(complex);
+                        processComplex((Complex) entry);
                     }
                 }
             }
@@ -184,6 +180,33 @@ public class PsiComplexesConverter extends BioFileConverter
             }
 
         }
+    }
+
+    /**
+     * Stores one complex, its participants and the interactions between them.
+     * @param interactionEvidence the complex as read by jami
+     * @throws ObjectStoreException if an item cannot be stored
+     */
+    void processComplex(Complex interactionEvidence) throws ObjectStoreException {
+        Item complex = createItem("Complex");
+
+        processIdentifiers(interactionEvidence, complex);
+
+        // parse annotations
+        processAnnotations(interactionEvidence, complex);
+
+        DetailHolder detail = new DetailHolder();
+
+        // type, e.g. "physical association", "direct interaction"
+        processType(interactionEvidence, detail);
+
+        // parse participants and interactions
+        processInteractions(interactionEvidence, detail, complex);
+
+        // parse GO terms
+        processXrefs(interactionEvidence, complex);
+
+        store(complex);
     }
 
     private void processIdentifiers(Complex interactionEvidence, Item complex) {
@@ -206,8 +229,22 @@ public class PsiComplexesConverter extends BioFileConverter
 
     private void processInteractions(Complex interactionEvidence,
             DetailHolder detail, Item complex) throws ObjectStoreException {
-        for (ModelledParticipant modelledParticipant : interactionEvidence.getParticipants()) {
+        List<ModelledParticipant> participants =
+            new ArrayList<ModelledParticipant>(interactionEvidence.getParticipants());
+
+        // every participant gets its Interactor item before any is processed: an
+        // InteractionDetail lists all the interactors of the complex, the ones that come after
+        // the participant it is made for as well as those before it
+        List<Item> interactorItems = new ArrayList<Item>();
+        for (int i = 0; i < participants.size(); i++) {
             Item interactor = createItem("Interactor");
+            interactorItems.add(interactor);
+            detail.addInteractor(interactor.getIdentifier());
+        }
+
+        for (int i = 0; i < participants.size(); i++) {
+            ModelledParticipant modelledParticipant = participants.get(i);
+            Item interactor = interactorItems.get(i);
 
             // annotations
             processAnnotations(modelledParticipant, interactor);
@@ -215,13 +252,8 @@ public class PsiComplexesConverter extends BioFileConverter
             // biological role
             setBiologicalRole(modelledParticipant, interactor);
 
-            // protein
+            // protein, small molecule or RNA (anything else is stored as a BioEntity)
             String refId = processProtein(modelledParticipant.getInteractor());
-
-            // not a protein or small molecule, skip for now
-            if (refId == null) {
-                return;
-            }
             interactor.setReference("participant", refId);
 
             // interactions and regions
@@ -244,7 +276,11 @@ public class PsiComplexesConverter extends BioFileConverter
 
                         Item detailItem = createItem("InteractionDetail");
                         detailItem.setAttribute("type", INTERACTION_TYPE);
-                        detailItem.setAttribute("relationshipType", detail.getRelationshipType());
+                        // a complex with no interaction type has no relationship type
+                        if (detail.getRelationshipType() != null) {
+                            detailItem.setAttribute("relationshipType",
+                                    detail.getRelationshipType());
+                        }
                         detailItem.setReference("interaction", interaction);
                         detailItem.setCollection("allInteractors", detail.getAllInteractors());
 
@@ -264,7 +300,6 @@ public class PsiComplexesConverter extends BioFileConverter
 
             store(interactor);
 
-            detail.addInteractor(interactor.getIdentifier());
             complex.addToCollection("allInteractors", interactor);
         }
     }
@@ -273,9 +308,17 @@ public class PsiComplexesConverter extends BioFileConverter
         String locatedOn)
         throws ObjectStoreException {
         for (Range range : ranges) {
-            Item location = createItem("Location");
             Position startPosition = range.getStart();
             Position endPosition = range.getEnd();
+            // "?-?" is an undetermined range, which jami reads as 0..0: there is no location to
+            // store (and a Location 0..0 is not one: positions start at 1)
+            if (startPosition == null || endPosition == null
+                    || startPosition.isPositionUndetermined()
+                    || endPosition.isPositionUndetermined()
+                    || startPosition.getStart() < 1 || endPosition.getStart() < 1) {
+                continue;
+            }
+            Item location = createItem("Location");
             Long start = startPosition.getStart();
             Long end = endPosition.getStart();
             location.setAttribute("start", String.valueOf(start));
@@ -353,6 +396,11 @@ public class PsiComplexesConverter extends BioFileConverter
             protein.setAttribute("primaryIdentifier", primaryIdentifier);
             if (PROTEIN.equals(typeTermIdentifier)) {
                 protein.setAttribute("primaryAccession", accession);
+            } else if (SMALL_MOLECULE.equals(typeTermIdentifier)) {
+                String smallMolecule = chebi.getName(primaryIdentifier);
+                if (StringUtils.isNotEmpty(smallMolecule)) {
+                    protein.setAttribute("name", smallMolecule);
+                }
             }
             Organism organism = participant.getOrganism();
             if (organism != null) {

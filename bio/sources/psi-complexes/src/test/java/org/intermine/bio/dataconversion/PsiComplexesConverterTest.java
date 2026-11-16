@@ -61,13 +61,15 @@ public class PsiComplexesConverterTest extends ItemsTestCase
         assertEquals(14, countItemByClass(items, "Protein"));
         assertEquals(52, countItemByClass(items, "Interaction"));
         assertEquals(52, countItemByClass(items, "InteractionDetail"));
-        assertEquals(52, countItemByClass(items, "InteractionRegion"));
-        assertEquals(52, countItemByClass(items, "Location"));
+        // all 52 ranges of the file are undetermined ("?-?", which jami reads as 0..0): they give
+        // no Location (and so no InteractionRegion), not a Location 0..0
+        assertEquals(0, count(items, "InteractionRegion"));
+        assertEquals(0, count(items, "Location"));
         assertEquals(6, countItemByClass(items, "GOAnnotation"));
         assertEquals(6, countItemByClass(items, "GOTerm"));
         assertEquals(1, countItemByClass(items, "Publication"));
         assertEquals(1, countItemByClass(items, "Organism"));
-        assertEquals(254, items.size());
+        assertEquals(150, items.size());
 
         Item complex = null;
         for (Item item : items) {
@@ -81,6 +83,15 @@ public class PsiComplexesConverterTest extends ItemsTestCase
         assertEquals("swr1:ruvb1:ruvb2:swc5:swc4:swc7:act1:arp4:bdf1:yaf9:arp6:swc3:vps71:vps72",
                 complex.getAttribute("systematicName").getValue());
         assertEquals(14, complex.getCollection("allInteractors").getRefIds().size());
+
+        // an InteractionDetail lists all 14 interactors of the complex, not only those that were
+        // read before the one it is made for
+        for (Item item : items) {
+            if ("InteractionDetail".equals(item.getClassName())) {
+                assertEquals(complex.getCollection("allInteractors").getRefIds(),
+                        item.getCollection("allInteractors").getRefIds());
+            }
+        }
 
         // the Vps72 / Swc2 subunit, by its UniProt accession and its SGD identifier
         Item vps72 = null;
@@ -98,6 +109,16 @@ public class PsiComplexesConverterTest extends ItemsTestCase
         Set<Item> written = new LinkedHashSet<Item>(FullParser.parse(new ByteArrayInputStream(
                 FullRenderer.render(items).getBytes("UTF-8"))));
         assertEquals(readItemSet("PsiComplexesConverterTest_tgt.xml"), written);
+    }
+
+    private int count(Set<Item> items, String className) {
+        int n = 0;
+        for (Item item : items) {
+            if (className.equals(item.getClassName())) {
+                n++;
+            }
+        }
+        return n;
     }
 
     private String getTaxonId(Set<Item> items, String refId) {

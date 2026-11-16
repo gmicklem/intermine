@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.custommonkey.xmlunit.XMLTestCase;
 import org.intermine.bio.postprocess.ReactomePostProcess;
 import org.intermine.model.InterMineObject;
 import org.intermine.model.bio.DataSet;
@@ -33,10 +32,12 @@ import org.intermine.objectstore.query.QueryClass;
 import org.intermine.objectstore.query.SingletonResults;
 import org.intermine.util.DynamicUtil;
 
+import junit.framework.TestCase;
+
 /**
  * Tests for the BioPAXPostprocess class.
  */
-public class ReactomePostprocessTest extends XMLTestCase {
+public class ReactomePostprocessTest extends TestCase {
 
     private ObjectStoreWriter osw;
 

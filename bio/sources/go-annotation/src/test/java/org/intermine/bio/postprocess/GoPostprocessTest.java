@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.custommonkey.xmlunit.XMLTestCase;
 import org.intermine.model.InterMineObject;
 import org.intermine.model.bio.GOAnnotation;
 import org.intermine.model.bio.GOEvidence;
@@ -37,10 +36,12 @@ import org.intermine.objectstore.query.QueryClass;
 import org.intermine.objectstore.query.SingletonResults;
 import org.intermine.util.DynamicUtil;
 
+import junit.framework.TestCase;
+
 /**
  * Tests for the GoPostprocess class.
  */
-public class GoPostprocessTest extends XMLTestCase {
+public class GoPostprocessTest extends TestCase {
 
     private ObjectStoreWriter osw;
 
