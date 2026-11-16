@@ -45,19 +45,34 @@ new version next to the old one, update the property and extend `SHA256SUMS`.
 
 These are inside the vendored files, which are not modified:
 
-* im-tables and imjs request `json3` from `cdn.intermine.org` only when the browser has no
-  native `JSON` object (Internet Explorer 7 and older). Not supported anyway.
+* imjs (`js/intermine/imjs/3.18.1/im.js`) and im-tables (`js/intermine/im-tables/2.2.0-beta/imtables.js`)
+  contain a fallback that, only when the browser has no native `JSON` object (Internet Explorer 7
+  and older, which no browser the webapp supports), appends a `<script>` for
+  `http://cdn.intermine.org/js/json3/3.2.2/json3.min.js`. It never runs in a supported browser, so it
+  makes no request and needs no replacement; it is left as shipped because these files must stay
+  identical to `SHA256SUMS`. If a mine ever has to support such a browser, serve json3 from the
+  webapp and define `window.JSON` before these scripts.
 * The api-loader default load root and the im-tables default `CDN.server` still name
   `cdn.intermine.org`. The webapp overrides both on every page (`intermine.setLoadRoot`,
   `imtables.configure("CDN.server", ...)` in `htmlHead.jsp` and `layout.jsp`).
 * `js/intermine/im-tables/2.2.0-beta/main.sandboxed.css` asks `netdna.bootstrapcdn.com` for the
   Glyphicons and Font Awesome fonts. `css/im-tables-fonts.css` (not vendored, part of the webapp, loaded
   after it by `head.css.results.RESULT_TABLES_FONTS`) redefines both font faces from `fonts/`.
+  The code snippets generated for pasting into other sites (`WebserviceJavaScriptCodeGenerator`) link
+  `css/im-tables-fonts.css` of the mine right after `main.sandboxed.css`, so a pasted snippet contacts
+  no host but the mine. Browsers only accept a font from another origin when it is sent with CORS
+  headers, so `web.xml` maps the `AllowCORSWebServiceRequests` filter onto `/vendor/fonts/*` too.
 
-## Fonts
+## Google
 
-`fonts/` holds the woff2, woff and ttf files of Font Awesome 4.7.0 (npm package `font-awesome@4.7.0`,
-integrity `sha512-U6kGnykA/6bFmg1M/oT9EkFeIYv7JlX3bozwQJWiiLz6L0w3F5vBVPxHlwyX/vtNq1ckcpRKOB9f2Qal/VtFpg==`)
-and Bootstrap 3.3.2 Glyphicons (npm package `bootstrap@3.3.2`, integrity
-`sha512-4aP7n3MWfOyASkwezPN2Q7PBczCaaU/pD7sFA+1YlP8SVF4gjTQPbTKMeBopCg3S6ScUzmU64SFmWkE4Kx31kw==`),
-the versions im-tables 2.2.0-beta was built against. The checksums are in `SHA256SUMS`.
+* The only third-party script the webapp still loads is the Google Charts loader
+  (`https://www.gstatic.com/charts/loader.js`, `head.js.bagDetails.Ca`), on the list analysis page only.
+  The vendored list-widgets app 2.1.4 draws its charts with `google.visualization` (it calls
+  `google.load("visualization", "1.0", {packages: ["corechart"]})`) and does not start without the
+  `google` global, so it cannot be left out until list-widgets is replaced or given a local chart
+  renderer. Until November 2026 this loader was included on every page as `head.js.all.L =
+  https://www.google.com/jsapi` (that URL now just redirects to the gstatic loader).
+* The superuser usage charts (My Mine, "tracks" tab) used the same loader; they now draw their own
+  tables and an inline SVG line chart (`js/track.js`).
+* The Google Play badge in the footer, an image fetched from `play.google.com` on every page, is
+  gone together with its link: the InterMine app's Play Store listing no longer exists (404).
