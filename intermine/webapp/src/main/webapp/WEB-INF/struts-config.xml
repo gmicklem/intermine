@@ -132,42 +132,6 @@
     <action path="/linkPreview" forward="/linkPreview.jsp">
     </action>
     <action path="/exportOptions" forward="exportOptions.page"/>
-    <action path="/pollQuery" type="org.intermine.web.struts.PollQueryAction">
-      <!-- some kind of error in the action to do with session state or the request -->
-      <forward name="error" path="error.page"/>
-      <!-- problem running query -->
-      <forward name="failure" redirect="true" path="/query.do"/>
-      <!-- implicitly cancelled by user -->
-      <forward name="cancelled" redirect="true" path="/query.do"/>
-      <!-- forward to results page -->
-      <forward name="results" path="/results.do"/>
-      <!-- continue waiting -->
-      <forward name="waiting" path="waiting.page"/>
-    </action>
-    <action path="/pollTemplateQuery" type="org.intermine.web.struts.PollQueryAction">
-      <!-- some kind of error in the action to do with session state or the request -->
-      <forward name="error" path="error.page"/>
-      <!-- problem running query -->
-      <forward name="failure" path="error.page"/>
-      <!-- implicitly cancelled by user -->
-      <forward name="cancelled" path="error.page"/>
-      <!-- forward to results page -->
-      <forward name="results" redirect="true" path="/results.do"/>
-      <!-- continue waiting -->
-      <forward name="waiting" path="waiting.page"/>
-    </action>
-    <action path="/pollBrowseQuery" type="org.intermine.web.struts.PollQueryAction" parameter="followSingleResult">
-      <!-- some kind of error in the action to do with session state or the request -->
-      <forward name="error" path="error.page"/>
-      <!-- problem running query -->
-      <forward name="failure" path="error.page"/>
-      <!-- implicitly cancelled by user -->
-      <forward name="cancelled" path="error.page"/>
-      <!-- forward to results page -->
-      <forward name="results" redirect="true" path="/results.do"/>
-      <!-- continue waiting -->
-      <forward name="waiting" path="waiting.page"/>
-    </action>
     <action path="/modifyQueryChange" type="org.intermine.web.struts.ModifyQueryChangeAction" parameter="method">
       <forward name="query" redirect="true" path="/query.do"/>
       <forward name="mymine" redirect="true" path="/mymine.do"/>
@@ -230,8 +194,6 @@
     <action path="/editTemplate" type="org.intermine.web.struts.EditTemplateAction">
       <forward name="query" redirect="true" path="/query.do"/>
       <forward name="mymine" redirect="true" path="/mymine.do"/>
-    </action>
-    <action path="/collapseElement" type="org.intermine.web.struts.CollapseAction">
     </action>
     <action path="/exportTags" type="org.intermine.web.struts.ExportTagsAction">
     </action>
@@ -382,10 +344,6 @@
     <action path="/labelListing" type="org.intermine.web.struts.LabelsSummaryAction">
       <forward name="begin" redirect="true" path="/begin.do"/>
     </action>
-    <action path="/columnSummary" type="org.intermine.web.struts.ColumnSummaryAction" parameter="method">
-      <forward name="query" redirect="true" path="/query.do"/>
-      <forward name="results" redirect="true" path="/results.do"/>
-    </action>
     <action path="/bagResultsTable" type="org.intermine.web.struts.BagDetailsAction">
       <forward name="results" redirect="true" path="/results.do"/>
     </action>
@@ -468,13 +426,10 @@
     </action>
      <action path="/initApiJava" type="org.intermine.web.struts.ApiJavaController">
     </action>
-    <action path="/initExternalLinks" type="org.intermine.web.struts.ExternalLinksController">
-    </action>
     <action path="/initClassChooser" type="org.intermine.web.struts.ClassChooserController">
     </action>
     <action path="/initSubMenu" type="org.intermine.web.struts.SubMenuController">
     </action>
-    <action path="/initSingleResult" type="org.intermine.web.struts.SingleResultController"/>
     <action path="/initConvertBag" type="org.intermine.web.struts.ConvertBagController"/>
     <action path="/initErrorMessages" type="org.intermine.web.struts.ErrorMessagesController"/>
     <action path="/initTable" name="changeTableSizeForm" type="org.intermine.web.struts.TableController"/>

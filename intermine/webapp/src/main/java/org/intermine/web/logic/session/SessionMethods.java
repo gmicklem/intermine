@@ -10,11 +10,8 @@ package org.intermine.web.logic.session;
  *
  */
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,14 +25,11 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.commons.collections.map.LRUMap;
 import org.apache.log4j.Logger;
-import org.apache.struts.Globals;
-import org.apache.struts.util.MessageResources;
 import org.intermine.api.InterMineAPI;
 import org.intermine.api.profile.InterMineBag;
 import org.intermine.api.profile.Profile;
 import org.intermine.api.profile.ProfileManager;
 import org.intermine.api.profile.SavedQuery;
-import org.intermine.api.query.PathQueryExecutor;
 import org.intermine.api.query.WebResultsExecutor;
 import org.intermine.api.results.WebResults;
 import org.intermine.api.search.SearchRepository;
@@ -44,22 +38,15 @@ import org.intermine.metadata.Model;
 import org.intermine.model.InterMineObject;
 import org.intermine.objectstore.ObjectStore;
 import org.intermine.objectstore.ObjectStoreException;
-import org.intermine.objectstore.ObjectStoreQueryDurationException;
-import org.intermine.objectstore.intermine.ObjectStoreInterMineImpl;
-import org.intermine.objectstore.query.Query;
 import org.intermine.objectstore.query.ResultsInfo;
 import org.intermine.pathquery.PathException;
 import org.intermine.pathquery.PathQuery;
-import org.intermine.pathquery.PathQueryBinding;
 import org.intermine.template.TemplateQuery;
 import org.intermine.web.autocompletion.AutoCompleter;
 import org.intermine.web.logic.Constants;
 import org.intermine.web.logic.aspects.Aspect;
 import org.intermine.web.logic.config.WebConfig;
 import org.intermine.web.logic.pathqueryresult.PathQueryResultHelper;
-import org.intermine.web.logic.query.PageTableQueryMonitor;
-import org.intermine.web.logic.query.QueryMonitor;
-import org.intermine.web.logic.query.QueryMonitorTimeout;
 import org.intermine.web.logic.results.PagedTable;
 import org.intermine.web.logic.results.ReportObjectFactory;
 import org.intermine.web.logic.results.WebState;
@@ -81,157 +68,8 @@ public final class SessionMethods
     private SessionMethods() {
     }
 
-    private interface CompletionCallBack
-    {
-        void complete();
-    }
-
-    private interface Action
-    {
-        void process();
-    }
-
     protected static final Logger LOG = Logger.getLogger(SessionMethods.class);
-    private static int topQueryId = 0;
     private static int index = 0;
-
-    /**
-     * Base class for query thread runnable.
-     */
-    private abstract static class RunQueryThread implements Runnable
-    {
-        protected boolean done = false;
-        protected boolean error = false;
-
-        @SuppressWarnings("unused")
-        protected boolean isDone() {
-            return done;
-        }
-        protected boolean isError() {
-            return error;
-        }
-    }
-
-    /**
-     * Executes an action and call a callback when it completes successfully. If the
-     * query fails for some reason, this method returns false and ActionErrors are set on the
-     * request.
-     *
-     * @param session   the http session
-     * @param resources message resources
-     * @param qid       the query id
-     * @param action    the action/query to perform in a new thread
-     * @param completionCallBack sets the method to call when the action successfully completes
-     * @return  true if query ran successfully, false if an error occured
-     * @throws  Exception if getting results info from paged results fails
-     */
-    public static boolean runQuery(final HttpSession session,
-                                   final MessageResources resources,
-                                   final String qid,
-                                   final Action action,
-                                   final CompletionCallBack completionCallBack)
-        throws Exception {
-        final InterMineAPI im = getInterMineAPI(session);
-        final ObjectStore os = im.getObjectStore();
-
-        final ObjectStoreInterMineImpl ios;
-        if (os instanceof ObjectStoreInterMineImpl) {
-            ios = (ObjectStoreInterMineImpl) os;
-        } else {
-            ios = null;
-        }
-        Map<String, QueryMonitor> queries = getRunningQueries(session);
-        QueryMonitor monitor = queries.get(qid);
-        // A reference to this runnable is used as a token for registering
-        // a cancelling the running query
-
-        RunQueryThread runnable = new RunQueryThread() {
-            @Override
-            public void run () {
-                try {
-
-                    // Register request id for query on this thread
-                    // We do this before setting r
-                    if (ios != null) {
-                        LOG.debug("Registering request id " + this);
-                        ios.registerRequestId(this);
-                    }
-
-                    // call this so that if an exception occurs we notice now rather than in the
-                    // JSP code
-                    try {
-                        action.process();
-                    } catch (IndexOutOfBoundsException err) {
-                        // no results - ignore
-                        // we don't call size() first to avoid this exception because that could be
-                        // very slow on a large results set
-                    } catch (RuntimeException e) {
-                        if (e.getCause() instanceof ObjectStoreException) {
-                            throw (ObjectStoreException) e.getCause();
-                        }
-                        throw e;
-                    }
-                } catch (ObjectStoreException e) {
-                    // put stack trace in the log
-                    LOG.error("Exception", e);
-
-                    String key = (e instanceof ObjectStoreQueryDurationException)
-                        ? "errors.query.estimatetimetoolong"
-                        : "errors.query.objectstoreerror";
-                    recordError(resources.getMessage(key), session);
-
-                    error = true;
-                } catch (Throwable err) {
-                    StringWriter sw = new StringWriter();
-                    err.printStackTrace(new PrintWriter(sw));
-                    recordError(sw.toString(), session);
-                    LOG.error("Exception", err);
-                    error = true;
-                } finally {
-                    try {
-                        LOG.debug("Deregistering request id " + this);
-                        ((ObjectStoreInterMineImpl) os).deregisterRequestId(this);
-                    } catch (ObjectStoreException e1) {
-                        LOG.error("Exception", e1);
-                        error = true;
-                    }
-                }
-            }
-        };
-        Thread thread = null;
-        thread = new Thread(runnable);
-        thread.start();
-
-        while (thread.isAlive()) {
-            Thread.sleep(1000);
-            if (monitor != null) {
-                boolean cancelled = monitor.shouldCancelQuery();
-                if (cancelled && ios != null) {
-                    LOG.debug("Cancelling request " + runnable);
-                    ios.cancelRequest(runnable);
-                    monitor.queryCancelled();
-                    return false;
-                }
-            }
-        }
-
-        if (runnable.isError()) {
-            if (monitor != null) {
-                monitor.queryCancelledWithError();
-            }
-            return false;
-        }
-
-        if (completionCallBack != null) {
-            completionCallBack.complete();
-        }
-
-        if (monitor != null) {
-            monitor.queryCompleted();
-        }
-
-        return true;
-    }
 
     /**
      * Load a query into the session, cloning to avoid modifying the original
@@ -462,108 +300,6 @@ public final class SessionMethods
     }
 
     /**
-     * Start the given query running in the background, then return, with a default timeout.
-     * A new query id will be created and added to the RUNNING_QUERIES session attribute.
-     *
-     * @param request the Http request
-     * @param saveQuery whether or not to automatically save the query
-     * @param pathQuery query to start
-     * @return the new query id created
-     */
-    public static String startQueryWithTimeout(
-            final HttpServletRequest request,
-            final boolean saveQuery,
-            final PathQuery pathQuery) {
-        QueryMonitorTimeout clientState
-            = new QueryMonitorTimeout(Constants.QUERY_TIMEOUT_SECONDS * 1000);
-        clientState.setPathQuery(pathQuery);
-        MessageResources messages = (MessageResources) request.getAttribute(Globals.MESSAGES_KEY);
-        return startQuery(clientState, request.getSession(), messages, saveQuery, pathQuery);
-    }
-
-    /**
-     * Start the current query running in the background, then return.  A new query id will be
-     * created and added to the RUNNING_QUERIES session attribute.  That attribute is a Map from
-     * query id to QueryMonitor.  A Thread will be created to update the QueryMonitor.
-     * @param monitor the monitor for this query - controls cancelling and receives feedback
-     *                about how the query concluded
-     * @param session the current http session
-     * @param messages messages resources (for messages and errors)
-     * @param saveQuery whether or not to automatically save the query
-     * @param pathQuery query to start
-     * @return the new query id created
-     */
-    public static String startQuery(final QueryMonitor monitor,
-                                    final HttpSession session,
-                                    final MessageResources messages,
-                                    final boolean saveQuery,
-                                    final PathQuery pathQuery) {
-        synchronized (session) {
-
-            Map<String, QueryMonitor> queries = getRunningQueries(session);
-            final String qid = "" + topQueryId++;
-            queries.put(qid, monitor);
-
-            new Thread(new Runnable() {
-                @Override
-                public void run () {
-                    final Profile profile = (Profile) session.getAttribute(Constants.PROFILE);
-                    final InterMineAPI im = getInterMineAPI(session);
-                    try {
-
-                        final PathQueryExecutor pqe = im.getPathQueryExecutor(profile);
-
-                        Action action = new Action() {
-                            @Override
-                            public void process() {
-                                try {
-                                    pqe.execute(pathQuery);
-                                } catch (ObjectStoreException e) {
-                                    throw new RuntimeException("Error running query.", e);
-                                }
-                            }
-                        };
-                        CompletionCallBack completionCallBack = new CompletionCallBack() {
-                            @Override
-                            public void complete() {
-                                // Do nothing...
-                            }
-                        };
-                        SessionMethods.runQuery(session, messages, qid, action, completionCallBack);
-
-                        if (saveQuery) {
-                            String queryName = NameUtil.findNewQueryName(
-                                    profile.getHistory().keySet());
-                            saveQueryToHistory(session, queryName, pathQuery);
-                        }
-
-                        // pause because we don't want to remove the monitor from the
-                        // session until client has retrieved it in order to work out
-                        // where to go next
-                        Thread.sleep(20000);
-                    } catch (Exception err) {
-                        StringWriter sw = new StringWriter();
-                        err.printStackTrace(new PrintWriter(sw));
-                        StringBuffer errorMessage = new StringBuffer("Error while running query");
-                        if (SessionMethods.isSuperUser(session)) {
-                            errorMessage.append(": " + err.getMessage());
-                        }
-                        recordError(errorMessage.toString(), session);
-                        LOG.error("Error while running query \""
-                                + PathQueryBinding.marshal(pathQuery, "",
-                                    im.getModel().getName(), 1), err);
-                    } finally {
-                        LOG.debug("unregisterRunningQuery qid " + qid);
-                        getRunningQueries(session).remove(qid);
-                    }
-                }
-            }).start();
-
-            return qid;
-        }
-    }
-
-    /**
      * Before running a query via web services, add to query history
      * and add a track
      * @param session User's session
@@ -577,154 +313,6 @@ public final class SessionMethods
         String queryName = NameUtil.findNewQueryName(
                 profile.getHistory().keySet());
         SessionMethods.saveQueryToHistory(session, queryName, pathQuery);
-    }
-
-    /**
-     * Start a query running in the background that will return the row count of the collection.
-     * A new query id will be created and added to the RUNNING_QUERIES session attribute.
-     * That attribute is a Map from query id to QueryMonitor.  A Thread will be created to
-     * update the QueryMonitor.
-     * @param monitor the monitor for this query - controls cancelling and receives feedback
-     *                about how the query concluded
-     * @param session the current http session
-     * @param messages messages resources (for messages and errors)
-     * @return the new query id
-     */
-    public static String startPagedTableCount(final PageTableQueryMonitor monitor,
-                                              final HttpSession session,
-                                              final MessageResources messages) {
-        synchronized (session) {
-            Map<String, QueryMonitor> queries = getRunningQueries(session);
-            final String qid = "" + topQueryId++;
-            queries.put(qid, monitor);
-
-            new Thread(new Runnable() {
-                @Override
-                public void run () {
-                    try {
-                        LOG.debug("startQuery qid " + qid + " thread started");
-
-                        class CountAction implements Action
-                        {
-                            @Override
-                            public void process() {
-                                monitor.getPagedTable().getExactSize();
-                            }
-                        }
-
-                        Action action = new CountAction();
-
-                        SessionMethods.runQuery(session, messages, qid, action, null);
-
-                        // pause because we don't want to remove the monitor from the
-                        // session until client has retrieved it in order to work out
-                        // where to go next
-                        Thread.sleep(20000);
-                    } catch (Exception err) {
-                        StringWriter sw = new StringWriter();
-                        err.printStackTrace(new PrintWriter(sw));
-                        recordError(sw.toString(), session);
-                        LOG.error(sw.toString());
-                    } finally {
-                        LOG.debug("unregisterRunningQuery qid " + qid);
-                        getRunningQueries(session).remove(qid);
-                    }
-                }
-            }).start();
-
-            return qid;
-        }
-
-    }
-
-    /**
-     * Return the Map of currently running queries from the session.
-     */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static Map<String, QueryMonitor> getRunningQueries(final HttpSession session) {
-        Map queries = (Map) session.getAttribute(Constants.RUNNING_QUERIES);
-        if (queries == null) {
-            queries = new HashMap();
-            session.setAttribute(Constants.RUNNING_QUERIES, queries);
-        }
-        return queries;
-    }
-
-
-    /**
-     * Start a query running in the background that will return the row count of the query argument.
-     * A new query id will be created and added to the RUNNING_QUERIES session attribute.
-     * That attribute is a Map from query id to QueryMonitor.  A Thread will be created to
-     * update the QueryMonitor.
-     * @param monitor the monitor for this query - controls cancelling and receives feedback
-     *                about how the query concluded
-     * @param session the current http session
-     * @param messages messages resources (for messages and errors)
-     * @return the new query id created
-     */
-    public static String startQueryCount(final QueryCountQueryMonitor monitor,
-                                         final HttpSession session,
-                                         final MessageResources messages) {
-        synchronized (session) {
-            Map<String, QueryMonitor> queries = getRunningQueries(session);
-            final String qid = "" + topQueryId++;
-            queries.put(qid, monitor);
-
-            final Query query = monitor.getQuery();
-            final InterMineAPI im = getInterMineAPI(session);
-            final ObjectStore os = im.getObjectStore();
-
-            new Thread(new Runnable() {
-                @Override
-                public void run () {
-                    try {
-                        LOG.debug("startQuery qid " + qid + " thread started");
-                        Action action = new Action() {
-                            @Override
-                            public void process() {
-                                try {
-                                    monitor.setCount(os.count(query, ObjectStore.SEQUENCE_IGNORE));
-                                } catch (ObjectStoreException e) {
-                                    throw new RuntimeException("failed to get count of: " + query,
-                                                               e);
-                                }
-                            }
-                        };
-                        SessionMethods.runQuery(session, messages, qid, action, null);
-
-                        // pause because we don't want to remove the monitor from the
-                        // session until client has retrieved it in order to work out
-                        // where to go next
-                        Thread.sleep(20000);
-                    } catch (Exception err) {
-                        StringWriter sw = new StringWriter();
-                        err.printStackTrace(new PrintWriter(sw));
-                        recordError(sw.toString(), session);
-                        LOG.error(sw.toString());
-                    } finally {
-                        LOG.debug("unregisterRunningQuery qid " + qid);
-                        getRunningQueries(session).remove(qid);
-                    }
-                }
-            }).start();
-
-            return qid;
-        }
-    }
-
-    /**
-     * Get the QueryMonitor object corresponding to a running query id (qid).
-     *
-     * @param qid the query id returned by startQuery
-     * @param session the users session
-     * @return QueryMonitor registered to the query id
-     */
-    public static QueryMonitor getRunningQueryController(String qid, HttpSession session) {
-        synchronized (session) {
-            Map<String, QueryMonitor> queries = getRunningQueries(session);
-            QueryMonitor controller = queries.get(qid);
-            return controller;
-        }
     }
 
     /**
