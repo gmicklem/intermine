@@ -24,7 +24,7 @@ new version next to the old one, update the property and extend `SHA256SUMS`.
 | im-tables | 2.2.0-beta | `js/intermine/im-tables/2.2.0-beta/` | results, report and list pages (`head.*.results.RESULT_TABLES`), generated JavaScript |
 | intermine api-loader | latest | `js/intermine/api-loader/latest/intermine.api.min.js` | every page (`head.js.all.0`) |
 | pomme.js | 0.2.6 | `js/intermine/pomme.js/0.2.6/app.min.js` | every page and the list upload confirmation (`head.js.all.POMME`, `component-400`) |
-| list-widgets | 2.1.4 | `js/intermine/apps-c/list-widgets/2.1.4/app.min.js` | list analysis page |
+| list-widgets | 2.1.4 | `js/intermine/apps-c/list-widgets/2.1.4/app.min.js` | list analysis page (charts drawn by `js/google-charts-shim.js`) |
 | component-400 | 0.5.0 | `js/intermine/apps-c/component-400/0.5.0/` | list upload identifier-match confirmation page |
 | pathways-displayer | 0.0.2 | `js/intermine/apps-c/pathways-displayer/0.0.2/` | report page (bio) |
 | gene-interaction-displayer | 1.0.5 | `js/intermine/gene-interaction-displayer/1.0.5/` | report page (bio) |
@@ -65,13 +65,20 @@ These are inside the vendored files, which are not modified:
 
 ## Google
 
-* The only third-party script the webapp still loads is the Google Charts loader
-  (`https://www.gstatic.com/charts/loader.js`, `head.js.bagDetails.Ca`), on the list analysis page only.
-  The vendored list-widgets app 2.1.4 draws its charts with `google.visualization` (it calls
-  `google.load("visualization", "1.0", {packages: ["corechart"]})`) and does not start without the
-  `google` global, so it cannot be left out until list-widgets is replaced or given a local chart
-  renderer. Until November 2026 this loader was included on every page as `head.js.all.L =
-  https://www.google.com/jsapi` (that URL now just redirects to the gstatic loader).
+* The webapp loads no script from Google or any other third-party host. The vendored list-widgets
+  app 2.1.4 draws its charts with the Google Charts API and used to need
+  `https://www.gstatic.com/charts/loader.js` (`head.js.bagDetails.Ca`) on the list analysis page.
+  That is replaced by `js/google-charts-shim.js` (not vendored: part of the webapp, loaded by
+  `head.js.bagDetails.Ca` before the app), a local implementation of exactly what the app uses, as
+  inline SVG: `google.load("visualization", ...)` (callback on the next tick), `google.visualization`
+  `ColumnChart`, `BarChart` and `PieChart` (`draw`, `getSelection`), `arrayToDataTable`, `DataTable` and
+  `events.addListener` for "click" and "select". Selecting a bar, slice or legend entry fires the same
+  "select" event, with `getSelection()` returning `{row, column}`, so the widgets still open the results
+  for the clicked bar. Any other Google chart type (line, scatter, ...) is not provided; the widgets app
+  then shows its "chart type does not exist" message. If list-widgets is ever upgraded or replaced by a
+  version that uses a different chart API, drop the shim together with that property.
+  Until November 2026 the Google loader was included on every page as `head.js.all.L =
+  https://www.google.com/jsapi`.
 * The superuser usage charts (My Mine, "tracks" tab) used the same loader; they now draw their own
   tables and an inline SVG line chart (`js/track.js`).
 * The Google Play badge in the footer, an image fetched from `play.google.com` on every page, is
