@@ -22,7 +22,7 @@ import java.util.zip.ZipOutputStream
  */
 class TestMine {
     static final File TESTKIT_DIR = new File(System.getProperty('testkit.dir'))
-    static final String VERSION = '5.1.1'
+    static final String VERSION = '6.0.0'
     static final String MINE_JSP = '<p>the mine\'s own dataCategories.jsp</p>\n'
     static final String BIO_WEBAPP_JSP = '<p>dataCategories.jsp of bio-webapp</p>\n'
 
@@ -150,8 +150,8 @@ class TestMine {
             }
             dependencies {
                 // the model that mergeModels starts from, and the classes of generateModel's Ant task
-                bioModel 'org.intermine:bio-model:5.1.1'
-                implementation 'org.intermine:intermine-integrate:5.1.1'
+                bioModel 'org.intermine:bio-model:6.0.0'
+                implementation 'org.intermine:intermine-integrate:6.0.0'
             }
             sourceSets {
                 main {

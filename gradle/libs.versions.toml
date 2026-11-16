@@ -9,7 +9,7 @@
 
 [versions]
 # the InterMine release built from this tree (group org.intermine, all modules; docs/RELEASING.md)
-intermine = "5.1.1"
+intermine = "6.0.0"
 # 9.3: the last Checkstyle release that runs on Java 8 (10.x needs Java 11); see config/checkstyle/checkstyle.xml
 checkstyle = "9.3"
 
