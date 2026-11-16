@@ -120,7 +120,6 @@ subprojects {
         api libs.commons.collections
         implementation libs.commons.io
         implementation libs.commons.lang3
-        implementation libs.commons.logging
         implementation libs.postgresql
         api libs.reload4j
         api libs.slf4j.reload4j

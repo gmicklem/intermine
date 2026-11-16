@@ -96,7 +96,6 @@ subprojects {
         implementation libs.commons.collections
         implementation libs.commons.io
         implementation libs.commons.lang3
-        implementation libs.commons.logging
         implementation group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
         implementation group: "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
         implementation libs.reload4j

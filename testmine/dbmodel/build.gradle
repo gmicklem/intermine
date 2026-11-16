@@ -10,13 +10,6 @@ sourceSets {
 
 configurations {
     testModelProps
-    // commons-lang 2.6 for the vendored Torque jars of intermine-objectstore, which only BuildDbTask loads (buildDatabase
-    // below); not on the runtime classpath, so not in the testmine war
-    torqueRuntime {
-        canBeConsumed = false
-        canBeResolved = true
-        transitive = false
-    }
 
     all {
         exclude group: 'org.apache.logging.log4j'
@@ -24,7 +17,6 @@ configurations {
 }
 
 dependencies {
-    torqueRuntime libs.commons.lang
     // api: webapp compiles against this project (its classes, the generated testmodel classes and the
     // libraries they use). Nothing here is published.
     api group: "org.intermine", name: "intermine-api", version: imVersion
@@ -37,12 +29,6 @@ dependencies {
     api libs.commons.collections
     api libs.commons.io
     api libs.commons.lang3
-    // the testmine war then has two jars for org.apache.commons.logging: this one and jcl-over-slf4j, which
-    // solr-solrj brings. Both end in reload4j (commons-logging finds log4j 1.x itself, jcl-over-slf4j goes
-    // through slf4j-reload4j), so which one the class loader finds first does not matter. jcl-over-slf4j is the one to
-    // keep if one is dropped (it is the logging path of solrj and of its HTTP clients); the vendored torque jar
-    // of intermine-objectstore only needs the API.
-    api libs.commons.logging
     api(libs.hikaricp) { transitive = false }
     api libs.base64
     api libs.reload4j
@@ -94,23 +80,14 @@ processResources {
 }
 
 void buildDatabase(osname, model) {
-    ant.taskdef(name: 'torque', classname: 'org.intermine.objectstore.intermine.TorqueModelOutputTask') {
+    ant.taskdef(name: 'buildDB', classname: 'org.intermine.task.BuildDbTask') {
         classpath {
             pathelement(path: configurations.runtimeClasspath.asPath)
             dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties
             dirset(dir: 'build/resources/main') // intermine.properties
         }
     }
-    ant.torque(osname: "os.$osname", destFile: layout.buildDirectory.file("os.${osname}-schema.xml").get().asFile)
-    ant.taskdef(name: 'buildDB', classname: 'org.intermine.task.BuildDbTask') {
-        classpath {
-            pathelement(path: configurations.runtimeClasspath.asPath)
-            pathelement(path: configurations.torqueRuntime.asPath)
-            dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties, os.unittest-schema.xml
-            dirset(dir: 'build/resources/main') // intermine.properties
-        }
-    }
-    ant.buildDB(osname: "os.$osname", model: "$model", schemafile:"os.$osname-schema.xml", tempDir: layout.buildDirectory.dir("tmp").get().asFile)
+    ant.buildDB(osname: "os.$osname", model: "$model", tempDir: layout.buildDirectory.dir("tmp/intermine-buildDB").get().asFile)
     ant.taskdef(name: 'insertModel', classname: 'org.intermine.task.StoreMetadataTask') {
         classpath {
             pathelement(path: configurations.runtimeClasspath.asPath)

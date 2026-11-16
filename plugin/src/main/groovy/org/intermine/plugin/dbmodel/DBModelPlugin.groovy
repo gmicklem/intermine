@@ -50,7 +50,6 @@ class DBModelPlugin implements Plugin<Project> {
         addDependency(project, 'bioModelForSOOnly') {
             [group: "org.intermine", name: "bio-model", version: System.getProperty("bioVersion"), transitive: false]
         }
-        DBModelUtils.torqueRuntime(project)
         addDependency(project, IM_ANTLR) {
             [group: "org.antlr", name: "antlr-complete", version: "3.5.2", transitive: false]
         }
@@ -268,7 +267,6 @@ class DBModelPlugin implements Plugin<Project> {
                      DBModelUtils.output(project, 'generateKeys') { config.modelName + "_keyDefs.properties" }])
 
             doLast {
-                dbUtils.createSchema(config.objectStoreName)
                 dbUtils.createTables(config.objectStoreName, config.modelName)
                 dbUtils.storeMetadata(config.objectStoreName, config.modelName)
                 dbUtils.createIndexes(config.objectStoreName, false)
@@ -287,7 +285,6 @@ class DBModelPlugin implements Plugin<Project> {
                      DBModelUtils.output(project, 'copyGenomicKeys') { config.modelName + "_keyDefs.properties" }])
 
             doLast {
-                dbUtils.createSchema(config.objectStoreName)
                 dbUtils.createTables(config.objectStoreName, config.modelName)
                 dbUtils.storeMetadata(config.objectStoreName, config.modelName)
             }
@@ -313,7 +310,6 @@ class DBModelPlugin implements Plugin<Project> {
                     [DBModelUtils.output(project, 'copyUserProfileModel') { config.userProfileModelName + "_model.xml" }])
 
             doFirst {
-                dbUtils.createSchema(config.userProfileObjectStoreName)
                 dbUtils.createTables(config.userProfileObjectStoreName, config.userProfileModelName)
                 dbUtils.storeMetadata(config.userProfileObjectStoreName, config.userProfileModelName)
             }

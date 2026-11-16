@@ -5,13 +5,6 @@ jar.enabled = false
 configurations {
     testArtifacts
     commonResources
-    // commons-lang 2.6 for the vendored Torque jars of intermine-objectstore, which only BuildDbTask loads (createTables below).
-    // Not on testRuntimeClasspath, so the tests of the other modules, which take this module's test artefacts, do not get it.
-    torqueRuntime {
-        canBeConsumed = false
-        canBeResolved = true
-        transitive = false
-    }
 }
 
 dependencies {
@@ -21,7 +14,6 @@ dependencies {
     testImplementation project(':intermine-api')
     testImplementation project(':intermine-objectstore')
     testImplementation libs.commons.lang3
-    torqueRuntime libs.commons.lang
 }
 
 void generateModel(model, destination, type) {
@@ -220,38 +212,25 @@ void createTables(osname, model) {
     ant.taskdef(name: 'buildDBUnittest', classname: 'org.intermine.task.BuildDbTask') {
         classpath {
             pathelement(path: configurations.testRuntimeClasspath.asPath)
-            pathelement(path: configurations.torqueRuntime.asPath)
-            dirset(dir: 'build/') // testmodel classes and schemas
-            dirset(dir: 'src/test/resources/') // testmodel classes and schemas
+            dirset(dir: 'build/') // testmodel classes and intermine.properties
+            dirset(dir: 'src/test/resources/') // testmodel_model.xml
         }
     }
-    // BuildDbTask empties its tempDir first: not build/tmp itself, which holds Gradle's own task state
-    // (build/tmp/compileTestJava, ...), or compileTestJava re-runs after every buildDB
+    // BuildDbTask generates the DDL from the model and the os.$osname properties, and writes a copy of it
+    // (os.$osname-schema.sql) to tempDir
     def tempDir = layout.buildDirectory.dir("tmp/intermine-buildDB").get().asFile
-    tempDir.mkdirs() // it must exist
-    ant.buildDBUnittest(osname: "os.$osname", model: "$model", schemafile:"os.$osname-schema.xml", tempDir: tempDir.path)
+    tempDir.mkdirs()
+    ant.buildDBUnittest(osname: "os.$osname", model: "$model", tempDir: tempDir.path)
     ant.taskdef(name: 'insertModel', classname: 'org.intermine.task.StoreMetadataTask') {
         classpath {
             pathelement(path: configurations.testRuntimeClasspath.asPath)
-            pathelement(path: configurations.torqueRuntime.asPath)
-            dirset(dir: 'build/') // testmodel classes and schemas
-            dirset(dir: 'src/test/resources/') // testmodel classes and schemas
+            dirset(dir: 'build/') // testmodel classes and intermine.properties
+            dirset(dir: 'src/test/resources/') // testmodel_model.xml
         }
     }
     ant.insertModel(osname: "os.$osname", modelName: "$model")
     // <create-indexes alias="${objectstore.name}" />
     // <analyse-db osName="${objectstore..name}"/>
-}
-
-void generateSchema(osname, model) {
-    ant.taskdef(name: 'torque', classname: 'org.intermine.objectstore.intermine.TorqueModelOutputTask') {
-        classpath {
-            pathelement(path: configurations.testRuntimeClasspath.asPath)
-            dirset(dir: 'build/') // testmodel classes and intermine.properties
-            dirset(dir: 'src/test/resources') // testmodel_model.xml
-        }
-    }
-    ant.torque(osname: "os.$osname", destFile: layout.buildDirectory.file("os.${osname}-schema.xml").get().asFile.path)
 }
 
 task buildDB {
@@ -261,22 +240,11 @@ task buildDB {
     description = "Create tables for database for intermine tests"
     inputs.files(configurations.testRuntimeClasspath)
     doLast {
-        generateSchema('unittest', 'testmodel')
         createTables('unittest', 'testmodel')
-
-        generateSchema('truncunittest', 'testmodel')
         createTables('truncunittest', 'testmodel')
-
-        generateSchema('notxmlunittest', 'testmodel')
         createTables('notxmlunittest', 'testmodel')
-
-        generateSchema('flatmodeunittest', 'testmodel')
         createTables('flatmodeunittest', 'testmodel')
-
-        generateSchema('userprofile-test', 'userprofile')
         createTables('userprofile-test', 'userprofile')
-
-        // don't need to generate schema, never changes
         createTables('fulldatatest', 'fulldata')
     }
 }

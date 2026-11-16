@@ -72,7 +72,6 @@ class IntegratePlugin implements Plugin<Project> {
                     Properties props = spec.bioSourceProperties.getBioSourceProperties(sourceName)
                     if (!props.containsKey("have.file.custom.direct")) {
                         println "Building tgt items database"
-                        spec.dbUtils.createSchema(osName)
                         spec.dbUtils.createTables(osName, modelName)
                         spec.dbUtils.storeMetadata(osName, modelName)
                     }
@@ -149,7 +148,6 @@ class IntegratePlugin implements Plugin<Project> {
                     def osName = "os.$COMMON_OS_PREFIX-tgt-items-std"
                     def modelName = 'fulldata'
 
-                    spec.dbUtils.createSchema(osName)
                     spec.dbUtils.createTables(osName, modelName)
                     spec.dbUtils.storeMetadata(osName, modelName)
                 }

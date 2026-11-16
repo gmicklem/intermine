@@ -42,7 +42,7 @@ public final class MetadataManager
     }
 
     /**
-     * Name of the metadata table (created by TorqueModelOutput)
+     * Name of the metadata table (created by DdlGenerator)
      */
     public static final String METADATA_TABLE = "intermine_metadata";
 

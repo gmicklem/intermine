@@ -69,14 +69,13 @@ dependencies {
     api libs.commons.collections
     api libs.commons.io
 
-    // never compiled against (no imports): the JDBC driver, the pool, the logging binding and bridge, and
+    // never compiled against (no imports): the JDBC driver, the pool, the logging binding, and
     // the resources jar. Declared implementation, not runtimeOnly, since the old maven plugin ignored runtimeOnly;
     // maven-publish writes either as runtime scope, so runtimeOnly would do now (kept to leave the compile classpath alone).
     implementation(libs.hikaricp) { transitive = false }
     implementation libs.postgresql
     implementation group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")
     implementation libs.slf4j.reload4j
-    implementation libs.commons.logging
 
     bundled fileTree(dir: 'libs', include: '*.jar') // obo and bbop not available in the public maven repo
     // the patched antlr that intermine/libs holds (one copy for all builds); it is packed into this jar, so the bio

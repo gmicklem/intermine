@@ -3,9 +3,6 @@
         name="acceptance-tests"
         classname="org.intermine.task.AcceptanceTestTask"/>
     <typedef
-        name="build-torque"
-        classname="org.intermine.objectstore.intermine.TorqueModelOutputTask"/>
-    <typedef
         name="build-db"
         classname="org.intermine.task.BuildDbTask"/>
     <typedef
