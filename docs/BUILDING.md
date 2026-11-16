@@ -115,6 +115,7 @@ In a project that applies the plugin (`bio/core`, `bio/model`, the `bio-source-*
 | `generateKeys` | `<model>_keyDefs.properties` merged from the sources of `project.xml` | `buildDB`, the Ant tasks | no |
 | `copyUserProfileModel` | `userprofile_model.xml` | `createUserDB` | no |
 | `createTestPrioritiesFile` | an empty `genomic_priorities.properties` | the unit tests of the bio sources | no |
+| `copyMineProperties` (the build file's own, in each mine and in `bio/core`, `bio/model`, `bio/sources`, `bio/postprocess`, `bio/postprocess-test`, `testmine`) | `intermine.properties`, under `build/im/mine-properties` (the directory its `into` names) | `processResources` (it takes the task as a source), so every reader of `build/resources/main` depends on it | yes, through `processResources` |
 | the integrate tasks | `build/im/integrate/so.obo` (source `so`) | the `so` converter | no |
 
 `copyGenomicModel` is kept as an alias of `mergeModels`. The unit tests get these directories on their runtime classpath after the test and main outputs and before the dependencies (bio-model's jar has an unmerged `genomic_model.xml`); the plugin's Ant tasks list `build/im/*` first on their classpath. After moving a checkout or a mine to this layout, run `clean` once: files that an earlier plugin wrote into `build/resources/main` would otherwise still be packed into the jar.
