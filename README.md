@@ -4,9 +4,9 @@ InterMine
 Master: [![InterMine CI](https://github.com/intermine/intermine/actions/workflows/im-build.yml/badge.svg?branch=master)](https://github.com/intermine/intermine/actions/workflows/im-build.yml?query=branch%3Amaster)
 Dev: [![InterMine CI](https://github.com/intermine/intermine/actions/workflows/im-build.yml/badge.svg?branch=dev)](https://github.com/intermine/intermine/actions/workflows/im-build.yml?query=branch%3Adev)
 [![Checkstyle](https://github.com/intermine/intermine/actions/workflows/checkstyle.yml/badge.svg?branch=dev)](https://github.com/intermine/intermine/actions/workflows/checkstyle.yml?query=branch%3Adev)
+<!-- Keep the version badge at the last released version (5.1.0) until the next release is published, then bump it. -->
 [![Version](http://img.shields.io/badge/version-5.1.0-blue.svg?style=flat)](https://github.com/intermine/intermine/releases)
 [![License](http://img.shields.io/badge/license-LGPL_2.1-blue.svg?style=flat)](https://github.com/intermine/intermine/blob/master/LICENSE)
-[![Research software impact](http://depsy.org/api/package/pypi/intermine/badge.svg)](http://depsy.org/package/python/intermine)
 [![Conda](https://anaconda.org/anaconda/conda-build/badges/installer/conda.svg)](https://anaconda.org/bioconda/intermine)
 [![Documentation Status](https://readthedocs.org/projects/intermine/badge/?version=latest)](https://intermine.readthedocs.io/en/latest/?badge=latest)
 
