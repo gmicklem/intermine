@@ -9,7 +9,10 @@
  */
 InterMine 6.0.0 (unreleased)
 
-BREAKING release: a mine's build files must change. Everything in 5.1.1 (below) is also in 6.0.0.
+BREAKING release: a mine's build files must change. Everything in 5.1.1 (below) is also in 6.0.0,
+except where an entry here replaces it (the Gradle wrapper is 8.14.6, Apache Ant is 1.10.18, and
+the DWR include list is two methods shorter: getColumnSummary and getResultsSize, which only
+removed JavaScript called).
 Deployer guide, step by step: docs/UPGRADING-build.md, section "5.1.1 to 6.0.0 (Gradle 8.14)".
 Release procedure: docs/RELEASING.md.
 
@@ -35,7 +38,8 @@ What a mine's build files need (UPGRADING-build.md, "Steps")
   from jcenter, which is gone; cargo deploys); main becomes mainClass; delete warWebApp,
   copyWebappContent, explodedWebAppDir and the War classpath filters: the plugin composes the war
   itself now (unwarBioWebApp is a Sync) and the first run of a fresh checkout no longer wipes
-  files or omits web.xml.
+  files or omits web.xml. Its checkWarLibraries task warns when the war would carry two versions
+  of one library (-PimWarDuplicateLibraries=fail makes it an error, =ignore silences it).
 - If Gretty passed -Dorg.apache.el.parser.SKIP_IDENTIFIER_CHECK=true to your Tomcat and you
   rely on it, set it yourself (CATALINA_OPTS or Cargo jvmArgs).
 - The errors you will meet, and the fix for each: UPGRADING-build.md, "What breaks, and how it
@@ -57,8 +61,9 @@ What was replaced
   (DdlGenerator). The tables, columns, types and constraints are the same as before (pg_dump
   --schema-only of old and new databases is identical, checked on the test models, the user
   profile, and the genomic models of bio-model and HumanMine); a database made by 5.1 needs no
-  change. TorqueModelOutputTask (Ant name torque) is removed, schemafile is ignored by buildDB
-  (with a warning), and <objectstore>-schema.xml is no longer written (the SQL is in
+  change. TorqueModelOutputTask (Ant name torque) is removed, schemafile is deprecated and ignored
+  by buildDB (with a warning), tempDir is optional, and <objectstore>-schema.xml is no longer
+  written (the plugin's tasks write the SQL they run to
   build/tmp/intermine-buildDB/<objectstore>-schema.sql). Only a mine whose own build files call
   these Ant tasks needs an edit. See "Torque is gone".
 - commons-lang 2.6 and commons-logging no longer come with InterMine. InterMine uses commons-lang3
@@ -66,8 +71,10 @@ What was replaced
   reached every mine's classpath. A mine's own Java that imports org.apache.commons.lang must
   move to org.apache.commons.lang3 (escapeHtml becomes escapeHtml4, escapeXml becomes escapeXml10),
   or declare commons-lang:commons-lang:2.6 itself. commons-logging stays in a mine's war through
-  Struts, but is no longer in the POMs of intermine-objectstore, bio-core and the bio-sources:
-  declare it if your own code imports it. See "commons-lang 2 is gone".
+  Struts (and jcl-over-slf4j through solr-solrj; both end in reload4j, so do not exclude either),
+  but commons-logging is no longer in the POMs of intermine-objectstore, bio-core and the
+  bio-sources: declare it if your own code imports it. See "commons-lang 2 is gone" and
+  "Torque is gone".
 - Publishing: the old maven plugin and the OSSRH uploadArchives are gone; InterMine publishes
   with maven-publish and the Central Portal (docs/RELEASING.md). Mines only consume the
   artifacts. The POMs keep the old scopes (compile, runtime, provided).
@@ -107,7 +114,9 @@ What was removed
 - The ChEBI SOAP client of psi-complexes; small molecules now take their names from the ChEBI REST
   API (https://www.ebi.ac.uk/chebi/backend/api/public/compound/...), which also works on JDK 11+.
 - The com.sun.xml.internal XMLOutputFactory property in the gradle.properties templates (the StAX
-  writers flush by themselves now); a mine's own copy of it still works.
+  writers flush by themselves now); a mine's own copy of it still works. The
+  javax.xml.stream.XMLOutputFactory line of the webapp's global.web.properties stays: the web
+  application's InitialiserPlugin reads it at start-up.
 
 Web application and web services
 - DWR is locked down in the shipped web.xml and dwr.xml (also in 5.1.1): no debug pages, no GET
@@ -145,18 +154,21 @@ Build, CI and tests
 - Boxed-type constructors (new Integer(...)) are replaced by valueOf throughout; tests that
   depended on test order, thread timing or JDK 8 behaviour are fixed.
 - bio/sources, bio/postprocess and testmine build files are on Gradle 8.14 configurations; testmine
-  runs on Gradle 8.14 (data load, war, Cargo) and checks that commons-lang 2 is not in its war.
+  runs on Gradle 8.14 (data load, war, Cargo, whose Tomcat configuration is in
+  testmine/webapp/build/cargo/conf instead of the shared <tmpdir>/cargo/conf) and checks that
+  commons-lang 2 is not in its war (checkNoCommonsLang2).
 
 Documentation
 - docs/UPGRADING-build.md (deployer guide, both releases), docs/BUILDING.md, docs/TESTING.md,
-  docs/RELEASING.md, docs/tools/ElSweep.java (the JSP EL sweep), README, CONTRIBUTING.
+  docs/RELEASING.md, docs/tools/ (ElSweep.java, the JSP EL sweep, and the webapp sweeps msgkeys.py,
+  tilescheck.py and classrefs.py), README, CONTRIBUTING.
 
 InterMine 5.1.1 (unreleased)
 
 Non-breaking release for mines on JDK 8. A mine can stay on Gradle 4.9 or move to 6.9.4
 (recommended). The only edit that does not depend on InterMine is the one every mine needs for
 any Gradle from 5.0 on. To upgrade: docs/UPGRADING-build.md, section "5.0.x or 5.1.0 to 5.1.1";
-to release: docs/RELEASING.md, "5.1.1 changes" and "Release 5.1.1".
+to release: docs/RELEASING.md, section 3 "Release 5.1.1".
 
 Build and upgrading
 - The Gradle wrapper of every InterMine build is 6.9.4 (downloaded with its checksum verified).
