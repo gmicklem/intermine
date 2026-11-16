@@ -56,6 +56,8 @@ public class StockProcessor extends ChadoProcessor
     /**
      * Process the stocks and genotypes tables in a chado database
      * @param connection
+     * @throws SQLException if the stocks cannot be read from chado
+     * @throws ObjectStoreException if a stock item cannot be stored
      */
     private void processSocks(Connection connection)
         throws SQLException, ObjectStoreException {
