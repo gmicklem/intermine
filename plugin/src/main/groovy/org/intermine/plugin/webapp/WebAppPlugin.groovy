@@ -98,7 +98,7 @@ class WebAppPlugin implements Plugin<Project> {
             sync.doLast {
                 // where processResources puts the model's fragments: the source set's resources output, which a mine
                 // may have moved from build/resources/main (im-ee7.32)
-                File buildResDir = DBModelUtils.buildFile(project, "resources/main")
+                File buildResDir = new File(DBModelUtils.resourcesDir(project))
                 File webInf = new File(explodedWebApp(project), "WEB-INF")
                 File strutsConfigModelPath = new File(buildResDir, "struts-config-model.xml")
                 File strutsConfigFormPath = new File(buildResDir, "struts-config-form-model.xml")
