@@ -384,6 +384,9 @@ public class InterMineBag extends StorableBag implements Cloneable
                     InterMineObject imObj = (InterMineObject) row.get(0);
                     if (imObj != null) {
                         extra = (String) imObj.getFieldValue(extraConstrainField);
+                        if (extra == null) {
+                            extra = "";
+                        }
                     } else {
                         extra = "";
                     }
