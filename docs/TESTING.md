@@ -19,7 +19,7 @@ How the unit tests and web service tests find their databases and settings, how 
 
 ## How CI runs the tests
 
-Two workflows in `.github/workflows/`. Both start on `push` and `pull_request` when a path under `bio/`, `config/`, `docs/`, `intermine/`, `plugin/` or `testmine/` (or the workflow file itself) changes, and can be started by hand (`workflow_dispatch`). A newer push to the same branch or pull request cancels the older run, except on `dev` and `master`. Permissions are `contents: read`.
+Two workflows in `.github/workflows/`. Both start on `push` and `pull_request` when a path under `bio/`, `config/`, `docs/`, `gradle/`, `intermine/`, `plugin/` or `testmine/` (or the workflow file itself) changes, and can be started by hand (`workflow_dispatch`). A newer push to the same branch or pull request cancels the older run, except on `dev` and `master`. Permissions are `contents: read`.
 
 ### `im-build.yml` ("InterMine CI")
 
@@ -28,7 +28,7 @@ Two workflows in `.github/workflows/`. Both start on `push` and `pull_request` w
 | `unit-tests` | `testSuite` in `intermine`, `bio`; `java` 8 and 17; `postgres` 14 and 16 (four cells per suite, `fail-fast: false`) | `config/ci/init.sh` then `config/ci/run.sh` with the suite name |
 | `ws-tests` | `client` in `JS`, `PY`; `java` 17; PostgreSQL 14 | Solr in Docker, then `init.sh` and `run.sh` with the suite `ws`: build and start the testmine web application, then run the client's tests against it (`config/run-ws-tests.sh`) |
 
-Both jobs have a 45 minute timeout, cache `~/.gradle/caches` and `~/.gradle/wrapper`, keyed on the build scripts and templates, check the database connection first (`psql -w -h localhost -U postgres -c 'select version()'` with `PGPASSWORD=postgres`), write a test summary into the job summary (`config/ci/junit-summary.py`), and upload the JUnit XML (always) and the HTML reports (on failure).
+Both jobs have a 45 minute timeout, cache `~/.gradle/caches` and `~/.gradle/wrapper`, keyed on the build scripts and templates, and check the database connection first (`psql -w -h localhost -U postgres -c 'select version()'` with `PGPASSWORD=postgres`). `unit-tests` also writes a test summary into the job summary (`config/ci/junit-summary.py`) and uploads the JUnit XML (always) and the HTML reports (on failure); `ws-tests` shows the Solr container log and uploads the web application logs (`testmine/**/build/**/*.log`, on failure).
 
 `config/ci/init.sh <workspace> <python> <suite> <client> <testmodel_url>` installs the Python requirements, drops the test databases and the `test` role and recreates the role (`dropuser`, `createuser`, then `alter user test with encrypted password 'test'`; for the suites `intermine`, `bio` and `ws`), and runs `config/lib/install_intermine.py` with `PSQL_USER=test`, `PSQL_PWD=test`, `PSQL_HOST=localhost`. For `ws` it also creates the unit test databases, runs `testmine/setup.sh` and clones the client.
 
@@ -36,7 +36,7 @@ Both jobs have a 45 minute timeout, cache `~/.gradle/caches` and `~/.gradle/wrap
 
 ### `checkstyle.yml` ("Checkstyle")
 
-One job, JDK 17, 30 minute timeout. It runs `init.sh` and `run.sh` with the suite `checkstyle`: `./gradlew checkstyleMain` in `intermine`, `bio`, `bio/sources` and `bio/postprocess`, then `config/lib/parse_checkstyle_report.py`, which reads every `reports/checkstyle/main.xml` and fails on any remaining error, or if no report was found. Checkstyle itself already fails the build (`ignoreFailures = false`, `maxWarnings = 0`).
+One job, JDK 17, 30 minute timeout. It runs `init.sh` and `run.sh` with the suite `checkstyle`: `./gradlew checkstyleMain` in `intermine`, `bio`, `bio/sources` and `bio/postprocess`, then `config/lib/parse_checkstyle_report.py`, which reads every `reports/checkstyle/main.xml` and fails on any remaining error, or if no report was found. Checkstyle itself already fails the build (`ignoreFailures = false`, `maxWarnings = 0`). Last, `./gradlew checkThrowsDocs` runs in the same four builds and fails when a method declares a checked exception without a Javadoc `@throws` tag (Checkstyle 9.3 cannot check that; see "`@throws` tags" in [BUILDING.md](BUILDING.md)); the job uploads the Checkstyle reports and `build/reports/doclint-throws/*.txt`.
 
 ### How pass or fail is decided despite `ignoreFailures = true`
 

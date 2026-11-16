@@ -5,7 +5,7 @@ from the repository root before a release; each reads files only and prints what
 
 | Script | Question it answers | Clean result |
 |---|---|---|
-| `msgkeys.py` | Which keys of `InterMineWebApp.properties` are used nowhere (JSP, tag, Java, JS, XML, other properties files, the mines)? | `unused 0` |
+| `msgkeys.py` | Which keys of `InterMineWebApp.properties` are used nowhere (JSP, tag, Java, JS, XML, other properties files, the mines)? | `unused 0` with the mines among the roots (over this repository alone it lists `galaxyExportOptions.title`, `genomicRegionSearch.tab`, `genomicRegionSearchResults.tab` and `.title`: the pages that use them are defined in the mines' `tiles-defs-model.xml`) |
 | `tilescheck.py` | Does every tile definition have its JSP, its `controllerUrl` action and a user, and does every struts action class exist? | no output below the two headings |
 | `classrefs.py` | Does every `org.intermine.*` class name written in a JSP, tag, TLD, XML or properties file have a source file? | only references that name a class nobody provides (see below) |
 
