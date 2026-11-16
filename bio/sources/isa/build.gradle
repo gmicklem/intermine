@@ -18,7 +18,7 @@ sourceSets {
 }
 
 dependencies {
-    implementation group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
+    runtimeOnly group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
     api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
     implementation libs.jackson.core
     implementation libs.jackson.databind

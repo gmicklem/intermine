@@ -108,20 +108,21 @@ subprojects {
         // that does subclass a source sees at compile time: the types in the converters' constructors and
         // protected methods (ItemWriter, Model, ObjectStore, BioFileConverter, ant Task, log4j Logger,
         // commons-collections MultiKey in chado-db's processors). Libraries used only inside method
-        // bodies are implementation (POM scope compile -> runtime). The leaf builds also use implementation for
-        // bio-model, which has no classes (only properties read at runtime): the old maven plugin did not map
-        // runtimeOnly into the POM; maven-publish does (runtime scope), so runtimeOnly would now publish the same.
-        implementation(libs.hikaricp) { transitive = false }
+        // bodies are implementation (POM scope compile -> runtime). What no source imports (the connection pool, the JDBC
+        // driver, commons-logging, the resources jar, which only has property files) and the leaf builds' bio-model (it has
+        // no classes, only properties read at run time) are runtimeOnly (im-ee7.63); implementation and runtimeOnly both
+        // give the runtime scope in the POM.
+        runtimeOnly(libs.hikaricp) { transitive = false }
         api libs.ant
         api group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false
         api group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion") // log4j
-        implementation group : "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion") // log4j; property files only
+        runtimeOnly group : "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion") // log4j; property files only
         api group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
         api libs.commons.collections
         implementation libs.commons.io
         implementation libs.commons.lang3
-        implementation libs.commons.logging
-        implementation libs.postgresql
+        runtimeOnly libs.commons.logging
+        runtimeOnly libs.postgresql
         api libs.reload4j
         api libs.slf4j.reload4j
         testImplementation libs.junit
