@@ -157,6 +157,7 @@ public class TableExportAction extends InterMineAction
 
     /**
      * Copy the old PagedTable and make one with the new paths
+     * @throws ObjectStoreException if the objectstore cannot be read or written
      */
     private PagedTable reorderPagedTable(PathQuery pathQuery, Collection<String> newViews,
             HttpServletRequest request) throws ObjectStoreException {

@@ -401,6 +401,7 @@ public class TableRowIterator implements
 
     /**
      * Simple wrapper around pathQuery methods to prevent RSI.
+     * @throws PathException if the path is not valid for the model
      */
     private Path getOJG(Path somePath) throws PathException {
         return pathQuery.makePath(pathQuery.getOuterJoinGroup(somePath.getNoConstraintsString()));

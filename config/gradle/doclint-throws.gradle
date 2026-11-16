@@ -1,0 +1,68 @@
+// checkThrowsDocs: fails when a method declares a checked exception without a Javadoc @throws tag. See docs/BUILDING.md,
+// "@throws tags".
+//
+// Checkstyle 9.3 cannot tell checked from unchecked exceptions (no classpath), so it does not ask for @throws tags. javac does:
+// -Xdoclint:missing reports "warning: no @throws for <type>" for checked exceptions only. The same option also reports
+// thousands of "no comment", "no @param" and "no @return" warnings, and javac cannot select one message, so this task runs
+// the compiler in-process on the module's sources (classes go to a temporary directory and are deleted), collects the
+// diagnostics, and keeps those that say "no @throws". Applied after the java-library plugin, by every build that checkstyle
+// checks (intermine, bio, bio/sources, bio/postprocess).
+tasks.register('checkThrowsDocs') {
+    group = 'verification'
+    description = 'Fails if a method declares a checked exception without a @throws tag (javac -Xdoclint:missing)'
+
+    dependsOn tasks.named('compileJava')   // generated sources and the jars of the modules this one compiles against
+    def sources = sourceSets.main.allJava
+    def classpath = sourceSets.main.compileClasspath
+    inputs.files(sources).withPropertyName('sources').withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(classpath).withPropertyName('classpath')
+    def report = layout.buildDirectory.file('reports/doclint-throws/missing-throws.txt')
+    outputs.file(report)
+
+    doLast {
+        def javaFiles = sources.files.findAll { it.name.endsWith('.java') }
+        def reportFile = report.get().asFile
+        reportFile.parentFile.mkdirs()
+        reportFile.text = ''
+        if (javaFiles.isEmpty()) {
+            return
+        }
+        def compiler = javax.tools.ToolProvider.getSystemJavaCompiler()
+        if (compiler == null) {
+            throw new GradleException('checkThrowsDocs needs a JDK (javax.tools has no Java compiler): run Gradle on a JDK, not a JRE')
+        }
+        def diagnostics = new javax.tools.DiagnosticCollector<javax.tools.JavaFileObject>()
+        def fileManager = compiler.getStandardFileManager(diagnostics, Locale.ENGLISH, java.nio.charset.StandardCharsets.UTF_8)
+        def classesDir = new File(temporaryDir, 'classes')
+        classesDir.deleteDir()
+        classesDir.mkdirs()
+        def args = ['-Xdoclint:missing', '-Xmaxwarns', '100000', '-proc:none', '-implicit:none',
+                    '-encoding', 'UTF-8', '-d', classesDir.absolutePath,
+                    '-classpath', classpath.asPath]
+        if (JavaVersion.current().isJava9Compatible()) {
+            args += ['--release', '8']   // as the compileJava tasks (config/gradle/java-target.gradle)
+        }
+        try {
+            def ok = compiler.getTask(null, fileManager, diagnostics, args, null,
+                    fileManager.getJavaFileObjectsFromFiles(javaFiles)).call()
+            def errors = diagnostics.diagnostics.findAll { it.kind == javax.tools.Diagnostic.Kind.ERROR }
+            if (!ok || !errors.isEmpty()) {
+                throw new GradleException("checkThrowsDocs: javac failed on ${project.path}:\n" +
+                        errors.take(20).collect { "${it.source?.name}:${it.lineNumber}: ${it.getMessage(Locale.ENGLISH)}" }.join('\n'))
+            }
+        } finally {
+            fileManager.close()
+            classesDir.deleteDir()
+        }
+        def missing = diagnostics.diagnostics.findAll {
+            it.kind != javax.tools.Diagnostic.Kind.ERROR && it.getMessage(Locale.ENGLISH).contains('no @throws for')
+        }.collect {
+            "${project.rootDir.toPath().relativize(new File(it.source.toUri()).toPath())}:${it.lineNumber}: ${it.getMessage(Locale.ENGLISH)}".toString()
+        }.sort()
+        reportFile.text = missing.join('\n') + (missing.isEmpty() ? '' : '\n')
+        if (!missing.isEmpty()) {
+            throw new GradleException("${missing.size()} checked exception(s) declared without a @throws tag in ${project.path} " +
+                    "(add '@throws <type> when ...' to the method's Javadoc; list in ${reportFile}):\n" + missing.join('\n'))
+        }
+    }
+}

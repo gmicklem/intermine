@@ -64,6 +64,7 @@ public final class PasswordHasher
 
     /**
      * The salted SHA-256 of a password, Base64 encoded.
+     * @throws NoSuchAlgorithmException if the SHA-256 algorithm is not available
      */
     private static String digest(String saltString, String password, Charset charset)
         throws NoSuchAlgorithmException {

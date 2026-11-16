@@ -293,6 +293,7 @@ public class EntrezPublicationsRetriever
 
     /**
      * Add a Map of pubication information to the Database
+     * @throws IOException if a file or stream cannot be read or written
      */
     private static void addToDb(Transaction txn, Database db,
                                 Map<String, Map<String, Object>> fromServerMap)

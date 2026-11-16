@@ -17,6 +17,7 @@ InterMine has a [Code of Conduct](http://intermine.org/code-of-conduct/), which 
 
   ```bash
   ./gradlew checkstyleMain   # Checkstyle only (build runs it too)
+  ./gradlew checkThrowsDocs  # a checked exception in a `throws` clause needs a Javadoc `@throws` tag (CI runs it with Checkstyle)
   ./gradlew build            # compile, Checkstyle and unit tests
   ```
 

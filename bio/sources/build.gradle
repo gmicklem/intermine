@@ -35,6 +35,12 @@ subprojects {
     // Java 8 bytecode whatever the build JDK; --release 8 on JDK 9+
     apply from: "${rootDir}/../../config/gradle/java-target.gradle"
 
+    // checkThrowsDocs: a checked exception that a method declares needs a @throws tag (docs/BUILDING.md).
+    // chado-db is left out: 46 declared SQLException and ObjectStoreException in its processors have no tag yet (im-ee7.68)
+    if (it.name != 'bio-source-chado-db') {
+        apply from: "${rootDir}/../../config/gradle/doclint-throws.gradle"
+    }
+
     // -------------------------
     // Build localDirs list
     // -------------------------

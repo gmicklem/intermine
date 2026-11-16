@@ -120,6 +120,9 @@ public class Callback extends LoginHandler
     /**
      * Google's OpenID2.0 -> OpenIDConnect (ie. Open Auth 2.0) migration makes this
      * special branch necessary.
+     * @throws OAuthProblemException if the OAuth provider reports a problem
+     * @throws OAuthSystemException if the OAuth request cannot be made
+     * @throws ForseenProblem if the login cannot be completed (the cause is reported to the user)
      */
     private ActionMessages googleProviderFlow(HttpServletRequest request,
             String providerName, String redirectUri, OAuthProvider provider,

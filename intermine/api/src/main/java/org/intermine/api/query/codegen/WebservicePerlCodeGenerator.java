@@ -415,6 +415,7 @@ public class WebservicePerlCodeGenerator implements WebserviceCodeGenerator
      * This method helps to generate constraint source code for PathQuery
      * @param pc PathConstraint object
      * @return a string for constraints source code
+     * @throws UnhandledFeatureException if the query has an unsupported feature
      */
     private String pathContraintUtil(
             PathConstraint pc,
@@ -515,6 +516,7 @@ public class WebservicePerlCodeGenerator implements WebserviceCodeGenerator
      * @param pc PathConstraint object
      * @param opCode operation code
      * @return a line of source code
+     * @throws UnhandledFeatureException if the query has an unsupported feature
      */
     private String templateConstraintUtil(PathConstraint pc, String opCode)
         throws UnhandledFeatureException {

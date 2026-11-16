@@ -129,6 +129,7 @@ public class PathQueryBinding
 
     /**
      * Create XML for the join style in a PathQuery.
+     * @throws XMLStreamException if the XML cannot be written
      */
     private static void marshalPathQueryJoinStyle(PathQuery query, XMLStreamWriter writer)
         throws XMLStreamException {
@@ -142,6 +143,7 @@ public class PathQueryBinding
 
     /**
      * Create XML for the path descriptions in a PathQuery.
+     * @throws XMLStreamException if the XML cannot be written
      */
     private static void marshalPathQueryDescriptions(PathQuery query, XMLStreamWriter writer)
         throws XMLStreamException {
@@ -156,6 +158,7 @@ public class PathQueryBinding
 
     /**
      * Create XML for the constraints in a PathQuery.
+     * @throws XMLStreamException if the XML cannot be written
      */
     private void marshalPathQueryConstraints(PathQuery query, XMLStreamWriter writer,
             boolean hasMultipleConstraints)

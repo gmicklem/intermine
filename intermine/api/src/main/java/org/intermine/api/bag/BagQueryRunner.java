@@ -367,6 +367,7 @@ public class BagQueryRunner
     /**
      * Find any objects in the objsOfWrongType Map that can be converted to the destination type,
      * add them to bqr as TYPE_CONVERTED issues and remove them from objsOfWrongType.
+     * @throws InterMineException if the query or bag cannot be run
      */
     private void convertObjects(BagQueryResult bqr, String msg, Class<?> type,
             Map<String, Set<Object>> objsOfWrongType)

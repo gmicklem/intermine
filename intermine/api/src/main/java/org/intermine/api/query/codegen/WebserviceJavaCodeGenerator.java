@@ -274,6 +274,7 @@ public class WebserviceJavaCodeGenerator implements WebserviceCodeGenerator
      * @param javaImports the import strings from standard Java classes
      * @param intermineImports the import strings from InterMine classes
      * @param codeBody the body of the generated class
+     * @throws InvalidQueryException if the query cannot be turned into code
      */
     private void generatePathQueryCode(WebserviceCodeGenInfo info,
             StringBuffer packageName, Set<String> javaImports, Set<String> intermineImports,
@@ -714,6 +715,7 @@ public class WebserviceJavaCodeGenerator implements WebserviceCodeGenerator
      * TemplateQuery
      * @param pc PathConstraint object
      * @return a line of source code
+     * @throws UnhandledFeatureException if the query has an unsupported feature
      */
     private static String templateConstraintUtil(PathConstraint pc, String code,
         Set<String> javaImports)

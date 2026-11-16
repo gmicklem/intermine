@@ -63,7 +63,7 @@ jobs:
           restore-keys: |
             gradle-${{ runner.os }}-checkstyle-
             gradle-${{ runner.os }}-
-      - name: Check style
+      - name: Check style and @throws tags
         run: |
           set -euxo pipefail
           ./config/ci/init.sh ${GITHUB_WORKSPACE} $(which python3) checkstyle none none
@@ -73,6 +73,8 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: checkstyle-reports-java${{ matrix.java }}
-          path: '**/build/reports/checkstyle/*.xml'
+          path: |
+            **/build/reports/checkstyle/*.xml
+            **/build/reports/doclint-throws/*.txt
           if-no-files-found: ignore
           retention-days: 14
