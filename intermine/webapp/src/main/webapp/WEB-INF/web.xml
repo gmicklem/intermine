@@ -4046,6 +4046,13 @@ may be polled later.
     <url-pattern>/service/*</url-pattern>
   </filter-mapping>
 
+  <!-- The code snippets the mine generates for other sites load the icon fonts from here, and
+       browsers only use a font from another origin if it is served with CORS headers. -->
+  <filter-mapping>
+    <filter-name>AllowCORSWebServiceRequests</filter-name>
+    <url-pattern>/vendor/fonts/*</url-pattern>
+  </filter-mapping>
+
   <filter>
     <filter-name>DontCache</filter-name>
     <filter-class>org.intermine.web.filters.HeaderFilter</filter-class>

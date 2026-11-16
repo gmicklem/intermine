@@ -38,9 +38,6 @@
     <div class="mobile-app">
         <p>Have you tried our InterMine mobile apps?</p>
         <div>
-        <a href='https://play.google.com/store/apps/details?id=org.intermine.app&utm_source=global_co&utm_medium=prtnr&utm_content=Mar2515&utm_campaign=PartBadge&pcampaignid=MKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1' target="_blank">
-          <img class="googleplay" alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' />
-        </a>
         <a href="https://itunes.apple.com/us/app/intermine-gene-search/id1271710231?mt=8" target="_blank">
           <img src="images/apple-app-store.svg" class="ios">
         </a>
