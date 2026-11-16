@@ -109,8 +109,8 @@ subprojects {
         // protected methods (ItemWriter, Model, ObjectStore, BioFileConverter, ant Task, log4j Logger,
         // commons-collections MultiKey in chado-db's processors). Libraries used only inside method
         // bodies are implementation (POM scope compile -> runtime). The leaf builds also use implementation for
-        // bio-model, which has no classes (only properties read at runtime): the old maven plugin does not map
-        // runtimeOnly into the POM, so runtimeOnly would drop it from the published dependencies.
+        // bio-model, which has no classes (only properties read at runtime): the old maven plugin did not map
+        // runtimeOnly into the POM; maven-publish does (runtime scope), so runtimeOnly would now publish the same.
         implementation(libs.hikaricp) { transitive = false }
         api libs.ant
         api group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false

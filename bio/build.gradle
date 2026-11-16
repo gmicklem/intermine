@@ -50,8 +50,8 @@ subprojects {
         // Ant is only part of the public API of bio-core (its Task subclasses): bio-core declares it as api.
         implementation libs.ant
         // The Ant tasks of the webapp (loaded by name through the plugin's classpath): nothing compiles against them,
-        // so not api. implementation rather than runtimeOnly keeps the runtime scope in the POM that the legacy
-        // maven plugin writes (it ignores runtimeOnly).
+        // so not api. Declared implementation rather than runtimeOnly since the old maven plugin ignored runtimeOnly;
+        // maven-publish writes either as runtime scope, so the POM would not change (kept to leave the compile classpath alone).
         implementation group: "org.intermine", name: "intermine-webtasks", version: System.getProperty("imVersion")
         testImplementation libs.opencsv
         testImplementation libs.cglib
