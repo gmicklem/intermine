@@ -175,7 +175,7 @@ The build files use the Gradle 7 configuration names; `compile`, `testCompile`, 
 | `compileOnly` | compile time only, and kept out of the war (once, in `testmine/webapp`) | none |
 | `bundled` | jars that are not resolved from a repository but copied into the module's own jar | none (file dependencies have no coordinates) |
 
-`bundled` is declared in `intermine/objectstore/build.gradle` and `bio/core/build.gradle` as
+`bundled` is declared in `bio/core/build.gradle` (`obo.jar`, `bbop.jar`) as
 
 ```groovy
 configurations {
@@ -191,7 +191,7 @@ jar {
 }
 ```
 
-`bio/core/build.gradle` also adds the patched `antlr-2.7.6-caching.jar` from `intermine/libs` (`bundled files("${rootDir}/../intermine/libs/antlr-2.7.6-caching.jar")`). It replaces the old `provided` configuration, whose name was misleading: those jars are not "provided" by anyone, they are merged into the module's jar (the `libs/` directories hold vendored jars that are not in a public repository). Because `bundled` is added to `implementation`, they stay on the compile and test classpaths. `compileOnly` would have removed them from the tests. `duplicatesStrategy = EXCLUDE` keeps the first copy of entries that several bundled jars share, such as `META-INF/LICENSE.txt`.
+(`intermine/objectstore` declared it too until 6.0, for the vendored Torque 3.2 and Velocity 1.3 jars; `DdlGenerator` replaced them.) `bio/core/build.gradle` also adds the patched `antlr-2.7.6-caching.jar` from `intermine/libs` (`bundled files("${rootDir}/../intermine/libs/antlr-2.7.6-caching.jar")`). It replaces the old `provided` configuration, whose name was misleading: those jars are not "provided" by anyone, they are merged into the module's jar (the `libs/` directories hold vendored jars that are not in a public repository). Because `bundled` is added to `implementation`, they stay on the compile and test classpaths. `compileOnly` would have removed them from the tests. `duplicatesStrategy = EXCLUDE` keeps the first copy of entries that several bundled jars share, such as `META-INF/LICENSE.txt`.
 
 Other configurations you will meet are build-specific and not part of the Gradle standard set: `bioModel`, `mergeModel`, `commonResources`, `imWebApp`, `testModelProps` and `testArtifacts` (the test jar that `intermine-testresources` shares with the modules that test against it, used as `testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')`). The plugin creates `imApiJar` and `imAntlr` (renamed from `api` and `antlr`, which clash with the `java-library` and `antlr` plugins), `bioModel`, `bioModelForSOOnly`, `commonResources` and `mergeSource`, as resolvable-only configurations.
 
