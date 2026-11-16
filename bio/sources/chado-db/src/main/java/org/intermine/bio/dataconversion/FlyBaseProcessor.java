@@ -960,6 +960,8 @@ public class FlyBaseProcessor extends SequenceProcessor
 
     /**
      * Create Interaction objects.
+     * @throws SQLException if the interactions cannot be read from chado
+     * @throws ObjectStoreException if an interaction or its experiment cannot be stored
      */
     private void createInteractions(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1038,7 +1040,8 @@ public class FlyBaseProcessor extends SequenceProcessor
     /**
      * Create Location objects for deletions (chromosome_structure_variation) as they don't have
      * locations in the featureloc table.
-     * @throws ObjectStoreException
+     * @throws SQLException if the deletion locations cannot be read from chado
+     * @throws ObjectStoreException if a location cannot be stored
      */
     private void createDeletionLocations(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1124,6 +1127,8 @@ public class FlyBaseProcessor extends SequenceProcessor
     /**
      * Create the ChromosomalDeletion.element1 and element2 references (to
      * TransposableElementInsertionSite objects)
+     * @throws SQLException if the indel features cannot be read from chado
+     * @throws ObjectStoreException if a reference cannot be stored
      */
     private void createIndelReferences(Connection connection)
         throws ObjectStoreException, SQLException {
@@ -1183,6 +1188,8 @@ public class FlyBaseProcessor extends SequenceProcessor
 
     /**
      * @param connection
+     * @throws SQLException if the insertion locations cannot be read from chado
+     * @throws ObjectStoreException if an item or reference cannot be stored
      */
     private void copyInsertionLocations(Connection connection)
         throws ObjectStoreException, SQLException {
@@ -1268,6 +1275,7 @@ public class FlyBaseProcessor extends SequenceProcessor
      * Return a Map from allele feature_id to mutagen.  The mutagen is found looking at cvterms
      * that are associated with each feature and saving those terms that have "origin of mutation"
      * as a parent term.
+     * @throws SQLException if the allele cvterms cannot be read from chado
      */
     private Map<Integer, List<String>> makeMutagenMap(Connection connection)
         throws SQLException {
@@ -1328,6 +1336,8 @@ public class FlyBaseProcessor extends SequenceProcessor
 
     /**
      * Return a map from featureprop_id for alleles to publication item identifier
+     * @throws SQLException if the allele publications cannot be read from chado
+     * @throws ObjectStoreException if a publication item cannot be created or stored
      */
     private Map<Integer, List<String>> makeAnnotationPubMap(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1367,6 +1377,11 @@ public class FlyBaseProcessor extends SequenceProcessor
 //        return retMap;
 //    }
 
+    /**
+     * Create the PhenotypeAnnotation item of an allele from the text of a FlyBase phenotype
+     * featureprop.
+     * @throws ObjectStoreException if the annotation item or an anatomy term item cannot be created
+     */
     private Item makePhenotypeAnnotation(String alleleItemIdentifier, String value,
                                          Item dataSetItem, List<String> publicationsItemIdList)
         throws ObjectStoreException {

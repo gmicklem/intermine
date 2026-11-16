@@ -782,6 +782,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
     }
    /**
      * to set the step attribute for the applied protocols
+     * @throws ObjectStoreException if an attribute cannot be stored
      */
     private void setAppliedProtocolSteps(Connection connection)
         throws ObjectStoreException {
@@ -1128,6 +1129,8 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * 2 maps store intermine objectId and itemId, with key the experiment name.
      * They are probably not needed.
      *
+     * @throws SQLException if the experiments cannot be read from chado
+     * @throws ObjectStoreException if an experiment item cannot be stored
      */
     private void processExperiment(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1249,6 +1252,8 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * ================
      *    SUBMISSION
      * ================
+     * @throws SQLException if the submissions cannot be read from chado
+     * @throws ObjectStoreException if a submission item cannot be stored
      */
     private void processSubmission(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1428,6 +1433,8 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * ==========================
      *    EXPERIMENTAL FACTORS
      * ==========================
+     * @throws SQLException if the experimental factors cannot be read from chado
+     * @throws ObjectStoreException if an experimental factor item cannot be stored
      */
     private void processEFactor(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1508,6 +1515,8 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * ==============
      *    PROTOCOL
      * ==============
+     * @throws SQLException if the protocols cannot be read from chado
+     * @throws ObjectStoreException if a protocol item cannot be stored
      */
     private void processProtocolTable(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1564,6 +1573,8 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
 
     /**
      * to store protocol attributes
+     * @throws SQLException if the protocol attributes cannot be read from chado
+     * @throws ObjectStoreException if an attribute cannot be stored
      */
     private void processProtocolAttributes(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1615,6 +1626,8 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * ======================
      *    APPLIED PROTOCOL
      * ======================
+     * @throws SQLException if the applied protocols cannot be read from chado
+     * @throws ObjectStoreException if an applied protocol item cannot be stored
      */
     private void processAppliedProtocolTable(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1709,6 +1722,8 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * ======================
      *    APPLIED DATA
      * ======================
+     * @throws SQLException if the applied data cannot be read from chado
+     * @throws ObjectStoreException if an applied data item cannot be stored
      */
     private void processAppliedData(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1858,6 +1873,8 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * =====================
      *    DATA ATTRIBUTES
      * =====================
+     * @throws SQLException if the data attributes cannot be read from chado
+     * @throws ObjectStoreException if an attribute cannot be stored
      */
     @SuppressWarnings("unused")
     private void processAppliedDataAttributesNEW(Connection connection)
@@ -3350,6 +3367,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * ================
      * to store references between submission and submissionData
      * (1 to many)
+     * @throws ObjectStoreException if a reference cannot be stored
      */
     private void setSubmissionRefs(Connection connection)
         throws ObjectStoreException {
@@ -3378,6 +3396,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * =====================
      *    DATABASE RECORDS
      * =====================
+     * @throws ObjectStoreException if a database record item cannot be stored
      */
     private void createDatabaseRecords(Connection connection)
         throws ObjectStoreException {
@@ -3524,6 +3543,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * =====================
      *    RESULT FILES
      * =====================
+     * @throws ObjectStoreException if a result file item cannot be stored
      */
     private void createResultFiles(Connection connection)
         throws ObjectStoreException {
@@ -3905,6 +3925,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
      * and between applied protocols and their output data
      * reverse reference: data -> previous appliedProtocols
      * (many to many)
+     * @throws ObjectStoreException if a reference cannot be stored
      */
     private void setDAGRefs(Connection connection)
         throws ObjectStoreException {

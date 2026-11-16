@@ -428,6 +428,7 @@ public class SequenceProcessor extends ChadoProcessor
     /**
      * Set the given attribute if the FeatureData says it's not set, then set the flag in
      * FeatureData to say it's set.
+     * @throws ObjectStoreException if the attribute cannot be stored
      */
     private void setAttributeIfNotSet(FeatureData fdat, final String attributeName,
             final String value) throws ObjectStoreException {
@@ -717,6 +718,8 @@ public class SequenceProcessor extends ChadoProcessor
     /**
      * Use the feature_relationship table to set relations (references and collections) between
      * features.
+     * @throws SQLException if the feature relationships cannot be read from chado
+     * @throws ObjectStoreException if a reference or collection cannot be stored
      */
     private void processRelationTable(Connection connection, boolean subjectFirst)
         throws SQLException, ObjectStoreException {
@@ -815,6 +818,7 @@ public class SequenceProcessor extends ChadoProcessor
     /**
      * Create collections and references for the Item given by chadoSubjectId.
      * @param collectionWarnings
+     * @throws ObjectStoreException if a reference or collection cannot be stored
      */
     private boolean processCollectionData(Integer chadoSubjectId,
             Map<String, Map<String, List<FeatureData>>> relTypeMap,
@@ -1175,6 +1179,8 @@ public class SequenceProcessor extends ChadoProcessor
     /**
      * This method isn't used yet, it takes up too much memory.  We need to use a temporary table
      * instead.
+     * @throws SQLException if the library features cannot be read from chado
+     * @throws ObjectStoreException if an item or reference cannot be stored
      */
     @SuppressWarnings("unused")
     private void processLibraryFeatureTable(Connection connection)
@@ -1235,6 +1241,8 @@ public class SequenceProcessor extends ChadoProcessor
     /**
      * This method isn't used yet, it takes up too much memory.  We need to use a temporary table
      * instead.
+     * @throws SQLException if the library cvterms cannot be read from chado
+     * @throws ObjectStoreException if an item or reference cannot be stored
      */
     @SuppressWarnings("unused")
     private void processLibraryCVTermTable(Connection connection)
@@ -1284,6 +1292,8 @@ public class SequenceProcessor extends ChadoProcessor
      * Read the feature, feature_cvterm and cvterm tables, then set fields, create synonyms or
      * create objects based on the cvterms.
      * @param connection the Connection
+     * @throws SQLException if the feature cvterms cannot be read from chado
+     * @throws ObjectStoreException if an item, attribute or reference cannot be stored
      */
     private void processFeatureCVTermTable(Connection connection)
         throws SQLException, ObjectStoreException {
@@ -1405,6 +1415,7 @@ public class SequenceProcessor extends ChadoProcessor
     /**
      * Given the object id and a map of reference/collection names to Items, store the Items in the
      * reference or collection of the object.
+     * @throws ObjectStoreException if a reference or collection cannot be stored
      */
     private void processCVTermRefCols(Integer chadoObjectId, Map<String, List<Item>> dataMap)
         throws ObjectStoreException {
@@ -1641,6 +1652,7 @@ public class SequenceProcessor extends ChadoProcessor
 
     /**
      * Set the publications collection of the feature with the given (chado) feature id.
+     * @throws ObjectStoreException if the publications collection cannot be stored
      */
     private void makeFeaturePublications(Integer featureId, List<String> argPublicationIds)
         throws ObjectStoreException {
