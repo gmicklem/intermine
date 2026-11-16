@@ -11,9 +11,10 @@ package org.intermine.task;
  */
 
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -104,7 +105,7 @@ public class FullXmlConverterTask extends ConverterTask
                     throw new BuildException("Failed to find resource '" + xmlRes
                                              + "' on classpath.");
                 }
-                converter.process(new InputStreamReader(is));
+                converter.process(new InputStreamReader(is, StandardCharsets.UTF_8));
             } else {
                 if (file != null && !"".equals(file)) {
                     files = new ArrayList<File>(Collections.singleton(new File(file)));
@@ -125,7 +126,8 @@ public class FullXmlConverterTask extends ConverterTask
                 while (fileIter.hasNext()) {
                     toRead = fileIter.next();
                     System.out .println("Processing file " + toRead.toString());
-                    converter.process(new FileReader(toRead));
+                    converter.process(new InputStreamReader(new FileInputStream(toRead),
+                            StandardCharsets.UTF_8));
                 }
             }
         } catch (Exception e) {

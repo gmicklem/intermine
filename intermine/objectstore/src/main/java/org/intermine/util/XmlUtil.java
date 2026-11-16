@@ -11,6 +11,7 @@ package org.intermine.util;
  */
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,7 +51,7 @@ public final class XmlUtil
     public static String indentXmlSimple(String xmlString) {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         int indent = 0;
-        byte[] bytes = xmlString.getBytes();
+        byte[] bytes = xmlString.getBytes(StandardCharsets.UTF_8);
         int i = 0;
         while (i < bytes.length) {
             if (bytes[i] == '<' && bytes[i + 1] == '/') {
@@ -68,7 +69,7 @@ public final class XmlUtil
             }
             os.write(bytes[i++]);
         }
-        return os.toString();
+        return new String(os.toByteArray(), StandardCharsets.UTF_8);
     }
 
     private static void writeIndentation(ByteArrayOutputStream os, int indent) {

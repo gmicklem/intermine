@@ -13,8 +13,11 @@ package org.intermine.sql.writebatch;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.intermine.model.StringConstructor;
 import org.intermine.util.SensibleByteArrayOutputStream;
@@ -37,7 +40,7 @@ public class PostgresDataOutputStream extends DataOutputStream
     }
 
     /**
-     * Writes the given String to the stream in modified UTF-8 format, following its length in bytes
+     * Writes the given String to the stream in UTF-8 format, following its length in bytes
      * as a four-byte integer.
      *
      * @param str the String
@@ -49,7 +52,7 @@ public class PostgresDataOutputStream extends DataOutputStream
     }
 
     /**
-     * Writes the given StringConstructor to the stream in modified UTF-8 format, following its
+     * Writes the given StringConstructor to the stream in UTF-8 format, following its
      * length in bytes as a four-byte integer.
      *
      * @param str the StringConstructor
@@ -61,7 +64,7 @@ public class PostgresDataOutputStream extends DataOutputStream
     }
 
     /**
-     * Writes the given Collection of Strings to the stream in modified UTF-8 format, following its
+     * Writes the given Collection of Strings to the stream in UTF-8 format, following its
      * length in bytes as a four-byte integer.
      *
      * @param strs the Collection of Strings
@@ -69,26 +72,16 @@ public class PostgresDataOutputStream extends DataOutputStream
      * @throws IOException if there is an error writing to the underlying OutputStream
      */
     protected int writeLargeUTF(Collection<String> strs) throws IOException {
+        // The bytes are encoded once, as UTF-8 and never in the platform's default charset (with
+        // LANG=C or POSIX that is ASCII, which wrote a ? for every non-ASCII character, so that
+        // the length written first no longer matched the bytes and the COPY failed), and the
+        // length is the length of those bytes.
+        List<byte[]> encoded = new ArrayList<byte[]>(strs.size());
         int utflen = 0;
-        int c;
-
         for (String str : strs) {
-            int strlen = str.length();
-            for (int i = 0; i < strlen; i++) {
-                if (!Character.isBmpCodePoint(Character.codePointAt(str, i))) {
-                    utflen += 4;
-                    i++;
-                    continue;
-                }
-                c = str.charAt(i);
-                if ((c >= 0x0001) && (c <= 0x007F)) {
-                    utflen++;
-                } else if (c > 0x07FF) {
-                    utflen += 3;
-                } else {
-                    utflen += 2;
-                }
-            }
+            byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+            encoded.add(bytes);
+            utflen += bytes.length;
         }
 
         if (out instanceof SensibleByteArrayOutputStream) {
@@ -98,34 +91,8 @@ public class PostgresDataOutputStream extends DataOutputStream
 
         writeInt(utflen);
 
-        for (String str : strs) {
-            write(str.getBytes());
-            //commented out because it's modified utf-8 incompatible with standard UTF-8
-            //Ref  https://github.com/intermine/intermine/issues/1532
-            /*
-            int strlen = str.length();
-            int i = 0;
-            for (i = 0; i < strlen; i++) {
-                c = str.charAt(i);
-                if (!((c >= 0x0001) && (c <= 0x007F))) {
-                    break;
-                }
-                writeByte((byte) c);
-            }
-
-            for (; i < strlen; i++) {
-                c = str.charAt(i);
-                if ((c >= 0x0001) && (c <= 0x007F)) {
-                    writeByte((byte) c);
-                } else if (c > 0x07FF) {
-                    writeByte((byte) (0xE0 | ((c >> 12) & 0x0F)));
-                    writeByte((byte) (0x80 | ((c >>  6) & 0x3F)));
-                    writeByte((byte) (0x80 | ((c >>  0) & 0x3F)));
-                } else {
-                    writeByte((byte) (0xC0 | ((c >>  6) & 0x1F)));
-                    writeByte((byte) (0x80 | ((c >>  0) & 0x3F)));
-                }
-            }*/
+        for (byte[] bytes : encoded) {
+            write(bytes);
         }
         return utflen + 4;
     }

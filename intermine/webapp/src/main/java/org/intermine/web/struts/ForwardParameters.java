@@ -59,14 +59,17 @@ public class ForwardParameters
     }
 
     /**
-     * Add a parameter to the path.
+     * Add a parameter to the path. A parameter without a value (null, for example a request
+     * parameter that was not sent) is left out of the path.
      *
      * @param name   the name of the parameter
      * @param value  the value of the parameter
      * @return       this ForwardParameters object
      */
     public ForwardParameters addParameter(String name, String value) {
-        params.put(name, value);
+        if (value != null) {
+            params.put(name, value);
+        }
         return this;
     }
 
