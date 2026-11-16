@@ -37,7 +37,7 @@ are raised before the arity check, so this filter cannot hide a keyword failure.
 Run on the webapp sources of an InterMine tree (`intermine/webapp/src` and `bio/webapp/src`, or a mine's `webapp/src`), the sweep
 before the fixes reported 10 failures, all of them `.class` or other Java-keyword property names in `widget.jsp`, `template.jsp`,
 `historyBagView.jsp`, `objectView.jsp`, `tablePageLinks.jsp` and `bio/webapp/.../model/dataSourceShort.jsp` (the .class and keyword
-fixes of im-jqz.37 / im-jqz.38, applied by im-89g.17). With those fixes it reports **0 failures**.
+fixes of im-jqz.37 / im-jqz.38, applied by im-89g.17; `objectView.jsp` and `tablePageLinks.jsp` are not in 6.0.0 (removed as dead pages), so on `maint-2026` only the other four files are affected). With those fixes it reports **0 failures**.
 
 The `files=N expressions=M` counts depend on the branch: the 5.1.1 release line and `maint-2026` carry different numbers of JSP files
 and expressions, so compare the failure count, not the totals. Line numbers of the failures above are those of the unfixed 5.1.1

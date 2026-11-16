@@ -5,8 +5,8 @@
 // -Xdoclint:missing reports "warning: no @throws for <type>" for checked exceptions only. The same option also reports
 // thousands of "no comment", "no @param" and "no @return" warnings, and javac cannot select one message, so this task runs
 // the compiler in-process on the module's sources (classes go to a temporary directory and are deleted), collects the
-// diagnostics, and keeps those that say "no @throws". Applied after the java-library plugin, by every build that checkstyle
-// checks (intermine, bio, bio/sources, bio/postprocess).
+// diagnostics, and keeps those that say "no @throws". Applied after the java or java-library plugin, by the four builds that CI
+// checks with Checkstyle (intermine, bio, bio/sources, bio/postprocess); `./gradlew checkThrowsDocs` is not part of `build`.
 tasks.register('checkThrowsDocs') {
     group = 'verification'
     description = 'Fails if a method declares a checked exception without a @throws tag (javac -Xdoclint:missing)'

@@ -9,8 +9,9 @@
  *     apply from: "${rootDir}/../config/gradle/publishing.gradle"   // ../../ for bio/sources and below
  *
  * Provides, per module:
- *   - a MavenPublication `mavenJava`: components.java (jar), or components.web (war) when the `war` plugin is
- *     applied, plus the sources and javadoc jars, with the POM metadata the old uploadArchives block set;
+ *   - a MavenPublication `mavenJava`: components.java (jar), or, when the `war` plugin is applied, components.java with
+ *     the war task's file in place of the jar (components.web carries no dependencies), plus the sources and javadoc
+ *     jars, with the POM metadata the old uploadArchives block set;
  *   - `publishToMavenLocal` (honours -Dmaven.repo.local) and an `install` alias for it, kept so existing
  *     callers (gate scripts, install_intermine.py, testmine/setup.sh, deployer habits) keep working;
  *   - a file repository `centralBundle` under <root>/build/central-bundle/m2 for config/gradle/central-bundle.gradle;

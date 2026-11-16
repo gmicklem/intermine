@@ -16,8 +16,8 @@ InterMine has a [Code of Conduct](http://intermine.org/code-of-conduct/), which 
 - Before you push, run Checkstyle and the tests for the builds you changed. The back end is a set of separate Gradle builds (`plugin`, `intermine`, `bio`, `bio/sources`, `bio/postprocess`, `bio/postprocess-test`, `testmine`). From the build's directory:
 
   ```bash
-  ./gradlew checkstyleMain   # Checkstyle only (build runs it too)
-  ./gradlew checkThrowsDocs  # a checked exception in a `throws` clause needs a Javadoc `@throws` tag (CI runs it with Checkstyle)
+  ./gradlew checkstyleMain   # Checkstyle only (build runs it too; not in `plugin` and `testmine`, which have no Checkstyle)
+  ./gradlew checkThrowsDocs  # a checked exception in a `throws` clause needs a Javadoc `@throws` tag (CI runs it with Checkstyle; only in `intermine`, `bio`, `bio/sources` and `bio/postprocess`; `build` does not run it)
   ./gradlew build            # compile, Checkstyle and unit tests
   ```
 
