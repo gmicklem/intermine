@@ -25,6 +25,7 @@ package org.intermine.sql.query;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -163,7 +164,7 @@ public class Query implements SQLStringable
         aliasToTable = new HashMap<String, AbstractTable>();
         originalAliasToTable = new HashMap<String, AbstractTable>();
         try {
-            InputStream is = new ByteArrayInputStream(sql.getBytes());
+            InputStream is = new ByteArrayInputStream(sql.getBytes(StandardCharsets.UTF_8));
 
             SqlLexer lexer = new SqlLexer(is);
             SqlParser parser = new SqlParser(lexer);
@@ -194,7 +195,7 @@ public class Query implements SQLStringable
             processSqlStatementAST(ast);
         } catch (antlr.RecognitionException e) {
             try {
-                InputStream is = new ByteArrayInputStream(sql.getBytes());
+                InputStream is = new ByteArrayInputStream(sql.getBytes(StandardCharsets.UTF_8));
                 SqlLexer lexer = new SqlLexer(is);
                 StringBuilder lex = new StringBuilder();
                 boolean needComma = false;
@@ -1345,7 +1346,7 @@ public class Query implements SQLStringable
         java.util.Date startTime = new java.util.Date();
         PrintStream out = System.out;
 
-        InputStream is = new ByteArrayInputStream(args[0].getBytes());
+        InputStream is = new ByteArrayInputStream(args[0].getBytes(StandardCharsets.UTF_8));
         SqlLexer lexer = new SqlLexer(is);
         SqlParser parser = new SqlParser(lexer);
         parser.start_rule();
