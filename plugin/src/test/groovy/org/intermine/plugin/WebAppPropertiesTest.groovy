@@ -48,6 +48,17 @@ class WebAppPropertiesTest {
         assert load(merged).getProperty('shared.key') == 'from-web-properties'
     }
 
+    /** A web.properties whose last line has no line break must not run into the first key of intermine.properties. */
+    @Test
+    void webPropertiesWithoutAFinalLineBreak() {
+        TestMine mine = TestMine.create('mergeProperties-no-final-newline')
+        mine.file('webapp/src/main/webapp/WEB-INF/web.properties').text = 'webapp.only=from-web-properties'
+        mine.run(':webapp:mergeProperties')
+        Properties properties = load(mine.file('webapp/build/props/web.properties'))
+        assert properties.getProperty('webapp.only') == 'from-web-properties'
+        assert properties.getProperty('project.title') == 'Test mine'
+    }
+
     /** `:webapp:war` alone, from a clean mine, runs no task of dbmodel (im-ee7.28). */
     @Test
     void warAloneNeedsNoDbModelTask() {
