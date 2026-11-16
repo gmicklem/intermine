@@ -82,10 +82,10 @@ class DBModelPlugin implements Plugin<Project> {
 
         // The files below are for the plugin's own tasks and the tests, not for the jar: each task writes them into
         // a directory of its own (DBModelUtils.taskDir, build/im/<task>), which it declares as its output, so that it is
-        // up to date when its inputs have not changed. The Ant tasks find the directories on their classpath
-        // (DBModelUtils.imDir); the tests through testReads; every other consumer names the file it reads
-        // (DBModelUtils.output), which schedules the producer. The model (copyGenomicModel, mergeModels) is still
-        // merged in place in build/resources/main.
+        // up to date when its inputs have not changed. build/resources/main, which the jar packs and javadoc reads,
+        // holds what processResources puts there and nothing else. The Ant tasks find the directories on their
+        // classpath (DBModelUtils.imDir); the tests through testReads; every other consumer names the file it reads
+        // (DBModelUtils.output), which schedules the producer.
         project.tasks.register('copyDefaultInterMineProperties') {
             description = "Copies the default.intermine.properties file (defaultInterminePropertiesFile) into build/im, for the tests and the Ant tasks"
             inputs.files({ project.configurations.getByName("commonResources") })
@@ -98,14 +98,10 @@ class DBModelPlugin implements Plugin<Project> {
         DBModelUtils.testReads(project, ['copyDefaultInterMineProperties'])
 
         project.tasks.register('copyGenomicModel') {
-            // ordering only: the model is still copied into processResources' output directory, where
-            // mergeModels then merges into it in place
-            mustRunAfter 'processResources'
-            onlyIf { regenerateModel(project) }
-            doLast {
-                DBModelUtils.copyFromArchive(project, modelArchive(project).singleFile, "genomic_model.xml",
-                        dbUtils.buildResourcesMainDir + File.separator + config.modelName + "_model.xml")
-            }
+            description = "Kept for build files that name it: the model now comes from mergeModels, which starts from the genomic model of bio-model"
+            // lifecycle alias: it has no work of its own (it used to copy genomic_model.xml into build/resources/main,
+            // where mergeModels then merged into it in place)
+            dependsOn 'mergeModels'
         }
 
         project.tasks.register('copyGenomicKeys') {
@@ -244,9 +240,9 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.register('generateModel') {
             description = "Merges different source model files into an intermine XML model"
             onlyIf { regenerateModel(project) }
-            // mergeModels (added by the biocore-, biomodel-, biosource- or mine-dbmodel plugin) leaves
-            // the merged <modelName>_model.xml in build/resources/main; this generates the Java from it.
-            inputs.files(DBModelUtils.resource(project, 'mergeModels') { config.modelName + "_model.xml" })
+            // mergeModels (added by the biocore-, biomodel-, biosource- or mine-dbmodel plugin) writes the
+            // merged <modelName>_model.xml into build/im/mergeModels; this generates the Java from it.
+            inputs.files(DBModelUtils.output(project, 'mergeModels') { config.modelName + "_model.xml" })
             outputs.dir(project.layout.buildDirectory.dir("gen"))
 
             doLast {
@@ -262,7 +258,8 @@ class DBModelPlugin implements Plugin<Project> {
             group = TaskConstants.TASK_GROUP
             description = "Build the database for the webapp"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project) +
-                    [DBModelUtils.output(project, 'generateKeys') { config.modelName + "_keyDefs.properties" }])
+                    [DBModelUtils.output(project, 'mergeModels') { config.modelName + "_model.xml" },
+                     DBModelUtils.output(project, 'generateKeys') { config.modelName + "_keyDefs.properties" }])
 
             doLast {
                 dbUtils.createSchema(config.objectStoreName)
@@ -280,7 +277,7 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.register('buildUnitTestDB') {
             description = "Build the database for the webapp"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project) +
-                    [DBModelUtils.resource(project, 'copyGenomicModel') { config.modelName + "_model.xml" },
+                    [DBModelUtils.output(project, 'mergeModels') { config.modelName + "_model.xml" },
                      DBModelUtils.output(project, 'copyGenomicKeys') { config.modelName + "_keyDefs.properties" }])
 
             doLast {

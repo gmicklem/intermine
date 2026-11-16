@@ -108,9 +108,8 @@ class DBModelUtils {
     /**
      * A file in the resources output directory (build/resources/main) that task {@code producer} puts there, as a
      * task input: the consuming task then depends on the producer through its inputs instead of an explicit
-     * dependsOn. intermine.properties is read this way (a mine's copyMineProperties feeds processResources or, in a
-     * 5.x style build file, copies into the directory itself), and so is the model, which copyGenomicModel and
-     * mergeModels still merge in place there.
+     * dependsOn. Only intermine.properties is read this way: a mine's copyMineProperties feeds processResources
+     * (or, in a 5.x style build file, copies into the directory itself).
      */
     static FileCollection resource(Project project, String producer, Closure<String> fileName) {
         project.files({ new File(resourcesDir(project), fileName.call()) }).builtBy(producer)

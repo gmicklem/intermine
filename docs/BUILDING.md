@@ -103,6 +103,22 @@ cd intermine && ./gradlew -Dmaven.repo.local=/tmp/im-m2 publishToMavenLocal
 
 `config/gradle/central-bundle.gradle` adds the `centralBundle` task; see [RELEASING.md](RELEASING.md).
 
+## Files that the plugin's tasks write: `build/im/<task>`
+
+In a project that applies the plugin (`bio/core`, `bio/model`, the `bio-source-*`, `bio-postprocess-*` and `bio/postprocess-test` modules, and a mine's `dbmodel` and `webapp`), every plugin task that writes a file has a directory of its own, `build/im/<task name>`, declared as its output, so that the task is up to date when its inputs have not changed. `build/resources/main` holds only what `processResources` puts there, so the jar and javadoc have the same inputs whatever ran before them.
+
+| Task | Writes | Read by | In the jar |
+|---|---|---|---|
+| `mergeModels` | `<model>_model.xml`, the merged model (bio-core and bio-postprocess: bio-model's as it is) | `generateModel`, `buildDB`, `buildUnitTestDB`, the unit tests | only in `bio-model` and a mine's `dbmodel` (there its directory is a main output) |
+| `copyDefaultInterMineProperties` | `default.intermine.properties` (`defaultInterminePropertiesFile`) | the Ant tasks, the unit tests | no; a mine's `webapp` takes it through `processResources` (`WEB-INF/classes`) |
+| `copyGenomicKeys` | `<model>_keyDefs.properties` of the `bioModel` jar | `buildUnitTestDB`, the unit tests | no |
+| `generateKeys` | `<model>_keyDefs.properties` merged from the sources of `project.xml` | `buildDB`, the Ant tasks | no |
+| `copyUserProfileModel` | `userprofile_model.xml` | `createUserDB` | no |
+| `createTestPrioritiesFile` | an empty `genomic_priorities.properties` | the unit tests of the bio sources | no |
+| the integrate tasks | `build/im/integrate/so.obo` (source `so`) | the `so` converter | no |
+
+`copyGenomicModel` is kept as an alias of `mergeModels`. The unit tests get these directories on their runtime classpath after the test and main outputs and before the dependencies (bio-model's jar has an unmerged `genomic_model.xml`); the plugin's Ant tasks list `build/im/*` first on their classpath. After moving a checkout or a mine to this layout, run `clean` once: files that an earlier plugin wrote into `build/resources/main` would otherwise still be packed into the jar.
+
 ## Dependency versions: `gradle/libs.versions.toml`
 
 Every third-party library the module build files use is declared once in the version catalog `gradle/libs.versions.toml`. Each of the seven `settings.gradle` files loads it as `libs`, so a module declares a dependency as

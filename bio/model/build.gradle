@@ -70,9 +70,5 @@ processResources {
     from copyMineProperties
 }
 
-// copyGenomicModel unpacks genomic_model.xml from the bioModel dependency, which would be bio-model itself; bio-model
-// makes the model with mergeModels. (Gradle 6 forbids replacing a task the plugin has already created.)
-tasks.named('copyGenomicModel') { enabled = false }
-
 // lifecycle: buildDB needs the (empty) test databases to exist; no file output to wire.
 tasks.named('buildDB') { dependsOn ':bio-testresources:createUnitTestDatabases' }
