@@ -151,7 +151,8 @@ public class InitialiserPluginTest extends TestCase
         ClassDescriptor dep = m.getClassDescriptorByName("Department");
         tagManager.addTag("test-tag1", dep, bobProfile);
         tagManager.addTag("test-tag2", dep, bobProfile);
-        tagManager.addTag("test-tag2", dep, bobProfile);
+        // adding the same tag again is a no-op now, so use a third distinct tag
+        tagManager.addTag("test-tag3", dep, bobProfile);
 
         List tags = tagManager.getTags(null, null, "class", "bob");
         assertEquals(bobsTagsClasses + 3, tags.size());

@@ -33,7 +33,7 @@ public class TagManagerFactory
         init(profileWriter);
     }
 
-    private void init(ObjectStoreWriter profileWriter) {
+    private static synchronized void init(ObjectStoreWriter profileWriter) {
         // if there is different profileWriter than used before use this one
         // else use cached tag manager
         if (profileWriter != profileOsWriter) {
@@ -56,6 +56,8 @@ public class TagManagerFactory
      * @return tag manager
      */
     public TagManager getTagManager() {
-        return tagManager;
+        synchronized (TagManagerFactory.class) {
+            return tagManager;
+        }
     }
 }

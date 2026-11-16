@@ -99,6 +99,98 @@ public class TagManagerTest extends InterMineAPITestCase
         assertEquals(createdTag.getUserProfile().getUsername(), "bob");
     }
 
+    public void testAddSameTagTwiceStoresOnce() {
+        Tag first = manager.addTag("wowTag", "list1", "bag", "bob");
+        Tag second = manager.addTag("wowTag", "list1", "bag", "bob");
+        assertEquals(first.getId(), second.getId());
+        assertEquals(1, manager.getTags("wowTag", "list1", "bag", "bob").size());
+    }
+
+    // Several web requests tagging the same list with the same tag at once must give one tag
+    // and no exception (a duplicate row, or a duplicate key error, used to be possible).
+    public void testAddSameTagFromTwoThreads() throws Exception {
+        final int threads = 2;
+        final java.util.concurrent.CyclicBarrier start =
+                new java.util.concurrent.CyclicBarrier(threads);
+        final List<Throwable> failures = java.util.Collections.synchronizedList(
+                new java.util.ArrayList<Throwable>());
+        List<Thread> workers = new java.util.ArrayList<Thread>();
+        for (int i = 0; i < threads; i++) {
+            Thread t = new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        start.await();
+                        for (int j = 0; j < 5; j++) {
+                            manager.addTag("raceTag" + j, "list1", "bag", bobProfile);
+                        }
+                    } catch (Throwable e) {
+                        failures.add(e);
+                    }
+                }
+            };
+            workers.add(t);
+            t.start();
+        }
+        for (Thread t : workers) {
+            t.join(60000);
+        }
+        assertTrue("Tagging from several threads failed: " + failures, failures.isEmpty());
+        for (int j = 0; j < 5; j++) {
+            assertEquals("raceTag" + j, 1, manager.getTags("raceTag" + j, "list1", "bag", "bob")
+                    .size());
+        }
+    }
+
+    // If the writer hands out an id that is already in the tag table (tag_pkey violation), the
+    // tag is stored again with a new id rather than failing the request.
+    public void testAddTagRetriesOnDuplicateKey() throws Exception {
+        TagManager flakyManager = new TagManager(failingWriter(2, "23505"));
+        Tag tag = flakyManager.addTag("retryTag", "list1", "bag", "bob");
+        assertNotNull(tag.getId());
+        assertEquals(1, manager.getTags("retryTag", "list1", "bag", "bob").size());
+    }
+
+    // Other store failures are still reported, as is a duplicate key that keeps happening.
+    public void testAddTagReportsOtherFailures() throws Exception {
+        try {
+            new TagManager(failingWriter(1, "08006")).addTag("t1", "list1", "bag", "bob");
+            fail("Expected exception");
+        } catch (RuntimeException e) {
+            // expected
+        }
+        try {
+            new TagManager(failingWriter(100, "23505")).addTag("t2", "list1", "bag", "bob");
+            fail("Expected exception");
+        } catch (RuntimeException e) {
+            // expected
+        }
+        assertEquals(0, manager.getTags("t1", "list1", "bag", "bob").size());
+        assertEquals(0, manager.getTags("t2", "list1", "bag", "bob").size());
+    }
+
+    /** A writer whose first 'failures' calls to store throw an ObjectStoreException. */
+    private ObjectStoreWriter failingWriter(final int failures, final String sqlState) {
+        final int[] failuresLeft = {failures};
+        final ObjectStoreWriter real = uosw;
+        return (ObjectStoreWriter) java.lang.reflect.Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class[] {ObjectStoreWriter.class},
+                new java.lang.reflect.InvocationHandler() {
+                    public Object invoke(Object proxy, java.lang.reflect.Method m, Object[] args)
+                        throws Throwable {
+                        if ("store".equals(m.getName()) && failuresLeft[0]-- > 0) {
+                            throw new ObjectStoreException("insert failed",
+                                    new java.sql.SQLException("simulated", sqlState));
+                        }
+                        try {
+                            return m.invoke(real, args);
+                        } catch (java.lang.reflect.InvocationTargetException e) {
+                            throw e.getCause();
+                        }
+                    }
+                });
+    }
+
     public void testAddPermissionProblems() throws Exception {
         try {
             manager.addTag("im:wowTag", "list1", "bag", bobProfile);
