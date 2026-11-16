@@ -42,8 +42,6 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.lucene.queryParser.ParseException;
-import org.apache.struts.Globals;
-import org.apache.struts.util.MessageResources;
 import org.directwebremoting.WebContext;
 import org.directwebremoting.WebContextFactory;
 import org.intermine.InterMineException;
@@ -65,7 +63,6 @@ import org.intermine.api.profile.TagManager;
 import org.intermine.api.profile.UserAlreadyShareBagException;
 import org.intermine.api.profile.UserNotFoundException;
 import org.intermine.api.query.WebResultsExecutor;
-import org.intermine.api.results.WebTable;
 import org.intermine.api.search.SearchRepository;
 import org.intermine.api.search.SearchResults;
 import org.intermine.api.search.SearchTarget;
@@ -85,8 +82,6 @@ import org.intermine.metadata.TypeUtil;
 import org.intermine.model.InterMineObject;
 import org.intermine.objectstore.ObjectStore;
 import org.intermine.objectstore.ObjectStoreException;
-import org.intermine.objectstore.query.Query;
-import org.intermine.objectstore.query.ResultsRow;
 import org.intermine.pathquery.Constraints;
 import org.intermine.pathquery.OrderDirection;
 import org.intermine.pathquery.Path;
@@ -105,11 +100,8 @@ import org.intermine.web.logic.PortalHelper;
 import org.intermine.web.logic.bag.BagConverter;
 import org.intermine.web.logic.config.WebConfig;
 import org.intermine.web.logic.profile.UpgradeBagList;
-import org.intermine.web.logic.query.PageTableQueryMonitor;
-import org.intermine.web.logic.query.QueryMonitorTimeout;
 import org.intermine.web.logic.results.PagedTable;
 import org.intermine.web.logic.results.WebState;
-import org.intermine.web.logic.session.QueryCountQueryMonitor;
 import org.intermine.web.logic.session.SessionMethods;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -429,104 +421,6 @@ public class AjaxServices
         }
 
         return lists.toString();
-    }
-
-    /**
-     * Get the summary for the given column
-     * @param summaryPath the path for the column as a String
-     * @param tableName name of column-owning table
-     * @return a collection of rows
-     * @throws Exception an exception
-     */
-    public static List<? extends Object> getColumnSummary(
-            String tableName, String summaryPath) throws Exception {
-        try {
-            WebContext ctx = WebContextFactory.get();
-            HttpSession session = ctx.getSession();
-            final InterMineAPI im = SessionMethods.getInterMineAPI(session);
-            Profile profile = SessionMethods.getProfile(session);
-            WebResultsExecutor webResultsExecutor = im.getWebResultsExecutor(profile);
-
-            WebTable webTable = (SessionMethods.getResultsTable(session, tableName))
-                                   .getWebTable();
-            PathQuery pathQuery = webTable.getPathQuery();
-            @SuppressWarnings({ "unchecked", "rawtypes" })
-            List<ResultsRow> results = (List)
-                webResultsExecutor.summariseQuery(pathQuery, summaryPath);
-
-            // Start the count of results
-            Query countQuery = webResultsExecutor.makeSummaryQuery(pathQuery, summaryPath);
-            QueryCountQueryMonitor clientState
-                = new QueryCountQueryMonitor(Constants.QUERY_TIMEOUT_SECONDS * 1000, countQuery);
-            MessageResources messages = (MessageResources) ctx.getHttpServletRequest()
-                                                              .getAttribute(Globals.MESSAGES_KEY);
-            String qid = SessionMethods.startQueryCount(clientState, session, messages);
-            @SuppressWarnings("rawtypes")
-            List<ResultsRow> pageSizeResults = new ArrayList<ResultsRow>();
-            int rowCount = 0;
-            for (@SuppressWarnings("rawtypes") ResultsRow row : results) {
-                rowCount++;
-                if (rowCount > 10) {
-                    break;
-                }
-                pageSizeResults.add(row);
-            }
-            return Arrays.asList(new Object[] {pageSizeResults, qid, new Integer(rowCount)});
-        } catch (RuntimeException e) {
-            processException(e);
-            return null;
-        }
-    }
-
-    /**
-     * Return the number of rows of results from the query with the given query id.  If the size
-     * isn't yet available, return null.  The query must be started with
-     * SessionMethods.startPagedTableCount().
-     * @param qid the id
-     * @return the row count or null if not yet available
-     */
-    public static Integer getResultsSize(String qid) {
-        try {
-            WebContext ctx = WebContextFactory.get();
-            HttpSession session = ctx.getSession();
-            QueryMonitorTimeout controller = (QueryMonitorTimeout)
-                SessionMethods.getRunningQueryController(qid, session);
-
-            // this could happen if the user navigates away then back to the page
-            if (controller == null) {
-                return null;
-            }
-
-            // First tickle the controller to avoid timeout
-            controller.tickle();
-
-            if (controller.isCancelledWithError()) {
-                LOG.debug("query qid " + qid + " error");
-                return null;
-            } else if (controller.isCancelled()) {
-                LOG.debug("query qid " + qid + " cancelled");
-                return null;
-            } else if (controller.isCompleted()) {
-                LOG.debug("query qid " + qid + " complete");
-
-                if (controller instanceof PageTableQueryMonitor) {
-                    PagedTable pt = ((PageTableQueryMonitor) controller).getPagedTable();
-                    return new Integer(pt.getExactSize());
-                }
-                if (controller instanceof QueryCountQueryMonitor) {
-                    return new Integer(((QueryCountQueryMonitor) controller).getCount());
-                }
-                LOG.debug("query qid " + qid + " - unknown controller type");
-                return null;
-            } else {
-                // query still running
-                LOG.debug("query qid " + qid + " still running, making client wait");
-                return null;
-            }
-        } catch (RuntimeException e) {
-            processException(e);
-            return null;
-        }
     }
 
     /**

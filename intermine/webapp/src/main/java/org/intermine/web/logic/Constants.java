@@ -128,16 +128,6 @@ public final class Constants
     public static final String DEFAULT_OPERATOR = "DEFAULT_OPERATOR";
 
     /**
-     * Period of time to wait for client to poll a running query before cancelling the query.
-     */
-    public static final int QUERY_TIMEOUT_SECONDS = 20;
-
-    /**
-     * Refresh period specified on query poll page.
-     */
-    public static final int POLL_REFRESH_SECONDS = 2;
-
-    /**
      * The session attribute that holds the ReportObjectCache object for the session.
      */
     public static final String REPORT_OBJECT_CACHE = "REPORT_OBJECT_CACHE";
@@ -146,11 +136,6 @@ public final class Constants
      * Session attribute that holds cache of table identifiers to PagedTable objects.
      */
     public static final String TABLE_MAP = "TABLE_MAP";
-
-    /**
-     * Session attribute.  A Map from query id to QueryMonitor.
-     */
-    public static final String RUNNING_QUERIES = "RUNNING_QUERIES";
 
     /**
      * Servlet attribute. Map from MultiKey(experiment, gene) id to temp file name.

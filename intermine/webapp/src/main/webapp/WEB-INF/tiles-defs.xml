@@ -114,7 +114,6 @@
     <put name="body" value="aspect.tile"/>
     <put name="pageName" value="aspect"/>
   </definition>
-  <definition name="waiting.page" path="/waiting.jsp"/>
   <definition name="error.page" extends="layout.template">
     <put name="body" value="error.tile"/>
     <put name="pageName" value="error"/>
