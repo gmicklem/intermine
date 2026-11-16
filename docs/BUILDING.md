@@ -115,9 +115,14 @@ In a project that applies the plugin (`bio/core`, `bio/model`, the `bio-source-*
 | `generateKeys` | `<model>_keyDefs.properties` merged from the sources of `project.xml` | `buildDB`, the Ant tasks | no |
 | `copyUserProfileModel` | `userprofile_model.xml` | `createUserDB` | no |
 | `createTestPrioritiesFile` | an empty `genomic_priorities.properties` | the unit tests of the bio sources | no |
+| `copyMineProperties` (the build file's own, in each mine and in `bio/core`, `bio/model`, `bio/sources`, `bio/postprocess`, `bio/postprocess-test`, `testmine`) | `intermine.properties`, under `build/im/mine-properties` (the directory its `into` names) | `processResources` (it takes the task as a source), so every reader of `build/resources/main` depends on it | yes, through `processResources` |
 | the integrate tasks | `build/im/integrate/so.obo` (source `so`) | the `so` converter | no |
 
 `copyGenomicModel` is kept as an alias of `mergeModels`. The unit tests get these directories on their runtime classpath after the test and main outputs and before the dependencies (bio-model's jar has an unmerged `genomic_model.xml`); the plugin's Ant tasks list `build/im/*` first on their classpath. After moving a checkout or a mine to this layout, run `clean` once: files that an earlier plugin wrote into `build/resources/main` would otherwise still be packed into the jar.
+
+### Logging of the plugin's Ant tasks
+
+The Ant tasks that the plugin runs (`buildDB`, `integrate`, the post-processing, the model and key tasks) load InterMine's classes in an Ant class loader of their own, with the log4j 1 API (`reload4j`). Nothing on that classpath configures it (`intermine-resources` has only a `log4j2.properties`, which nothing reads), so until this was fixed every logger printed `log4j:WARN No appenders could be found` and the INFO messages of the converters and the data loader were lost. The plugin now writes `build/im/antLogging/log4j.properties` (a console appender on the task's standard output, which Gradle shows) and puts that directory on the classpath of every Ant task. The level follows Gradle's: INFO at the default level and with `-i`, WARN with `-q` and `-w`, and `org.intermine` at DEBUG with `-d`. A mine that has its own `log4j.properties` or `log4j.xml` in its resources keeps it (the plugin then writes none). The plugin also sets the system property `log4j.ignoreTCL=true` in the Gradle daemon, which only reload4j reads: Gradle's own class loader carries the log4j-over-slf4j classes (`ConsoleAppender`, `PatternLayout`), and without the property reload4j would take those for the classes that the configuration names and drop the appender. The file is not a task output: the level of a run must not make `buildDB` or `integrate` out of date.
 
 ## Dependency versions: `gradle/libs.versions.toml`
 

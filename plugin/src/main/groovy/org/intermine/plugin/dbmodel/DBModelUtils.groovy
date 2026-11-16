@@ -7,6 +7,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.util.PatternSet
@@ -95,6 +96,50 @@ class DBModelUtils {
      */
     static File imDir(Project project) {
         buildFile(project, "im")
+    }
+
+    /**
+     * The directory with the log4j.properties of the plugin's Ant tasks, on the classpath of each of them. The tasks
+     * run InterMine code in an Ant class loader of its own with the log4j 1 API (reload4j), which finds no
+     * configuration unless the classpath has one (intermine-resources only has the log4j 2 file that nothing reads
+     * since the move to reload4j): every Logger then printed "log4j:WARN No appenders could be found" and the
+     * integrate and postprocess messages were lost. The file has a console appender; its level follows Gradle's: INFO
+     * at the default level and with -i, WARN with -q and -w, org.intermine at DEBUG with -d. A mine that has its own
+     * log4j.properties or log4j.xml in its resources (build/resources/main) keeps it: then no file is written.
+     * It is not a task output: it only depends on the log level of the run, which must not make the Ant tasks out of
+     * date, so it is written when a task builds its classpath (a task action), when its content has changed.
+     * It is a directory of its own, build/im/antLogging, which is also on the classpath through the dirset of imDir.
+     * It also sets the system property log4j.ignoreTCL (see the comment in the method).
+     */
+    static File antLoggingDir(Project project) {
+        // Gradle's own class loader, the thread context class loader of the Ant task, has the classes of log4j-over-slf4j
+        // (Appender, ConsoleAppender, PatternLayout...), and reload4j in the Ant class loader loads the classes that the
+        // configuration names through the context class loader first: its Appender interface is then not the one that
+        // the ConsoleAppender from Gradle implements ("not assignable to a Appender variable"), the appender is dropped and
+        // the warning stays. log4j.ignoreTCL makes it load them from its own class loader. Only reload4j reads it.
+        System.setProperty("log4j.ignoreTCL", "true")
+        File dir = taskDir(project, "antLogging")
+        File config = new File(dir, "log4j.properties")
+        File resources = new File(resourcesDir(project))
+        if (new File(resources, "log4j.properties").exists() || new File(resources, "log4j.xml").exists()) {
+            config.delete()
+            return dir
+        }
+        LogLevel level = project.gradle.startParameter.logLevel
+        String root = (level == LogLevel.INFO || level == LogLevel.DEBUG || level == LogLevel.LIFECYCLE) ? "INFO" : "WARN"
+        String text = """# written by the InterMine Gradle plugin (DBModelUtils.antLoggingDir) for the Ant tasks; the level follows Gradle's
+log4j.rootLogger=${root}, console
+log4j.logger.org.intermine=${level == LogLevel.DEBUG ? "DEBUG" : root}
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+log4j.appender.console.Target=System.out
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.layout.ConversionPattern=%d{HH:mm:ss} %-5p %c{1} - %m%n
+"""
+        if (!config.exists() || config.text != text) {
+            dir.mkdirs()
+            config.text = text
+        }
+        dir
     }
 
     /** Empties (or creates) a task's own output directory before the task writes it, so that no stale file stays. */
@@ -219,6 +264,7 @@ class DBModelUtils {
         ant.taskdef(name: "modelOutputTask", classname: "org.intermine.task.ModelOutputTask") {
             classpath {
                 dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                 dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                 pathelement(path: project.configurations.getByName("bioModel").asPath)
@@ -236,6 +282,7 @@ class DBModelUtils {
         ant.taskdef(name: "torque", classname: "org.intermine.objectstore.intermine.TorqueModelOutputTask") {
             classpath {
                 dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                 dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                 pathelement(path: project.configurations.getByName("bioModel").asPath)
@@ -258,6 +305,7 @@ class DBModelUtils {
         ant.taskdef(name: "buildDB", classname: "org.intermine.task.BuildDbTask") {
             classpath {
                 dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                 dirset(dir: buildResourcesMainDir) // intermine.properties
                 pathelement(path: DBModelUtils.buildDirectory(project).absolutePath)//to read the schema
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
@@ -273,6 +321,7 @@ class DBModelUtils {
         ant.taskdef(name: 'insertModel', classname: 'org.intermine.task.StoreMetadataTask') {
             classpath {
                 dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                 dirset(dir: buildResourcesMainDir) // intermine.properties
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                 pathelement(path: project.configurations.getByName(IM_API_JAR).asPath) //userprofile_keyDefs.properties
@@ -288,6 +337,7 @@ class DBModelUtils {
         ant.taskdef(name: 'analyse', classname: 'org.intermine.task.AnalyseDbTask') {
             classpath {
                 dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                 dirset(dir: buildResourcesMainDir) // intermine.properties
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
             }
@@ -302,6 +352,7 @@ class DBModelUtils {
         ant.taskdef(name: 'createIndexes', classname: 'org.intermine.task.CreateIndexesTask') {
             classpath {
                 dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                 dirset(dir: buildResourcesMainDir) // intermine.properties
                 dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)

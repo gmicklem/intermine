@@ -31,6 +31,7 @@ class BioModelDBModelPlugin implements Plugin<Project>{
                     classpath {
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                        pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                     }
                 }
