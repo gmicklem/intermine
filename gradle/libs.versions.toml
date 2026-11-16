@@ -43,6 +43,8 @@ easymock = "5.7.0"
 everit-json-schema = "1.14.6"
 hikaricp = "4.0.3"
 jackson = "2.18.12"
+# javax.activation (the JavaBeans Activation Framework, removed from the JDK in 11); 1.2.x keeps the javax package
+jakarta-activation = "1.2.1"
 # bio/webapp (jami-core and the bridges)
 jami = "3.2.12"
 # bio/sources/psi-complexes: jami-core, jami-commons, jami-mitab and jami-xml, one release of the four
@@ -52,8 +54,6 @@ jami = "3.2.12"
 jami-complexes = "3.2.9"
 javax-mail = "1.4"
 javax-servlet-api = "3.1.0"
-# jakarta.xml.bind-api and jaxb-runtime are released together
-jaxb = "2.3.2"
 jaxb-api = "2.3.1"
 je = "4.0.92"
 jena = "3.16.0"
@@ -98,7 +98,7 @@ hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson" }
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
-jakarta-xml-bind-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version.ref = "jaxb" }
+jakarta-activation-api = { module = "jakarta.activation:jakarta.activation-api", version.ref = "jakarta-activation" }
 jami-bridges-core = { module = "psidev.psi.mi.jami.bridges:bridges-core", version.ref = "jami" }
 jami-commons = { module = "psidev.psi.mi.jami:jami-commons", version.ref = "jami-complexes" }
 jami-core = { module = "psidev.psi.mi.jami:jami-core", version.ref = "jami" }
@@ -110,7 +110,6 @@ jami-xml = { module = "psidev.psi.mi.jami:jami-xml", version.ref = "jami-complex
 javax-mail = { module = "javax.mail:mail", version.ref = "javax-mail" }
 javax-servlet-api = { module = "javax.servlet:javax.servlet-api", version.ref = "javax-servlet-api" }
 jaxb-api = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb-api" }
-jaxb-runtime = { module = "org.glassfish.jaxb:jaxb-runtime", version.ref = "jaxb" }
 je = { module = "com.sleepycat:je", version.ref = "je" }
 jena-core = { module = "org.apache.jena:jena-core", version.ref = "jena" }
 jena-libs = { module = "org.apache.jena:apache-jena-libs", version.ref = "jena" }

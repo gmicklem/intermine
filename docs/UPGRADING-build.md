@@ -393,7 +393,7 @@ For a `bio-source-*` POM of this tree the scopes are:
 | Scope | Dependencies |
 |---|---|
 | `compile` | `bio-core`, `intermine-objectstore`, `intermine-model`, `ant`, `commons-collections`, `reload4j`, `slf4j-reload4j`, in most sources `intermine-integrate`, and what a source adds for its own API (for example `biojava-core` in `bio-source-fasta`) |
-| `runtime` | `HikariCP`, `intermine-resources`, `commons-io`, `commons-lang3`, `commons-lang` 2.6, `commons-logging`, `postgresql`, `jakarta.xml.bind-api`, `jaxb-runtime`, and `bio-model` in the sources that list it |
+| `runtime` | `HikariCP`, `intermine-resources`, `commons-io`, `commons-lang3`, `commons-lang` 2.6, `commons-logging`, `postgresql`, `jakarta.activation-api`, and `bio-model` in the sources that list it |
 
 Nothing changes for the plugin: it puts the bio-source jars on a runtime classpath, where both scopes arrive. It matters for a mine's own bio-source project (your `*-bio-sources` repository) that **compiles against classes of an `org.intermine` bio-source jar**, for example a processor that extends a class of `bio-source-chado-db`. Gradle gives such a project only the `compile` entries of that POM. A library that your code imports, and that used to arrive through the bio-source jar, may now be missing at compile time, and the build stops with `error: package org.apache.commons.logging does not exist` (or `org.postgresql`, `com.zaxxer.hikari`, `javax.xml.bind`, `org.apache.commons.lang`).
 
