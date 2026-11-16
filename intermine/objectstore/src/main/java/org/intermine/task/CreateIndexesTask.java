@@ -58,8 +58,8 @@ import org.apache.tools.ant.Task;
  * relations, and for the indirection table columns of M-N relations.
  * Alternatively, if attributeIndexes is true, indexes are created for all non-primary key
  * attributes instead.
- * Note that all "id" columns are indexed automatically by virtue of InterMineTorqueModelOuput
- * specifying them as primary key columns.
+ * Note that all "id" columns are indexed already: DdlGenerator gives every class table a
+ * unique constraint on id (TABLE_pkey).
  *
  * @author Mark Woodbridge
  * @author Kim Rutherford

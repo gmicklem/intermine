@@ -10,7 +10,7 @@ package org.intermine.task;
  *
  */
 
-import static org.intermine.objectstore.intermine.TorqueModelOutput.FORMAT_VERSION;
+import static org.intermine.objectstore.intermine.DdlGenerator.FORMAT_VERSION;
 
 import java.util.Properties;
 import java.util.Random;

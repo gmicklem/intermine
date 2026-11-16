@@ -76,7 +76,6 @@ dependencies {
     runtimeOnly libs.postgresql
     runtimeOnly group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")
     runtimeOnly libs.slf4j.reload4j
-    runtimeOnly libs.commons.logging
 
     bundled fileTree(dir: 'libs', include: '*.jar') // obo and bbop not available in the public maven repo
     // the patched antlr that intermine/libs holds (one copy for all builds); it is packed into this jar, so the bio

@@ -109,7 +109,7 @@ subprojects {
         // protected methods (ItemWriter, Model, ObjectStore, BioFileConverter, ant Task, log4j Logger,
         // commons-collections MultiKey in chado-db's processors). Libraries used only inside method
         // bodies are implementation (POM scope compile -> runtime). What no source imports (the connection pool, the JDBC
-        // driver, commons-logging, the resources jar, which only has property files) and the leaf builds' bio-model (it has
+        // driver, the resources jar, which only has property files) and the leaf builds' bio-model (it has
         // no classes, only properties read at run time) are runtimeOnly (im-ee7.63); implementation and runtimeOnly both
         // give the runtime scope in the POM.
         runtimeOnly(libs.hikaricp) { transitive = false }
@@ -121,7 +121,6 @@ subprojects {
         api libs.commons.collections
         implementation libs.commons.io
         implementation libs.commons.lang3
-        runtimeOnly libs.commons.logging
         runtimeOnly libs.postgresql
         api libs.reload4j
         api libs.slf4j.reload4j

@@ -18,8 +18,6 @@ import java.nio.file.StandardCopyOption
 class DBModelUtils {
     /** Plugin-internal configuration holding the intermine-api jar (userprofile model and keys). */
     static final String IM_API_JAR = "imApiJar"
-    /** Plugin-internal configuration holding commons-lang 2.6, which only the Torque classes of BuildDbTask need. */
-    static final String IM_TORQUE_RUNTIME = "imTorqueRuntime"
 
     Project project
 
@@ -42,24 +40,6 @@ class DBModelUtils {
         Configuration configuration = project.configurations.maybeCreate(name)
         configuration.canBeConsumed = false
         configuration.canBeResolved = true
-        configuration
-    }
-
-    /**
-     * The configuration IM_TORQUE_RUNTIME: commons-lang 2.6, for the vendored Torque jars of intermine-objectstore. Only
-     * BuildDbTask (the buildDB, buildUnitTestDB and integrate tasks, through createTables) loads a Torque class, so the
-     * jar is on that Ant task's classpath alone and never on a mine's compile or run time classpath (im-jqz.35). Created
-     * on first use, because a project that applies only the integrate plugin has no DBModelPlugin to create it.
-     */
-    static Configuration torqueRuntime(Project project) {
-        Configuration existing = project.configurations.findByName(IM_TORQUE_RUNTIME)
-        if (existing != null) {
-            return existing
-        }
-        Configuration configuration = resolvableConfiguration(project, IM_TORQUE_RUNTIME)
-        DBModelPlugin.addDependency(project, IM_TORQUE_RUNTIME) {
-            [group: "commons-lang", name: "commons-lang", version: "2.6", transitive: false]
-        }
         configuration
     }
 
@@ -293,33 +273,17 @@ log4j.appender.console.layout.ConversionPattern=%d{HH:mm:ss} %-5p %c{1} - %m%n
         ant.modelOutputTask(model: modelName, destDir: destination, type: "java")
     }
 
-    protected createSchema = { objectStoreName ->
-        String schemaFile = objectStoreName + "-schema.xml"
-        String destination = DBModelUtils.buildFile(project, schemaFile).absolutePath
-        System.out.println("Creating schema in objectstore ${objectStoreName} for ${destination}")
-
-        def ant = new AntBuilder()
-        ant.taskdef(name: "torque", classname: "org.intermine.objectstore.intermine.TorqueModelOutputTask") {
-            classpath {
-                dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
-                pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
-                dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
-                pathelement(path: DBModelUtils.antClasspath(project).asPath)
-                pathelement(path: project.configurations.getByName("bioModel").asPath)
-                pathelement(path: project.configurations.getByName(IM_API_JAR).asPath) //userprofile classes
-            }
-        }
-        ant.torque(osname: objectStoreName, destFile: destination)
-    }
-
+    /**
+     * Empties the database of the objectstore and creates its tables (BuildDbTask, which generates the DDL from the
+     * model and the objectstore's properties; up to 5.1 the createSchema step wrote a Torque schema XML first). The
+     * classpath has what the task reads: intermine.properties, the model XML and the compiled model classes (the
+     * project's build directories, the bio model, and intermine-api for the userprofile model).
+     */
     protected createTables = { objectStoreName, modelName ->
-        String schemaFile = objectStoreName + "-schema.xml"
-        // BuildDbTask empties its tempDir first: not build/tmp itself, which holds Gradle's own task state
-        // (build/tmp/compileJava, build/tmp/jar), or every compileJava and jar re-runs after buildDB/buildUnitTestDB
+        // BuildDbTask writes the SQL it executes (<objectStoreName>-schema.sql) here, for inspection
         File tempDir = DBModelUtils.buildFile(project, "tmp/intermine-buildDB")
-        tempDir.mkdirs() // it must exist
-        String tempDirectory = tempDir.absolutePath
-        System.out.println("Creating tables in objectstore ${objectStoreName} with schema ${schemaFile}")
+        tempDir.mkdirs()
+        System.out.println("Creating tables in objectstore ${objectStoreName} for model ${modelName}")
 
         def ant = new AntBuilder()
         ant.taskdef(name: "buildDB", classname: "org.intermine.task.BuildDbTask") {
@@ -327,14 +291,18 @@ log4j.appender.console.layout.ConversionPattern=%d{HH:mm:ss} %-5p %c{1} - %m%n
                 dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                 dirset(dir: buildResourcesMainDir) // intermine.properties
-                pathelement(path: DBModelUtils.buildDirectory(project).absolutePath)//to read the schema
+                dirset(dir: DBModelUtils.buildDirectory(project).absolutePath) // the model classes
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
-                // the vendored Torque jars of intermine-objectstore extend and call commons-lang 2 (SchemaType, TorqueException);
-                // only this task needs it, so it is not on the mine's own classpath
-                pathelement(path: DBModelUtils.torqueRuntime(project).asPath)
+                // created by the dbmodel plugin; a project with the integrate plugin alone has neither
+                ["bioModel", IM_API_JAR].each { name -> // IM_API_JAR: the userprofile model and its classes
+                    Configuration configuration = project.configurations.findByName(name)
+                    if (configuration != null) {
+                        pathelement(path: configuration.asPath)
+                    }
+                }
             }
         }
-        ant.buildDB(osname: objectStoreName, model: modelName, schemafile: schemaFile, tempDir: tempDirectory)
+        ant.buildDB(osname: objectStoreName, model: modelName, tempDir: tempDir.absolutePath)
     }
 
     protected storeMetadata = { objectStoreName, modelName ->

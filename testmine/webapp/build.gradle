@@ -135,7 +135,7 @@ task warTestModelWebApp(type: War) {
 }
 
 // commons-lang 2.6 is no longer a library of a mine (im-jqz.35): InterMine's code uses commons-lang3, and the only code that
-// needed 2.6, the vendored Torque jars of BuildDbTask, gets it from the build's own classpath. This check makes `build`
+// needed 2.6, the vendored Torque jars of BuildDbTask, was removed in 6.0 (im-jqz.32). This check makes `build`
 // fail when a dependency brings it back, whether through solr-solrj's POM or any other, into the war or into the runtime
 // classpath of this project (which holds the dbmodel and the InterMine jars).
 task checkNoCommonsLang2 {
