@@ -40,7 +40,7 @@ input.submit {
        });
 
         if (ids.length < 1) {
-          alert("Please select some ${searchFacetValues['Category']}s...");
+          alert("Please select some <c:out value="${searchFacetValues['Category']}"/>s...");
             return false;
         } else {
           if (jQuery('#allItems').is(':checked')) {
@@ -189,7 +189,7 @@ input.submit {
 
       <div><c:forEach items="${searchFacets}" var="facet">
         <c:if test="${facet.value != null && facet.value != ''}">
-          <h2 class="facetRestriction">${facet.name} restricted to <b>${facet.value}</b>
+          <h2 class="facetRestriction">${facet.name} restricted to <b><c:out value="${facet.value}"/></b>
           <a
             href="<c:url value="/keywordSearchResults.do">
                      <c:param name="searchTerm" value="${searchTerm}" />
@@ -204,7 +204,7 @@ input.submit {
             title="Remove restriction" /> </a></h2>
         </c:if>
       </c:forEach> <c:if test="${!empty searchBag}">
-        <div class="facetRestriction">Searching only in list <b>${searchBag}</b>
+        <div class="facetRestriction">Searching only in list <b><c:out value="${searchBag}"/></b>
         <a
           href="<c:url value="/keywordSearchResults.do">
                  <c:param name="searchTerm" value="${searchTerm}" />
@@ -295,7 +295,7 @@ input.submit {
           <c:if test="${facet.items != null && !empty facet.items}">
             <c:choose>
               <c:when test="${facet.value != null && facet.value != ''}">
-                <div class="facetHeader">${facet.name}: <i>${facet.value}</i></div>
+                <div class="facetHeader">${facet.name}: <i><c:out value="${facet.value}"/></i></div>
                 <div class="facetContents"><a
                   href="<c:url value="/keywordSearchResults.do">
                                  <c:param name="searchTerm" value="${searchTerm}" />
@@ -356,7 +356,7 @@ input.submit {
         <div class="resultTableContainer">
         <c:if test="${!empty searchFacetValues['Category']}">
           <form action="/${WEB_PROPERTIES['webapp.path']}/saveFromIdsToBag.do" id="saveFromIdsToBagForm" method="POST">
-            <input type="hidden" id="type" name="type" value="${searchFacetValues['Category']}" />
+            <input type="hidden" id="type" name="type" value="<c:out value="${searchFacetValues['Category']}"/>" />
             <input type="hidden" id="ids" name="ids" value="" />
             <input type="hidden" id="allChecked" name="allChecked" value="false" />
             <input type="hidden" name="source" value="keywordSearchResults" />
@@ -364,7 +364,7 @@ input.submit {
             <input type="hidden" id="searchTerm" name="searchTerm" value="${fn:escapeXml(searchTerm)}" />
             <input type="hidden" id="jsonFacets" name="jsonFacets" value="<c:out value="${jsonFacets}"/>" />
 
-            <input type="hidden" name="newBagName" value="new_${searchFacetValues['Category']}_list" />
+            <input type="hidden" name="newBagName" value="new_<c:out value="${searchFacetValues['Category']}"/>_list" />
             <div align="left" style="position: relative; top: 1em; padding-bottom: 5px;"><input type="submit" class="submit" value="CREATE LIST" /></div>
           </form>
         </c:if>

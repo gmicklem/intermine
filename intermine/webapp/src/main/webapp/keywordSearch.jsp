@@ -18,13 +18,13 @@
 
 <div class="keywordSearch">
     <div class="form">
-        <h2>Search <c:if test="${!empty searchBag}">the list "${searchBag}"</c:if><c:if test="${empty searchBag}">our database</c:if> by keyword</h2>
+        <h2>Search <c:if test="${!empty searchBag}">the list "<c:out value="${searchBag}"/>"</c:if><c:if test="${empty searchBag}">our database</c:if> by keyword</h2>
         <form action="<c:url value="/keywordSearchResults.do" />" name="search" method="get">
             <c:forEach items="${searchFacetValues}" var="facetValue">
-                <input type="hidden" name="facet_${facetValue.key}" value="${facetValue.value}" />
+                <input type="hidden" name="facet_<c:out value="${facetValue.key}"/>" value="<c:out value="${facetValue.value}"/>" />
             </c:forEach>
             <c:if test="${!empty searchBag}">
-                <input type="hidden" name="searchBag" value="${searchBag}" />
+                <input type="hidden" name="searchBag" value="<c:out value="${searchBag}"/>" />
             </c:if>
             <input type="text" id="keywordSearch" name="searchTerm" value="<c:out value="${searchTerm}"></c:out>" />
             <input type="submit" name="searchSubmit" value="Search" />
