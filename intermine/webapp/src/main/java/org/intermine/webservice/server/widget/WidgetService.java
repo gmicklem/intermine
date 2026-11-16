@@ -124,6 +124,9 @@ public abstract class WidgetService extends JSONService
         if (filters != null && !filters.isEmpty()) {
             addOutputAttribute("filters", StringUtils.join(filters, ","));
             addOutputAttribute("filterSelectedValue", filterSelectedValue);
+        } else if (StringUtils.isNotBlank(widgetConfig.getFilters())) {
+            addOutputAttribute("filterWarning", "No values were found to filter this widget by"
+                    + " (" + widgetConfig.getFilterLabel() + "), so the filter was not applied.");
         }
     }
 

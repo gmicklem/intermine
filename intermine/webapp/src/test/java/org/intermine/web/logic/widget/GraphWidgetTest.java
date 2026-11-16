@@ -93,4 +93,46 @@ public class GraphWidgetTest extends WidgetConfigTestCase
         } catch (IllegalArgumentException iae){
         }
     }
+
+    private final class FilterOptions implements WidgetOptions {
+        private final String value;
+
+        private FilterOptions(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String getFilter() {
+            return value;
+        }
+    }
+
+    private List<List<Object>> processFilteredWidget(String filterValue) throws Exception {
+        GraphWidgetConfig filtered =
+                (GraphWidgetConfig) webConfig.getWidgets().get("age_groups_by_department");
+        GraphWidget w = new GraphWidget(filtered, bag, os, new FilterOptions(filterValue), null);
+        w.process();
+        return w.getResults();
+    }
+
+    /**
+     * A list for which there is no value to filter by (e.g. none of its genes has an organism
+     * name) used to fail with "Cannot create a QueryValue with null" [im-jqz.44]. The filter is
+     * now left out and the chart is drawn for the whole list.
+     */
+    public void testNullFilterIsIgnored() throws Exception {
+        List<List<Object>> results = processFilteredWidget(null);
+        // header row, then ages 25, 35, 40, 50
+        assertEquals(5, results.size());
+        assertEquals("25", results.get(1).get(0).toString());
+        assertEquals("1", results.get(1).get(1).toString());
+        assertEquals("35", results.get(2).get(0).toString());
+        assertEquals("2", results.get(2).get(1).toString());
+    }
+
+    public void testFilterStillApplied() throws Exception {
+        assertEquals(5, processFilteredWidget("department").size());
+        // no employee is in this department: only the header row is left
+        assertEquals(1, processFilteredWidget("no such department").size());
+    }
 }
