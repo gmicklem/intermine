@@ -126,7 +126,6 @@ subprojects {
         api libs.slf4j.reload4j
         testImplementation libs.junit
         testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion"), classifier: "testClasses"
-        testImplementation libs.xmlunit
         testImplementation libs.opencsv // version 2.3 not available in maven
         // the InterMine jars come from build/libs without their POMs, so intermine-objectstore's run-time dependency
         // (DynamicBean, objects of more than one model class) is declared here

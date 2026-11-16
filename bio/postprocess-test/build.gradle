@@ -103,7 +103,6 @@ subprojects {
         implementation libs.postgresql
         testImplementation libs.junit
         testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
-        testImplementation libs.xmlunit
         // the InterMine jars come from build/libs without their POMs, so intermine-objectstore's run-time dependency
         // (DynamicBean, objects of more than one model class) is declared here
         testImplementation libs.byte.buddy

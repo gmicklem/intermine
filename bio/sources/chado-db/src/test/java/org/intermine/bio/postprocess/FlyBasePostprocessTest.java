@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.custommonkey.xmlunit.XMLTestCase;
 import org.intermine.model.InterMineObject;
 import org.intermine.model.bio.Gene;
 import org.intermine.model.bio.Intron;
