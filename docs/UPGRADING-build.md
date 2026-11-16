@@ -114,7 +114,7 @@ grep -rn "head.cdn.location\|CDN/" webapp/src/main/webapp/WEB-INF/web.properties
 
 This is the non-breaking release. Branch `release/5.1.1-candidate` (the last Gradle 6.9.4 state; its plugin is compiled with Gradle 6.9.4) was checked in a mine on **Gradle 4.9**: the plugin loads, the build configures, and the tasks `tasks`, `createSoModel` and (in `webapp`) `mergeProperties` start. It was also checked on **Gradle 6.9.4**, with the changes below. Loading data, `buildDB` of a full mine and deploying to Tomcat were not run for this line, and this branch needs JDK 8.
 
-So nothing is required except `imVersion` and `bioVersion`, with one exception that does not depend on InterMine: a `webapp/build.gradle` that still has the `gretty` line (step 4) does not configure on any Gradle today, 4.9 included, because jcenter is gone. To move the mine to Gradle 6.9.4, which shows every deprecation that 8.14 will turn into an error:
+So nothing is required except `imVersion` and `bioVersion`, with one exception that does not depend on InterMine: a `webapp/build.gradle` that still has the `gretty` line (step 4) does not configure on any Gradle today, 4.9 included, because jcenter is gone. A mine that builds its war on this line also needs step 6 (`webXml`) and, on a fresh checkout, step 7 (run `copyWebappContent` once first). To move the mine to Gradle 6.9.4, which shows every deprecation that 8.14 will turn into an error:
 
 1. Set `imVersion` and `bioVersion` in the mine's `gradle.properties` to `5.1.1`.
 2. Update the wrapper: `./gradlew wrapper --gradle-version 6.9.4 --distribution-type bin`.
@@ -123,7 +123,29 @@ So nothing is required except `imVersion` and `bioVersion`, with one exception t
    - **Remove gretty** (what InterMine recommends): delete the `apply from` line and the `gretty { }` block of the same file. The `cargo` plugin does the deployment. Gretty was already dropped from testmine in InterMine's own `RELEASE_NOTES` because it does not work with Gradle 4.9, and the script is an unpinned remote file.
    - **Keep gretty**: gretty 2.0.0 itself is on Maven Central, only the script looks for it in jcenter. Save the script in the mine's repository (from a fixed commit of akhikhl/gretty, not `master`), change the `jcenter()` in its `buildscript { repositories { } }` to `mavenCentral()`, and point the `apply from:` at that copy. This was not tried here. Gretty 2.0.0 dates from the Gradle 4 era and is not known to work on Gradle 6.9.4 or 8.14, so it is a stop-gap for a mine that stays on Gradle 4.9; the 6.0.0 steps below remove it.
 5. In `dbmodel/build.gradle`, make `soTermListFilePath` and `soAdditionFilePath` absolute (`"$rootDir/..."`, see "Three edits" above). The 5.1.1 plugin does not resolve them. It is not needed while the daemon happens to start in the mine's root, but it is cheap and it carries over to 6.0.0.
-6. Run `./gradlew --warning-mode all :dbmodel:tasks` to see the remaining deprecations. In the flymine smoke build on 6.9.4 they were:
+6. **Set `webXml` on the mine's war task** (a mine of this line composes its war in a `warWebApp` task of `webapp/build.gradle`; flymine `webapp/build.gradle:38-44`). Gradle's `War` task takes `WEB-INF/web.xml` through its own `webXml` property, not through the generic `from(...)` copy, and the mine's `warWebApp` never set it. In the testbed's build of the 5.1.1 line (Gradle 6.9.4) the war that came out had no `web.xml` at all: it deployed, Tomcat logged success, and every request returned 404 because no servlet mapping existed. The real file, with the struts and tiles additions of the mine's model merged in by `addStrutsConfig`, is `build/explodedWebApp/WEB-INF/web.xml`. Point `webXml` at it, **and** exclude it from the `from`, or the war gets the entry twice (two overlapping `web.xml` entries, which `unzip` refuses as a possible zip bomb):
+
+   ```groovy
+   task warWebApp(type: War) {
+       dependsOn 'copyWebappContent'
+       description "Create the war from the build/explodedWebAppDir directory"
+       from "${explodedWebAppDir}"
+       exclude "WEB-INF/web.properties", "WEB-INF/web.xml"                 // was: exclude "WEB-INF/web.properties"
+       webXml = file("${explodedWebAppDir}/WEB-INF/web.xml")               // new
+       webInf { from "${mergePropsDir}" }
+   }
+   ```
+
+   This is on the 5.1.1 line only: the 6.0.0 plugin composes the war itself and sets `web.xml` (see "5.1.1 to 6.0.0" below), so the line goes away with the rest of `warWebApp`. It was not checked on Gradle 4.9.
+7. **The first `:webapp:war` of a fresh checkout fails** with `File .../build/explodedWebApp/WEB-INF/web.xml specified for property 'webXml' does not exist` (the `webXml` of step 6 is what makes it visible; without it the first war is built, with most of the bio-webapp content missing). The cause is the known first-run wipe of Gradle: `unwarBioWebApp` unpacks the `bio-webapp` war into `build/explodedWebApp`, and `copyWebappContent`, a `Copy` into the same directory, has no execution history yet. Gradle treats a task without history as the owner of nothing that exists in its output directory and removes it, so the copy deletes what the unwar had just written (2739 files down to 5, `web.xml` among them). Run the copy once on its own, first, so that it has a history, and then the war:
+
+   ```bash
+   ./gradlew :webapp:copyWebappContent
+   ./gradlew :webapp:war
+   ```
+
+   Every later run has the history and passes, which is why a build that was run by hand before never shows it; a script that builds the mine from a fresh checkout (CI) must run the first command once. With the history in place the war's own `unwarBioWebApp` and `copyWebappContent` sequence leaves both sets of files, the unpacked war overlaid with `src/main/webapp`. The 6.0 plugin composes the war from the outputs of the tasks that make each part (`unwarBioWebApp` is a Sync there, and `copyWebappContent` is gone), so a first run is no different from a later one and this note does not apply.
+8. Run `./gradlew --warning-mode all :dbmodel:tasks` to see the remaining deprecations. In the flymine smoke build on 6.9.4 they were:
 
 | Warning | Where (flymine copy) | Fix |
 |---|---|---|
