@@ -38,7 +38,12 @@ dependencies {
     api group: 'org.postgresql', name: 'postgresql', version: '42.7.14'
     testModelProps group: "org.intermine", name: "intermine-testresources", version: imVersion, transitive: false
     api group: 'cglib', name: 'cglib', version: '3.1'
-    api group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.4'
+    api(group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.4') {
+        exclude group: 'io.netty'
+        exclude group: 'org.eclipse.jetty'
+        exclude group: 'org.eclipse.jetty.http2'
+        exclude group: 'org.xerial.snappy'
+    } // same exclusions as intermine-api
 }
 
 // the JAR file has an intermine.properties files for unit tests. if we put the JAR on the classpath

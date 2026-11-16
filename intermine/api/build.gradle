@@ -23,7 +23,17 @@ tasks.test.dependsOn(':intermine-testresources:buildDB')
 dependencies {
     api project(':intermine-pathquery')
     api project(':intermine-integrate')
-    api group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.4'
+    // InterMine only uses SolrJ's HttpSolrClient (Apache HttpClient), SolrQuery and the schema requests. The Netty,
+    // Jetty (HTTP/2 client) and Snappy jars that solr-solrj 8.11.4 lists are for Http2SolrClient and the SolrCloud/
+    // ZooKeeper client, which are never loaded; about 25 advisory entries (Netty, Jetty, snappy-java) are not
+    // shipped. ZooKeeper itself stays, because HttpSolrClient's javabin decoding calls
+    // org.apache.zookeeper.server.ByteBufferInputStream.
+    api(group: 'org.apache.solr', name: 'solr-solrj', version: '8.11.4') {
+        exclude group: 'io.netty'
+        exclude group: 'org.eclipse.jetty'
+        exclude group: 'org.eclipse.jetty.http2'
+        exclude group: 'org.xerial.snappy'
+    }
     api group: 'org.apache.lucene', name: 'lucene-core', version: '3.0.2'
     implementation group: 'org.apache.lucene', name: 'lucene-snowball', version: '3.0.2'
     implementation group: 'org.apache.lucene', name: 'lucene-highlighter', version: '3.0.2'
