@@ -70,7 +70,7 @@ jQuery(function () {
     <c:if test="${empty buildNewBag}">upgrading = true;</c:if>
     <c:set var="section" value="component-400"/>
     <c:forEach var="res" items="${imf:getHeadResources(section, PROFILE.preferences)}">      
-    paths["${res.type}"].push("${res.url}");
+    paths["${res.type}"].push(<c:if test="${res.isRelative}">window.location.protocol + "//" + window.location.host + "${pageContext.request.contextPath}" + </c:if>"${res.url}");
     </c:forEach>
     jobId = "${jobUid}";
     elem = "#iframe";

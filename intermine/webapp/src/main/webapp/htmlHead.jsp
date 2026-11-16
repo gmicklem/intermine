@@ -96,11 +96,17 @@ if(new java.io.File(application.getRealPath("/js")+"/"+pageName+".js").exists())
 <c:set var="theme" value="${WEB_PROPERTIES['theme']}"/>
 <link rel="stylesheet" type="text/css" href="<html:rewrite page='/themes/${theme}/theme.css'/>"/>
 
-<!-- propagate cdn.location to runtime -->
+<!-- libraries bundled in the webapp (vendor/README.md) replace the defunct cdn.intermine.org -->
 <script type="text/javascript">
 jQuery && jQuery(function() {
-    if (typeof intermine !== 'undefined' && intermine.options) {
-        intermine.options.CDN.server = "${WEB_PROPERTIES['head.cdn.location']}";
+    var vendor = window.location.origin + "${pageContext.request.contextPath}/vendor";
+    if (typeof intermine !== 'undefined') {
+        if (intermine.options && intermine.options.CDN) {
+            intermine.options.CDN.server = vendor;
+        }
+        if (typeof intermine.setLoadRoot === 'function') {
+            intermine.setLoadRoot(vendor);
+        }
     }
 });
 </script>

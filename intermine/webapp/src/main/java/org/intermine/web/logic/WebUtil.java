@@ -62,6 +62,14 @@ public abstract class WebUtil
 {
     protected static final Logger LOG = Logger.getLogger(WebUtil.class);
 
+    /** Prefix of head resource values that name a bundled library (see vendor/README.md). */
+    private static final String VENDOR_PREFIX = "CDN/";
+    /** The webapp path under which the bundled libraries are served. */
+    private static final String VENDOR_ROOT = "/vendor/";
+    /** The host that used to serve the libraries; it no longer exists. */
+    private static final String DEAD_CDN_PREFIX = "://cdn.intermine.org/";
+    private static boolean cdnLocationWarned = false;
+
     private WebUtil() {
         // don't
     }
@@ -243,7 +251,7 @@ public abstract class WebUtil
     public static List<HeadResource> getHeadResources(String section,
                                            Map<String, String> userPreferences) {
         Properties webProperties = InterMineContext.getWebProperties();
-        String cdnLocation = webProperties.getProperty("head.cdn.location");
+        warnAboutCdnLocation(webProperties.getProperty("head.cdn.location"));
         boolean allowUserOverrides =
             "true".equals(webProperties.getProperty("head.allow.user.overrides"));
         List<HeadResource> ret = new ArrayList<HeadResource>();
@@ -262,17 +270,49 @@ public abstract class WebUtil
                 if (StringUtils.isBlank(value)) {
                     LOG.warn("Head resource configured with blank value: skipping " + propName);
                 } else {
-                    if (value.startsWith("CDN")) {
-                        value = value.replace("CDN", cdnLocation);
-                    } else if (!(value.startsWith("/") || value.startsWith("http"))) {
-                        value = String.format("/%s/%s", type, value);
-                    }
+                    value = resolveHeadResourceUrl(propName, type, value);
                     HeadResource resource = new HeadResource(propName, type, value);
                     ret.add(resource);
                 }
             }
         }
         return ret;
+    }
+
+    /**
+     * Work out the url of a head resource from the value configured in the web properties.
+     * Values starting with <code>CDN/</code> (and absolute urls on the defunct
+     * cdn.intermine.org) name libraries bundled in the webapp's <code>vendor</code> directory.
+     * Other values starting with a slash or http are used as they are, anything else is
+     * relative to the css or js directory of the webapp.
+     *
+     * @param propName the name of the property, for logging
+     * @param type css or js
+     * @param value the configured value
+     * @return the url, which starts with a slash if it is local to the webapp
+     */
+    static String resolveHeadResourceUrl(String propName, String type, String value) {
+        if (value.startsWith(VENDOR_PREFIX)) {
+            return VENDOR_ROOT + value.substring(VENDOR_PREFIX.length());
+        }
+        int dead = value.startsWith("http") ? value.indexOf(DEAD_CDN_PREFIX) : -1;
+        if (dead > 0 && dead <= "https".length()) {
+            LOG.warn("Head resource " + propName + " names the defunct cdn.intermine.org, using"
+                    + " the copy bundled in the webapp instead: " + value);
+            return VENDOR_ROOT + value.substring(dead + DEAD_CDN_PREFIX.length());
+        }
+        if (!(value.startsWith("/") || value.startsWith("http"))) {
+            return String.format("/%s/%s", type, value);
+        }
+        return value;
+    }
+
+    private static synchronized void warnAboutCdnLocation(String cdnLocation) {
+        if (!cdnLocationWarned && StringUtils.isNotBlank(cdnLocation)) {
+            cdnLocationWarned = true;
+            LOG.warn("The web property head.cdn.location (" + cdnLocation + ") is ignored: the"
+                    + " libraries are served by the webapp itself from /vendor/");
+        }
     }
 
     /**

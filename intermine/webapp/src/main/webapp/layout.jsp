@@ -97,8 +97,10 @@ jQuery(document).ready(function() {
   });
 
 if (typeof imtables != "undefined" && typeof imtables != null) {
-    // Make sure IM Tables knows about the host CDN (for code generation)
-    imtables.configure("CDN.server", "${WEB_PROPERTIES['head.cdn.location']}");
+    // IM Tables loads its extra resources, and the code generation dialogue points to
+    // imtables itself, below the libraries bundled in this webapp (see vendor/README.md).
+    imtables.configure("CDN.server", window.location.origin + "${pageContext.request.contextPath}/vendor");
+    imtables.configure("CDN.imtables", "/js/intermine/im-tables/2.2.0-beta/");
 }
 
 if ((typeof intermine != 'undefined') && (intermine.Service != null)) {
