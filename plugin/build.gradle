@@ -18,6 +18,64 @@ dependencies {
     implementation localGroovy()
 }
 
+// Tests (src/test/groovy): Gradle TestKit builds of small synthetic mines in build/testkit/mines, which apply the plugin
+// of this build (see docs/BUILDING.md, "Tests of the plugin"). The mines resolve only from a file Maven repository that
+// each test writes, so the tests need no network and no InterMine artifact.
+sourceSets {
+    // Stand-ins for the InterMine Ant tasks that the tests run (org.intermine.bio.task.SOToModelTask), packed into the
+    // fake bio-model jar of the tests
+    testKitTasks
+}
+
+configurations {
+    // the log4j 1 API that the Ant tasks of a mine log through, put on the runtime classpath of the test mines
+    testKitReload4j {
+        canBeConsumed = false
+        transitive = false
+    }
+}
+
+dependencies {
+    testImplementation gradleTestKit()
+    testImplementation libs.junit
+    testKitTasksCompileOnly libs.ant
+    testKitTasksCompileOnly libs.reload4j
+    testKitReload4j libs.reload4j
+}
+
+def testKitTasksJar = tasks.register('testKitTasksJar', Jar) {
+    description = 'Packs the stand-in Ant tasks of the TestKit tests'
+    archiveFileName = 'testkit-tasks.jar'
+    destinationDirectory = layout.buildDirectory.dir('testkit/jars')
+    from sourceSets.testKitTasks.output
+}
+
+// What the java-gradle-plugin plugin would add for GradleRunner.withPluginClasspath(): a
+// plugin-under-test-metadata.properties with the plugin's classes on the test runtime classpath. That plugin is not
+// applied because it also adds a publication and plugin markers, which would change what this build publishes.
+def pluginUnderTestMetadata = tasks.register('pluginUnderTestMetadata', PluginUnderTestMetadata) {
+    outputDirectory = layout.buildDirectory.dir('pluginUnderTestMetadata')
+    pluginClasspath.from(sourceSets.main.output)
+}
+dependencies {
+    testRuntimeOnly files(pluginUnderTestMetadata)
+}
+
+tasks.named('test', Test) {
+    inputs.files(testKitTasksJar).withPropertyName('testKitTasksJar')
+    inputs.files(configurations.testKitReload4j).withPropertyName('testKitReload4j')
+    def testKitDir = layout.buildDirectory.dir('testkit').get().asFile
+    def tasksJar = testKitTasksJar.flatMap { it.archiveFile }
+    def reload4j = configurations.testKitReload4j
+    jvmArgumentProviders.add({
+        ["-Dtestkit.dir=${testKitDir}", "-Dtestkit.tasksJar=${tasksJar.get().asFile}",
+         "-Dtestkit.reload4jJar=${reload4j.singleFile}"]
+    } as CommandLineArgumentProvider)
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}
+
 // Publishing (maven-publish, signing, sources and javadoc jars, `install` alias, Central bundle): see docs/RELEASING.md
 ext.imPublicationDescription = 'InterMine Plugin'
 apply from: "${rootDir}/../config/gradle/publishing.gradle"
