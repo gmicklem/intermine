@@ -75,8 +75,6 @@
     </action>
     <action path="/contextHelp" forward="contextHelp.page">
     </action>
-    <action path="viewInvitation" forward="viewInvitation.page" name="invitationForm" validate="false" type="org.intermine.web.struts.InvitationAction">
-    </action>
 
     <action path="/templateProblems" forward="templateProblems.page"/>
     <action path="/initTemplateProblems" type="org.intermine.web.struts.TemplateProblemsController"/>

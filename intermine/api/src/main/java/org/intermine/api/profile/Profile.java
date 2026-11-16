@@ -916,18 +916,6 @@ public class Profile
     }
 
     /**
-     * Return a single use API key for this profile
-     * @return the single use key
-     */
-    public String getSingleUseKey() {
-        if (isLoggedIn()) {
-            return manager.generateSingleUseKey(this);
-        } else {
-            return "";
-        }
-    }
-
-    /**
      * Return the shared bags for the profile.
      * @return a map from bag name to bag
      */

@@ -1159,16 +1159,6 @@ public class AjaxServices
     }
 
     /**
-     * Return the single use API key for the current profile
-     * @return the single use APi key
-     */
-    public static String getSingleUseKey() {
-        HttpServletRequest request = getRequest();
-        Profile profile = SessionMethods.getProfile(request.getSession());
-        return profile.getSingleUseKey();
-    }
-
-    /**
      * Return the request retrieved from the web contest
      * @return the request
      */
