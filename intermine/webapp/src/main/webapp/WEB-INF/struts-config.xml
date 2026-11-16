@@ -195,8 +195,6 @@
       <forward name="query" redirect="true" path="/query.do"/>
       <forward name="mymine" redirect="true" path="/mymine.do"/>
     </action>
-    <action path="/collapseElement" type="org.intermine.web.struts.CollapseAction">
-    </action>
     <action path="/exportTags" type="org.intermine.web.struts.ExportTagsAction">
     </action>
     <action path="/importTags" name="importTagsForm" type="org.intermine.web.struts.ImportTagsAction">
@@ -428,13 +426,10 @@
     </action>
      <action path="/initApiJava" type="org.intermine.web.struts.ApiJavaController">
     </action>
-    <action path="/initExternalLinks" type="org.intermine.web.struts.ExternalLinksController">
-    </action>
     <action path="/initClassChooser" type="org.intermine.web.struts.ClassChooserController">
     </action>
     <action path="/initSubMenu" type="org.intermine.web.struts.SubMenuController">
     </action>
-    <action path="/initSingleResult" type="org.intermine.web.struts.SingleResultController"/>
     <action path="/initConvertBag" type="org.intermine.web.struts.ConvertBagController"/>
     <action path="/initErrorMessages" type="org.intermine.web.struts.ErrorMessagesController"/>
     <action path="/initTable" name="changeTableSizeForm" type="org.intermine.web.struts.TableController"/>

@@ -214,8 +214,6 @@
   <definition name="bagBuild.tile" path="/bagBuild.jsp" controllerUrl="/initBagBuild.do"/>
   <definition name="table.tile" path="/table.jsp" controllerUrl="/initTable.do"/>
   <definition name="noResults.tile" path="/noResults.jsp"/>
-  <definition name="singleResult.tile" path="/singleResult.jsp"
-              controllerUrl="/initSingleResult.do"/>
   <definition name="aspect.tile" path="/aspect.jsp" controllerUrl="/initAspect.do"/>
   <definition name="webSearchableList.tile" path="/webSearchableList.jsp"
               controllerUrl="/initWebSearchableList.do"/>
@@ -235,8 +233,6 @@
   <definition name="setFavourite.tile" path="setFavourite.jsp" controllerUrl="/initSetFavourite.do" />
   <definition name="precomputeTemplate.tile" path="precompute.jsp"  />
   <definition name="summariseTemplate.tile" path="summarise.jsp" />
-  <definition name="externalLinks.tile" path="/externalLinks.jsp"
-              controllerUrl="/initExternalLinks.do"/>
   <definition name="bagDetails.tile" path="bagDetails.jsp" controllerUrl="/initBagDetails.do" />
   <definition name="bagView.tile" path="bagView.jsp" controllerUrl="/initBagView.do" />
   <definition name="apiJava.tile" path="apiJava.jsp" controllerUrl="/initApiJava.do" />
