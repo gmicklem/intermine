@@ -69,7 +69,18 @@ public final class SemanticMarkupFormatter
     private static final String GENE_TYPE = "Gene";
     private static final String INTERMINE_CITE = "http://www.ncbi.nlm.nih.gov/pubmed/23023984";
     private static final String INTERMINE_REGISTRY = "https://registry.intermine.org/";
+    private static final String CONNECT_TIMEOUT_PROPERTY = "markup.registry.connectTimeout";
+    private static final String READ_TIMEOUT_PROPERTY = "markup.registry.readTimeout";
+    private static final String RETRY_INTERVAL_PROPERTY = "markup.registry.retryInterval";
+    /** Default connect timeout of a registry request, in milliseconds. */
+    static final int DEFAULT_CONNECT_TIMEOUT = 5000;
+    /** Default read timeout of a registry request, in milliseconds. */
+    static final int DEFAULT_READ_TIMEOUT = 10000;
+    /** Default time to leave the registry alone after a failed or empty lookup, in seconds. */
+    static final int DEFAULT_RETRY_INTERVAL = 300;
     private static String baseURI = null;
+    /** System time (ms) before which the registry is not asked again, 0 if it can be asked. */
+    private static volatile long registryRetryAfter = 0;
     private static final Logger LOG = Logger.getLogger(SemanticMarkupFormatter.class);
 
     private SemanticMarkupFormatter() {
@@ -92,15 +103,35 @@ public final class SemanticMarkupFormatter
             }
         }
 
+        if (System.currentTimeMillis() < registryRetryAfter) {
+            return null;
+        }
         String mineURL = new URLGenerator(request).getPermanentBaseURL();
+        Properties webProps = InterMineContext.getWebProperties();
+        int connectTimeout = intProperty(webProps, CONNECT_TIMEOUT_PROPERTY,
+                DEFAULT_CONNECT_TIMEOUT);
+        int readTimeout = intProperty(webProps, READ_TIMEOUT_PROPERTY, DEFAULT_READ_TIMEOUT);
+        long retryAfter = System.currentTimeMillis()
+                + 1000L * intProperty(webProps, RETRY_INTERVAL_PROPERTY, DEFAULT_RETRY_INTERVAL);
         try {
-            imInstance = lookUpInstance(INTERMINE_REGISTRY, mineURL);
+            imInstance = lookUpInstance(INTERMINE_REGISTRY, mineURL, connectTimeout, readTimeout);
             if (imInstance != null && !(request instanceof SessionlessRequest)) {
                 SessionMethods.setBasicInstanceInfo(request.getSession().getServletContext(),
                         imInstance);
             }
+            if (imInstance == null) {
+                // not registered, or the registry answered with an error status
+                registryRetryAfter = retryAfter;
+            } else {
+                registryRetryAfter = 0;
+            }
         } catch (IOException | RuntimeException ex) {
-            LOG.error("Problems connecting to InterMine registry", ex);
+            // Logged once per retry interval, not per page view; the markup is rendered without
+            // the registry data (identifier = the mine URL, no maintainer contact).
+            registryRetryAfter = retryAfter;
+            LOG.warn("Problems connecting to InterMine registry, the markup is built without its"
+                    + " data and the registry is not asked again for "
+                    + (retryAfter - System.currentTimeMillis()) / 1000 + " s: " + ex);
             return null;
         }
         return imInstance;
@@ -116,13 +147,31 @@ public final class SemanticMarkupFormatter
      * @throws IOException if the registry cannot be reached
      */
     static Instance lookUpInstance(String registryURL, String mineURL) throws IOException {
-        String namespaceJson = httpGet(registryURL + "service/namespace?url=" + mineURL);
+        return lookUpInstance(registryURL, mineURL, DEFAULT_CONNECT_TIMEOUT, DEFAULT_READ_TIMEOUT);
+    }
+
+    /**
+     * Like {@link #lookUpInstance(String, String)}, with the given timeouts for each of the two
+     * requests.
+     * @param registryURL the base URL of the registry, with the trailing slash
+     * @param mineURL the permanent base URL of this mine
+     * @param connectTimeout the time allowed to open the connection, in milliseconds
+     * @param readTimeout the time allowed to wait for data on the open connection, in milliseconds
+     * @return the instance, or null if the registry answered either request with another status
+     * than 200 OK
+     * @throws IOException if the registry cannot be reached, or does not answer in time
+     */
+    static Instance lookUpInstance(String registryURL, String mineURL, int connectTimeout,
+            int readTimeout) throws IOException {
+        String namespaceJson = httpGet(registryURL + "service/namespace?url=" + mineURL,
+                connectTimeout, readTimeout);
         if (namespaceJson == null) {
             return null;
         }
         String namespace = new JSONObject(namespaceJson).getString("namespace");
         LOG.info("Namespace is: " + namespace);
-        String instanceJson = httpGet(registryURL + "service/instances/" + namespace);
+        String instanceJson = httpGet(registryURL + "service/instances/" + namespace,
+                connectTimeout, readTimeout);
         if (instanceJson == null) {
             return null;
         }
@@ -130,14 +179,20 @@ public final class SemanticMarkupFormatter
     }
 
     /**
-     * Send a GET request, with the default connection settings of the JDK (no timeouts, redirects
-     * followed).
+     * Send a GET request (redirects followed) with the given timeouts. Without them the JDK waits
+     * for ever on a registry that accepts the connection and never answers, and with it the
+     * request of the page that asked.
      * @param url the URL
+     * @param connectTimeout the connect timeout in milliseconds
+     * @param readTimeout the read timeout in milliseconds
      * @return the body of the response decoded as UTF-8, or null if the status is not 200 OK
      * @throws IOException if the connection fails
      */
-    private static String httpGet(String url) throws IOException {
+    private static String httpGet(String url, int connectTimeout, int readTimeout)
+        throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setConnectTimeout(connectTimeout);
+        connection.setReadTimeout(readTimeout);
         try {
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
                 return null;
@@ -154,6 +209,23 @@ public final class SemanticMarkupFormatter
         } finally {
             connection.disconnect();
         }
+    }
+
+    private static int intProperty(Properties props, String key, int defaultValue) {
+        String value = props == null ? null : props.getProperty(key);
+        if (StringUtils.isBlank(value)) {
+            return defaultValue;
+        }
+        try {
+            int parsed = Integer.parseInt(value.trim());
+            if (parsed > 0) {
+                return parsed;
+            }
+        } catch (NumberFormatException e) {
+            // fall through to the warning
+        }
+        LOG.warn("Ignoring the value '" + value + "' of " + key + ", using " + defaultValue);
+        return defaultValue;
     }
 
     /**

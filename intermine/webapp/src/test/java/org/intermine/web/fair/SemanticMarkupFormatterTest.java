@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,7 @@ public class SemanticMarkupFormatterTest extends TestCase
     private String registryURL;
     private int namespaceStatus = 200;
     private int instanceStatus = 200;
+    private volatile long namespaceDelay = 0;
     private final List<String> requests = new ArrayList<String>();
 
     @Override
@@ -42,6 +44,13 @@ public class SemanticMarkupFormatterTest extends TestCase
             @Override
             public void handle(HttpExchange exchange) throws IOException {
                 requests.add(exchange.getRequestURI().toString());
+                if (namespaceDelay > 0) {
+                    try {
+                        Thread.sleep(namespaceDelay);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
                 reply(exchange, namespaceStatus, "{\"namespace\":\"testmine\","
                         + "\"statusCode\":200}");
             }
@@ -109,5 +118,32 @@ public class SemanticMarkupFormatterTest extends TestCase
         } catch (IOException e) {
             // expected: getMineInstance logs it and returns null
         }
+    }
+
+    public void testRegistryThatNeverAnswers() throws IOException {
+        // accepts the connection and holds the request, as a hung registry does
+        namespaceDelay = 5000;
+        long start = System.currentTimeMillis();
+        try {
+            SemanticMarkupFormatter.lookUpInstance(registryURL, "http://x.example.org/", 1000, 300);
+            fail("expected a SocketTimeoutException");
+        } catch (SocketTimeoutException e) {
+            // expected: getMineInstance logs it and renders the markup without the registry data
+        }
+        long elapsed = System.currentTimeMillis() - start;
+        assertTrue("gave up after " + elapsed + " ms", elapsed < 3000);
+    }
+
+    public void testSlowRegistryWithinTheTimeout() throws IOException {
+        namespaceDelay = 200;
+        Instance instance = SemanticMarkupFormatter.lookUpInstance(registryURL,
+                "http://mine.example.org/testmine", 1000, 3000);
+        assertNotNull(instance);
+        assertEquals("testmine", instance.getNamespace());
+    }
+
+    public void testDefaultTimeouts() {
+        assertEquals(5000, SemanticMarkupFormatter.DEFAULT_CONNECT_TIMEOUT);
+        assertEquals(10000, SemanticMarkupFormatter.DEFAULT_READ_TIMEOUT);
     }
 }
