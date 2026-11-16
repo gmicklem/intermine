@@ -13,7 +13,6 @@
 <html:xhtml/>
 
 <script type="text/javascript" src="js/tablesort.js"></script>
-<script type="text/javascript" src="js/historyBagView.js"></script>
 <link rel="stylesheet" type="text/css" href="css/sorting.css"/>
 <c:set var="type" value="bag"/>
 <c:set var="index" value="0"/>

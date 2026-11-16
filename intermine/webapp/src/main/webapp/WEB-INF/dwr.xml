@@ -18,6 +18,7 @@
       <include method="filterWebSearchables"/>
       <include method="generateApiKey"/>
       <include method="getConstraintLogic"/>
+      <include method="getContent"/>
       <include method="getConvertCountForBag"/>
       <include method="getCustomConverterCounts"/>
       <include method="getFriendlyMineLinks"/>
