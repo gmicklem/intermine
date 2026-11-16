@@ -24,6 +24,5 @@ tasks.test.dependsOn(':intermine-testresources:buildDB')
 dependencies {
     api libs.commons.lang3
     api libs.commons.collections
-    api libs.cglib
     api libs.commons.io
 }

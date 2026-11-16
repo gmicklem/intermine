@@ -40,6 +40,8 @@ dependencies {
     // no imports; the bundled torque jar logs through it (commons-beanutils used to bring it in)
     implementation libs.commons.logging
     implementation(libs.hikaricp) { transitive = false } // conflict with log4j library this JAR needs
+    // generates the classes of objects of more than one model class (DynamicBean); no Byte Buddy type in the API
+    implementation libs.byte.buddy
     api libs.reload4j
     api libs.slf4j.reload4j
 

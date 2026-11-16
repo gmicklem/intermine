@@ -324,10 +324,7 @@ public final class TypeUtil
                             String fieldName = getterName.substring(3);
                             fieldName = StringUtil.reverseCapitalisation(fieldName).intern();
 
-                            // cglib Factory interface has getCallBack() and getCallBacks() methods
                             if ((!"getClass".equals(getter.getName()))
-                                    && (!"getCallback".equals(getter.getName()))
-                                    && (!"getCallbacks".equals(getter.getName()))
                                     && (!"getoBJECT".equals(getter.getName()))
                                     && (!"getFieldValue".equals(getter.getName()))
                                     && (!"getFieldProxy".equals(getter.getName()))

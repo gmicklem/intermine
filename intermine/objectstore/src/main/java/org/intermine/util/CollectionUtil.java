@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import net.sf.cglib.proxy.Factory;
+import org.intermine.model.DynamicObject;
 
 /**
  * Utilities for Collections.
@@ -177,7 +177,7 @@ public final class CollectionUtil
             stack.push(c);
             while (!stack.empty()) {
                 Class<?> d = stack.pop();
-                if ((!Factory.class.equals(d)) && (!all.contains(d))) {
+                if ((!DynamicObject.class.equals(d)) && (!all.contains(d))) {
                     all.add(d);
                     Class<?> superClass = d.getSuperclass();
                     if (superClass != null) {

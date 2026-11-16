@@ -17,7 +17,7 @@ Distributed under the Apache Software License:
 ----------------------------------------------
 Ant build tool                - http://ant.apache.org
 Cactus test framework         - http://jakarta.apache.org/cactus
-cglib Code Generation Library - http://cglib.sourceforge.net
+Byte Buddy                    - https://bytebuddy.net
 Jakarta commons components    - http://jakarta.apache.org/commons
 Jakarta Log4J logging tool    - http://jakarta.apache.org/log4j
 Jakarta Struts                - http://jakarta.apache.org/struts

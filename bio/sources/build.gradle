@@ -40,7 +40,7 @@ subprojects {
     apply plugin: 'biosource-dbmodel'
     apply plugin: "checkstyle"
 
-    // Java 8 bytecode whatever the build JDK; --release 8 and the test JVM options on JDK 9+
+    // Java 8 bytecode whatever the build JDK; --release 8 on JDK 9+
     apply from: "${rootDir}/../../config/gradle/java-target.gradle"
 
     // -------------------------
@@ -131,7 +131,9 @@ subprojects {
         testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion"), classifier: "testClasses"
         testImplementation libs.xmlunit
         testImplementation libs.opencsv // version 2.3 not available in maven
-        testImplementation libs.cglib
+        // the InterMine jars come from build/libs without their POMs, so intermine-objectstore's run-time dependency
+        // (DynamicBean, objects of more than one model class) is declared here
+        testImplementation libs.byte.buddy
         mergeModel libs.reload4j
         mergeModel libs.slf4j.reload4j
         mergeModel group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")

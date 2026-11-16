@@ -18,8 +18,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import net.sf.cglib.proxy.Factory;
-
 import org.intermine.metadata.StringUtil;
 import org.intermine.metadata.TypeUtil;
 import org.intermine.metadata.Util;
@@ -113,9 +111,10 @@ public final class DynamicUtil
                     // No problem - falling back on dynamic
                 }
             }
-            FastPathObject retval = DynamicBean.create(fpclazz, interfaces.toArray(new Class[] {}));
-            classMap.put(classes, retval.getClass());
-            return retval;
+            Class<? extends FastPathObject> dynamicClass = DynamicBean.createClass(fpclazz,
+                    interfaces.toArray(new Class<?>[] {}));
+            classMap.put(classes, dynamicClass);
+            return createObject(dynamicClass);
         }
     }
 
@@ -151,9 +150,6 @@ public final class DynamicUtil
             IllegalArgumentException e2 = new IllegalArgumentException();
             e2.initCause(e);
             throw e2;
-        }
-        if (retval instanceof Factory) {
-            ((Factory) retval).setCallback(0, new DynamicBean());
         }
         return retval;
     }
@@ -193,9 +189,9 @@ public final class DynamicUtil
     }
 
     /**
-     * Return the Class for a set of Class objects. NOTE: Creating an instance of this class is not
-     * trivial: after calling Class.newInstance(), cast the Object to net.sf.cglib.proxy.Factory,
-     * and call interceptor(new org.intermine.util.DynamicBean()) on it.
+     * Return the Class for a set of Class objects. Class.newInstance() on a class of more than one
+     * model class (one that implements org.intermine.model.DynamicObject) gives a working object:
+     * its constructor creates the DynamicBean that holds the fields.
      *
      * @param classes the classes and interfaces to extend/implement
      * @return the Class

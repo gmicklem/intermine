@@ -5,7 +5,7 @@ subprojects {
     apply plugin: "java-library"
     apply plugin: "checkstyle"
 
-    // Java 8 bytecode whatever the build JDK; --release 8 and the test JVM options on JDK 9+
+    // Java 8 bytecode whatever the build JDK; --release 8 on JDK 9+
     apply from: "${rootDir}/../config/gradle/java-target.gradle"
 
     // -------------------------
@@ -54,7 +54,9 @@ subprojects {
         // maven-publish writes either as runtime scope, so the POM would not change (kept to leave the compile classpath alone).
         implementation group: "org.intermine", name: "intermine-webtasks", version: System.getProperty("imVersion")
         testImplementation libs.opencsv
-        testImplementation libs.cglib
+        // the InterMine jars come from build/libs without their POMs, so intermine-objectstore's run-time dependency
+        // (DynamicBean, objects of more than one model class) is declared here
+        testImplementation libs.byte.buddy
         testImplementation libs.junit
         testImplementation libs.xmlunit
     }
