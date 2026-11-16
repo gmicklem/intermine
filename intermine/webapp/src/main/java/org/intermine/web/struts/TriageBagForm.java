@@ -13,6 +13,9 @@ package org.intermine.web.struts;
 /** @author Alex Kalderimis **/
 public class TriageBagForm extends ModifyBagForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     protected String newBagType;
 
     /**

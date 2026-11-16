@@ -21,6 +21,9 @@ import org.apache.struts.action.ActionMapping;
  */
 public class ModifySuperUserForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     protected String[] superUsers;
 
     /**

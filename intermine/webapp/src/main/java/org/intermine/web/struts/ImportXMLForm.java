@@ -22,6 +22,9 @@ import org.apache.struts.validator.ValidatorForm;
  */
 public class ImportXMLForm extends ValidatorForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     protected String xml;
     protected FormFile formFile;
 

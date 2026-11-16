@@ -22,6 +22,8 @@ import org.apache.struts.action.ActionMapping;
 public class FindInListForm extends ActionForm
 {
 
+    private static final long serialVersionUID = 1L;
+
     private String textToFind;
     private String bagName;
 

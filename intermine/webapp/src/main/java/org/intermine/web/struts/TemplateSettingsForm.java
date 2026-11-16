@@ -28,6 +28,9 @@ import org.intermine.web.logic.session.SessionMethods;
  */
 public class TemplateSettingsForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     private String description = "";
     private String name = "";
     private String title = "";

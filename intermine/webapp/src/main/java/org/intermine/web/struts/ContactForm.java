@@ -30,6 +30,9 @@ import org.intermine.web.logic.session.SessionMethods;
  */
 public class ContactForm extends ValidatorForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     private String name;
     private String monkey; // email address
     private String subject;
