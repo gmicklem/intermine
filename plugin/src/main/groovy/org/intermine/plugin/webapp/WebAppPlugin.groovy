@@ -2,7 +2,11 @@ package org.intermine.plugin.webapp
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.bundling.War
 import org.intermine.plugin.TaskConstants
 import org.intermine.plugin.dbmodel.DBModelPlugin
 import org.intermine.plugin.dbmodel.DBModelUtils
@@ -232,6 +236,49 @@ class WebAppPlugin implements Plugin<Project> {
                         username: superUser)
             }
         }
+
+        // The mine's own War tasks (`war`, and the `warWebApp` that mines of this line compose their war with) are
+        // configured once the mine's build files have run, so that the classpath that the mine set is the one filtered.
+        project.afterEvaluate {
+            boolean[] warned = [false] // `war` and `warWebApp` would both print it
+            project.tasks.withType(War).configureEach { War war ->
+                // A mine of the 5.x line declares compile('ant:ant:1.6.5'): a 2005 Ant under the legacy groupId `ant`,
+                // which Gradle takes for a different library from org.apache.ant:ant:1.10.x that InterMine brings, so
+                // both jars would go to WEB-INF/lib. Nothing at run time needs it (the classes of the old jar are in the
+                // new one). It stays on the mine's other classpaths (the Ant tasks of the build); the war leaves it out.
+                FileCollection legacyAnt = legacyAntJars(project)
+                if (war.classpath != null) {
+                    war.classpath = war.classpath.minus(legacyAnt)
+                }
+                war.doFirst {
+                    if (!warned[0] && !legacyAnt.empty) {
+                        warned[0] = true
+                        project.logger.warn("The war leaves out ${legacyAnt.files*.name.join(', ')} (legacy groupId 'ant', the " +
+                                "org.apache.ant:ant jar of InterMine is in the war): delete the ant:ant:1.6.5 dependency " +
+                                "from the build files of the mine (docs/UPGRADING-build.md)")
+                    }
+                }
+                // A zip entry that the war gets twice (a jar that the mine's classpath and the unpacked bio-webapp both
+                // carry, a file of the mine that overrides one of bio-webapp's) is written once: the first one wins.
+                // The order of the entries of a War task is: WEB-INF/lib from the classpath, the mine's own
+                // src/main/webapp (the war plugin adds it first), then what the mine's build file adds with from(), that
+                // is build/explodedWebApp. The mine's copyWebappContent has already copied src/main/webapp over the
+                // unpacked bio-webapp in that directory (unwarBioWebApp runs under `war`, copyWebappContent just before
+                // warWebApp), so the mine's file is the one in the war. A mine that chose a strategy of its own keeps it.
+                if (war.duplicatesStrategy == DuplicatesStrategy.INCLUDE) {
+                    war.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+                }
+            }
+        }
+    }
+
+    /** The jars of the legacy `ant:ant` coordinate (pre-Apache groupId) on the mine's runtime classpath, if any. */
+    static FileCollection legacyAntJars(Project project) {
+        project.configurations.getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME).incoming.artifactView { view ->
+            view.componentFilter { id ->
+                id instanceof ModuleComponentIdentifier && id.group == 'ant' && id.module == 'ant'
+            }
+        }.files
     }
 
     static File explodedWebApp(Project project) {
