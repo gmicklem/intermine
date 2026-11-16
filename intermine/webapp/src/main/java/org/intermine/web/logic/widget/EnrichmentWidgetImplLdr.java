@@ -237,7 +237,9 @@ public class EnrichmentWidgetImplLdr extends WidgetLdr
         if (!isFilterConstraint && !isListConstraint) {
             queryValue = buildQueryValue(pc);
         }
-        if (isFilterConstraint && !"All".equalsIgnoreCase(filter)) {
+        // A null filter means the list has no value to filter by (for instance none of its
+        // objects has an organism name): leave the constraint out rather than fail.
+        if (isFilterConstraint && filter != null && !"All".equalsIgnoreCase(filter)) {
             queryValue = new QueryValue(filter);
         }
 

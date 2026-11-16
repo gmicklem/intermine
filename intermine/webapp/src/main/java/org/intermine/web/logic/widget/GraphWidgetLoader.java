@@ -231,7 +231,9 @@ public class GraphWidgetLoader extends WidgetLdr implements DataSetLdr
         if (!isFilterConstraint) {
             queryValue = buildQueryValue(pc);
         }
-        if (isFilterConstraint && !"All".equalsIgnoreCase(filter)) {
+        // A null filter means the list has no value to filter by (for instance none of its
+        // objects has an organism name): leave the constraint out rather than fail.
+        if (isFilterConstraint && filter != null && !"All".equalsIgnoreCase(filter)) {
             queryValue = new QueryValue(filter);
         }
         for (int index = 0; index < pathConstraintSplitted.length; index++) {
