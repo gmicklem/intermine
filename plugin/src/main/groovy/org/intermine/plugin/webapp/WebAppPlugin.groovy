@@ -152,6 +152,7 @@ class WebAppPlugin implements Plugin<Project> {
                     ant.taskdef(name: "summarizeObjectStore", classname: "org.intermine.task.SummariseObjectStoreTask") {
                         classpath {
                             dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                            pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                             dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
@@ -186,6 +187,7 @@ class WebAppPlugin implements Plugin<Project> {
                 ant.taskdef(name: "loadTemplates", classname: "org.intermine.web.task.LoadDefaultTemplatesTask") {
                     classpath {
                         dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                        pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
@@ -207,6 +209,7 @@ class WebAppPlugin implements Plugin<Project> {
                 ant.taskdef(name: "dropPrecomputedTables", classname: "org.intermine.task.DropPrecomputedTablesTask") {
                     classpath {
                         dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                        pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
@@ -225,6 +228,7 @@ class WebAppPlugin implements Plugin<Project> {
                 ant.taskdef(name: "precomputeQueries", classname: "org.intermine.task.PrecomputeTask") {
                     classpath {
                         dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                        pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
@@ -250,6 +254,7 @@ class WebAppPlugin implements Plugin<Project> {
                 ant.taskdef(name: "precomputeTemplates", classname: "org.intermine.web.task.PrecomputeTemplatesTask") {
                     classpath {
                         dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                        pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }

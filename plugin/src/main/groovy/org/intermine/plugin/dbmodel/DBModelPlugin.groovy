@@ -218,6 +218,7 @@ class DBModelPlugin implements Plugin<Project> {
                     ant.taskdef(name: "createSoModel", classname: "org.intermine.bio.task.SOToModelTask") {
                         classpath {
                             dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                            pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                             dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
@@ -226,6 +227,7 @@ class DBModelPlugin implements Plugin<Project> {
                     ant.taskdef(name: "createSoModel", classname: "org.intermine.bio.task.SOToModelTask") {
                         classpath {
                             pathelement(path: project.configurations.getByName("bioModelForSOOnly").asPath)
+                            pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
                     }
@@ -335,6 +337,7 @@ class DBModelPlugin implements Plugin<Project> {
                 ant.taskdef(name: "acceptanceTest", classname: "org.intermine.task.AcceptanceTestTask") {
                     classpath {
                         dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                        pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
@@ -356,6 +359,7 @@ class DBModelPlugin implements Plugin<Project> {
                     ant.taskdef(name: "runIQLQuery", classname: "org.intermine.task.RunIqlQueryTask") {
                         classpath {
                             dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                            pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                             dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                             pathelement(path: project.configurations.getByName(IM_ANTLR).asPath)
@@ -377,6 +381,7 @@ class DBModelPlugin implements Plugin<Project> {
                 ant.taskdef(name: "generateUpdateTriggers", classname: "org.intermine.task.GenerateUpdateTriggersTask") {
                     classpath {
                         dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                        pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }

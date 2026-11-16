@@ -107,6 +107,7 @@ class PostProcessPlugin implements Plugin<Project> {
                                 ant.taskdef(name: "sourcePostProcess", classname: "org.intermine.task.PostProcessorTask") {
                                     classpath {
                                         dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                                        pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                                         pathelement(path: project.configurations.getByName("integrateSource").asPath)
@@ -126,6 +127,7 @@ class PostProcessPlugin implements Plugin<Project> {
                             ant.taskdef(name: "corePostProcess", classname: "org.intermine.task.PostProcessorTask") {
                                 classpath {
                                 dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                                pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
                                 dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                                 pathelement(path: project.configurations.getByName("postProcesses").asPath)
