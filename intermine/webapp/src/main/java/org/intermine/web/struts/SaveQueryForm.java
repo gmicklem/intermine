@@ -33,6 +33,9 @@ import org.intermine.web.logic.session.SessionMethods;
  */
 public class SaveQueryForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     protected String queryName = "";
 
     /**

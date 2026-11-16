@@ -28,6 +28,9 @@ import org.intermine.web.logic.session.SessionMethods;
  */
 public class LoginForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     protected String username, password, returnToString;
 
     /**

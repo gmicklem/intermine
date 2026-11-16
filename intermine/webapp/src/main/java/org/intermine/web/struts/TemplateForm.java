@@ -25,6 +25,9 @@ import org.apache.struts.action.ActionMapping;
  */
 public class TemplateForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     private Map<String, Object> attributeOps;
     private Map<String, Object> attributeValues;
     private Map<String, String[]> multiValues;

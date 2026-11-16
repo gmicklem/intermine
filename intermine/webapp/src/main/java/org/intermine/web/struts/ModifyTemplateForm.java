@@ -24,6 +24,9 @@ import org.apache.struts.action.ActionMessages;
  */
 public class ModifyTemplateForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     protected String[] selected;
     protected String pageName; // can modify template from templates and mymine pages
     protected String templateButton;
