@@ -10,6 +10,7 @@ package org.intermine.api.profile;
  *
  */
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -59,6 +60,7 @@ import org.intermine.util.DynamicUtil;
 public class TagManager
 {
     private static final Logger LOG = Logger.getLogger(TagManager.class);
+    private static final int MAX_STORE_ATTEMPTS = 3;
     protected ObjectStoreWriter osWriter;
     private CacheMap<MultiKey, List<Tag>> tagCache = null;
 
@@ -642,22 +644,59 @@ public class TagManager
             throw new IllegalArgumentException("type cannot be null");
         }
 
-        UserProfile userProfile = getUserProfile(username);
-        Tag tag = (Tag) DynamicUtil.createObject(Collections.singleton(Tag.class));
-        tag.setTagName(tagName);
-        tag.setObjectIdentifier(objectIdentifier);
-        tag.setType(type);
-        tag.setUserProfile(userProfile);
-
-        CacheMap<MultiKey, List<Tag>> cacheWas = tagCache;
-        try {
-            tagCache = null;
-            osWriter.store(tag);
-            return tag;
-        } catch (ObjectStoreException e) {
-            tagCache = cacheWas;
-            throw new RuntimeException("cannot set tag", e);
+        // Adding a tag is idempotent. This method is synchronized and the userprofile writer
+        // serialises its connection, so concurrent requests tagging the same object with the same
+        // name (BlueGenes sends several tag requests at once) find the tag the first request
+        // stored here instead of storing a duplicate.
+        List<Tag> existing = getTags(tagName, objectIdentifier, type, username);
+        if (!existing.isEmpty()) {
+            return existing.get(0);
         }
+
+        UserProfile userProfile = getUserProfile(username);
+        CacheMap<MultiKey, List<Tag>> cacheWas = tagCache;
+        tagCache = null;
+        for (int attempt = 1; attempt <= MAX_STORE_ATTEMPTS; attempt++) {
+            Tag tag = (Tag) DynamicUtil.createObject(Collections.singleton(Tag.class));
+            tag.setTagName(tagName);
+            tag.setObjectIdentifier(objectIdentifier);
+            tag.setType(type);
+            tag.setUserProfile(userProfile);
+            try {
+                osWriter.store(tag);
+                return tag;
+            } catch (ObjectStoreException e) {
+                // A serial number handed out by the writer can clash with a row that is already
+                // in the tag table (tag_pkey), for example when the 'serial' sequence of the
+                // userprofile database lags behind the ids of rows loaded into it. A fresh Tag
+                // makes the writer allocate another id, so retry a few times before giving up.
+                if (attempt < MAX_STORE_ATTEMPTS && isDuplicateKey(e)) {
+                    LOG.warn("Duplicate key storing tag " + tagName + ", retrying: " + e);
+                    continue;
+                }
+                tagCache = cacheWas;
+                throw new RuntimeException("cannot set tag", e);
+            }
+        }
+        // not reached: the last attempt returns or throws
+        tagCache = cacheWas;
+        throw new IllegalStateException("cannot set tag " + tagName);
+    }
+
+    private static boolean isDuplicateKey(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof SQLException && "23505".equals(((SQLException) t).getSQLState())) {
+                return true;
+            }
+            for (SQLException n = (t instanceof SQLException)
+                    ? ((SQLException) t).getNextException() : null; n != null;
+                    n = n.getNextException()) {
+                if ("23505".equals(n.getSQLState())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static void checkTagType(String type) {
