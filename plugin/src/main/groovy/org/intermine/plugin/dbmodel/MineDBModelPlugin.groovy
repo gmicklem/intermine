@@ -23,16 +23,25 @@ class MineDBModelPlugin implements Plugin<Project> {
         project.tasks.register('mergeModels') {
             description = "Merges defferent source model files into an intermine XML model"
             onlyIf { DBModelPlugin.regenerateModel(project) }
-            // Merges, in place, into the genomic model copied by copyGenomicModel; the additions come
-            // from the mine's resources, the bio-source jars (mergeSource, resolved only when this
-            // runs) and so_additions.xml (createSoModel).
+            // Copies the genomic model of bio-model (bioModel) into its own directory, build/im/mergeModels, and merges
+            // into it the additions of the mine's resources, of the bio-source jars (mergeSource, resolved only when
+            // this runs) and so_additions.xml (createSoModel). It used to merge in place into the copy that
+            // copyGenomicModel left in build/resources/main, processResources' output.
             inputs.files(DBModelUtils.processedResources(project))
-            inputs.files(DBModelUtils.resource(project, 'copyGenomicModel') { config.modelName + "_model.xml" })
+            inputs.files({ DBModelPlugin.modelArchive(project) })
             inputs.files(project.files({ soAdditionsFile(project, dbModelConfig) ?: [] }).builtBy('createSoModel'))
+            inputs.files({ DBModelPlugin.projectXml(project).exists() ? [DBModelPlugin.projectXml(project)] : [] })
+            inputs.property('modelName', { config.modelName ?: '' })
+            inputs.property('extraModelsStart', { config.extraModelsStart ?: '' })
+            inputs.property('extraModelsEnd', { config.extraModelsEnd ?: '' })
+            outputs.dir(DBModelUtils.taskDir(project, name))
 
             doLast {
                 String projectXmlFilePath = DBModelPlugin.projectXml(project).absolutePath
-                String modelFilePath = DBModelUtils.resourcesDir(project) + File.separator + config.modelName + "_model.xml"
+                String modelFilePath = DBModelUtils.cleanTaskDir(project, name).absolutePath + File.separator +
+                        config.modelName + "_model.xml"
+                DBModelUtils.copyFromArchive(project, DBModelPlugin.modelArchive(project).singleFile, "genomic_model.xml",
+                        modelFilePath)
                 def ant = new AntBuilder()
                 // MergeSourceModelsTask must be loaded by Ant's class loader, with the additions files on
                 // its classpath, so the plugin's own jar goes on the taskdef classpath.
@@ -41,6 +50,7 @@ class MineDBModelPlugin implements Plugin<Project> {
                         pathelement(path: project.configurations.getByName(IM_PLUGIN).asPath)
                         pathelement(path: project.configurations.getByName("mergeSource").asPath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
+                        dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                     }
                 }
@@ -50,6 +60,10 @@ class MineDBModelPlugin implements Plugin<Project> {
                         extraModelsEnd: config.extraModelsEnd)
             }
         }
+        // The merged model is part of the mine's dbmodel jar (the webapp reads it from there): its directory is a
+        // main output, so the jar takes it from the task that writes it.
+        DBModelUtils.sourceSets(project).getByName("main").output.dir(
+                [builtBy: 'mergeModels'], { DBModelUtils.taskDir(project, 'mergeModels') })
     }
 
     /**

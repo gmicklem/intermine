@@ -27,7 +27,9 @@ processResources {
     from('.') { include ("*.properties")}
 }
 
-mergeModels {   
+// the plugin's mergeModels writes the merged model into build/im/mergeModels (its output directory); this merges the
+// FlyBase additions into it too
+mergeModels {
     doLast {
         ant.taskdef(name: "mergeBioSourceModel", classname: "org.intermine.task.ModelMergerTask") {
             classpath {
@@ -35,8 +37,7 @@ mergeModels {
                 dirset(dir: layout.buildDirectory.get().asFile)
             }
         }
-        ant.mergeBioSourceModel(inputModelFile: "$sourceSets.main.output.resourcesDir/genomic_model.xml",
-                additionsFile: "flybase-chado-db_additions.xml",
-                outputFile: "$sourceSets.main.output.resourcesDir/genomic_model.xml")
+        def model = layout.buildDirectory.file('im/mergeModels/genomic_model.xml').get().asFile
+        ant.mergeBioSourceModel(inputModelFile: model, additionsFile: "flybase-chado-db_additions.xml", outputFile: model)
     }
 }

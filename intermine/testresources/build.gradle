@@ -216,7 +216,11 @@ void createTables(osname, model) {
             dirset(dir: 'src/test/resources/') // testmodel classes and schemas
         }
     }
-    ant.buildDBUnittest(osname: "os.$osname", model: "$model", schemafile:"os.$osname-schema.xml", tempDir: layout.buildDirectory.dir("tmp").get().asFile.path)
+    // BuildDbTask empties its tempDir first: not build/tmp itself, which holds Gradle's own task state
+    // (build/tmp/compileTestJava, ...), or compileTestJava re-runs after every buildDB
+    def tempDir = layout.buildDirectory.dir("tmp/intermine-buildDB").get().asFile
+    tempDir.mkdirs() // it must exist
+    ant.buildDBUnittest(osname: "os.$osname", model: "$model", schemafile:"os.$osname-schema.xml", tempDir: tempDir.path)
     ant.taskdef(name: 'insertModel', classname: 'org.intermine.task.StoreMetadataTask') {
         classpath {
             pathelement(path: configurations.testRuntimeClasspath.asPath)

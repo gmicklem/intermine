@@ -79,7 +79,7 @@ class PostProcessPlugin implements Plugin<Project> {
         project.tasks.register('postProcess') {
             group = TaskConstants.TASK_GROUP
             description = "Post processes. Optional input parameters: process (process name) and source(if process=do-sources). E.g. postprocess -Pprocess=create-references"
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
 
             doLast{
                 PostProcessSpec spec = spec(project)
@@ -106,6 +106,7 @@ class PostProcessPlugin implements Plugin<Project> {
                                 ant.project.setProperty("source.name", sourceName)
                                 ant.taskdef(name: "sourcePostProcess", classname: "org.intermine.task.PostProcessorTask") {
                                     classpath {
+                                        dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                                         pathelement(path: project.configurations.getByName("integrateSource").asPath)
@@ -124,6 +125,7 @@ class PostProcessPlugin implements Plugin<Project> {
                             String postprocessorClassName = bioSourceProperties.getPostProcesserClassName(processName)
                             ant.taskdef(name: "corePostProcess", classname: "org.intermine.task.PostProcessorTask") {
                                 classpath {
+                                dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                                 dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                                 pathelement(path: project.configurations.getByName("postProcesses").asPath)

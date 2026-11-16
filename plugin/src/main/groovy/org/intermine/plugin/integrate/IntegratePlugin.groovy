@@ -40,7 +40,7 @@ class IntegratePlugin implements Plugin<Project> {
         // which depended on jar, copyMineProperties and copyDefaultInterMineProperties), and the
         // one-off preparation it needs before it runs.
         Closure integrates = { Task task ->
-            DBModelUtils.readsRuntime(task, DBModelUtils.mineProperties())
+            DBModelUtils.readsRuntime(task, DBModelUtils.mineProperties(project))
             task.doFirst { spec(project).prepare() }
         }
 

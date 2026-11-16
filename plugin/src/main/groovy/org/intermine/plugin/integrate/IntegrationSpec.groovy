@@ -93,8 +93,10 @@ class IntegrationSpec {
         prepared = true
         sourceNames.each { sourceName ->
             if ("so".equals(intermineProject.sources.get(sourceName).type)) {
+                // into build/im/integrate, on the Ant tasks' classpath (dirset of build/); not into build/resources/main,
+                // where the dbmodel jar would pick it up
                 DBModelUtils.copyFromArchive(project, project.configurations.getByName("bioCore").singleFile, "so.obo",
-                        DBModelUtils.resourcesDir(project) + File.separator + "so.obo")
+                        DBModelUtils.taskDir(project, "integrate").absolutePath + File.separator + "so.obo")
             }
         }
     }

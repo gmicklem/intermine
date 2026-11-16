@@ -195,6 +195,7 @@ This repository's `bio/sources` build publishes 44 `bio-source-*` modules. The o
    unzip -Z1 $W | grep '^WEB-INF/lib/' | sed -E 's#WEB-INF/lib/##; s/-[0-9][0-9A-Za-z._-]*\.jar$//' | sort | uniq -d   # nothing
    unzip -Z1 $W | grep -E '\.war$'                                                                                    # nothing
    unzip -p $W WEB-INF/lib/dbmodel.jar > /tmp/dbmodel.jar; unzip -Z1 /tmp/dbmodel.jar | grep -x intermine.properties # nothing
+   unzip -Z1 /tmp/dbmodel.jar | grep -Ex 'default.intermine.properties|userprofile_model.xml|so.obo'                  # nothing
    unzip -Z1 $W | grep -E '^WEB-INF/(web.xml|struts-config.xml|tiles-defs.xml|aspects.xml|webconfig-model.xml)$'       # all five
    ```
 
@@ -203,7 +204,7 @@ This repository's `bio/sources` build publishes 44 `bio-source-*` modules. The o
    unzip -p $W dataCategories.jsp | cmp - webapp/src/main/webapp/dataCategories.jsp   # no output: the mine's own file won over bio-webapp's
    ```
 
-   Both converted mines gave 132 jars in `WEB-INF/lib` (HumanMine's war is 68.5 MB with JDK 17 and JDK 8, FlyMine's 68.4 MB; the 134 of the first conversions included `stringtree-json` and `libreadline-java`, which InterMine no longer ships), no output from the first three commands, and the same file list whether the war was built straight from a clean tree, after `buildDB`, or again after `rm -rf webapp/build`. `dbmodel.jar` has no `intermine.properties` because the plugin excludes it from the `jar` task of every project that applies one of its dbmodel plugins (you need no exclude of your own); `WEB-INF/classes/intermine.properties` and `WEB-INF/web.properties` in the war do contain the database credentials, as before.
+   Both converted mines gave 132 jars in `WEB-INF/lib` (HumanMine's war is 68.5 MB with JDK 17 and JDK 8, FlyMine's 68.4 MB; the 134 of the first conversions included `stringtree-json` and `libreadline-java`, which InterMine no longer ships), no output from the first three commands (and none from the fourth, which came with the `build/im` layout of the plugin, see [BUILDING.md](BUILDING.md); checked on HumanMine), and the same file list whether the war was built straight from a clean tree, after `buildDB`, or again after `rm -rf webapp/build`. `dbmodel.jar` has no `intermine.properties` because the plugin excludes it from the `jar` task of every project that applies one of its dbmodel plugins (you need no exclude of your own); `WEB-INF/classes/intermine.properties` and `WEB-INF/web.properties` in the war do contain the database credentials, as before.
 
 ### Worked example: HumanMine
 

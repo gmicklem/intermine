@@ -8,6 +8,7 @@ import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.WarPlugin
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Sync
 import org.gradle.api.tasks.bundling.War
 import org.intermine.plugin.TaskConstants
@@ -38,14 +39,21 @@ class WebAppPlugin implements Plugin<Project> {
             [group: "org.intermine", name: "bio-webapp", version: System.getProperty("bioVersion"), transitive: false, ext: "war"]
         }
 
+        // default.intermine.properties belongs in the war (WEB-INF/classes): the task writes it into a directory of its
+        // own, its declared output, and processResources takes it from there, so that it is in the resources output
+        // whatever ran before (it used to be copied into build/resources/main after processResources).
         project.tasks.register('copyDefaultInterMineProperties') {
-            description = "Copies default.intermine.properties file into resources output"
-            // ordering only: it writes into processResources' output directory.
-            mustRunAfter 'processResources'
+            description = "Copies the default.intermine.properties file (defaultInterminePropertiesFile) for the resources output"
+            inputs.files({ project.configurations.getByName("commonResources") })
+            inputs.property('defaultInterminePropertiesFile', { config.defaultInterminePropertiesFile ?: '' })
+            outputs.dir(DBModelUtils.taskDir(project, name))
 
             doLast {
-                dbUtils.copyDefaultPropertiesFile(config.defaultInterminePropertiesFile)
+                dbUtils.copyDefaultPropertiesFile(config.defaultInterminePropertiesFile, DBModelUtils.cleanTaskDir(project, name))
             }
+        }
+        project.tasks.named('processResources', Copy) { Copy copy ->
+            copy.from(project.tasks.named('copyDefaultInterMineProperties'))
         }
 
         project.tasks.register('mergeProperties') {
@@ -132,7 +140,7 @@ class WebAppPlugin implements Plugin<Project> {
         // We have no guarantee there will be a database. Hence the try/catch
         project.tasks.register('summariseObjectStore') {
             description = "Summarise ObjectStore into objectstoresummary.properties file"
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
             // the war takes the file from here. It depends on the database, which is no input, so the task always runs
             // (and the file may be missing when there is no database yet)
             outputs.file({ config.propsDir + File.separator + "objectstoresummary.properties" })
@@ -143,6 +151,7 @@ class WebAppPlugin implements Plugin<Project> {
                     def ant = new AntBuilder()
                     ant.taskdef(name: "summarizeObjectStore", classname: "org.intermine.task.SummariseObjectStoreTask") {
                         classpath {
+                            dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                             dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
@@ -160,7 +169,7 @@ class WebAppPlugin implements Plugin<Project> {
             description = "Loads default template queries from an XML file into a given user profile"
             // the runtime classpath builds the dbmodel jar (in case a clean has been run), which holds
             // class_keys.properties
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
             // lifecycle (kept): the templates go into the userprofile database createUserDB creates.
             dependsOn ':dbmodel:createUserDB'
 
@@ -176,6 +185,7 @@ class WebAppPlugin implements Plugin<Project> {
 
                 ant.taskdef(name: "loadTemplates", classname: "org.intermine.web.task.LoadDefaultTemplatesTask") {
                     classpath {
+                        dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
@@ -190,12 +200,13 @@ class WebAppPlugin implements Plugin<Project> {
         project.tasks.register('dropPrecomputedTables') {
             group = TaskConstants.TASK_GROUP
             description = "Drops all precomputed tables from the database"
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
 
             doLast {
                 def ant = new AntBuilder()
                 ant.taskdef(name: "dropPrecomputedTables", classname: "org.intermine.task.DropPrecomputedTablesTask") {
                     classpath {
+                        dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
@@ -207,12 +218,13 @@ class WebAppPlugin implements Plugin<Project> {
         project.tasks.register('precomputeQueries') {
             group = TaskConstants.TASK_GROUP
             description = "Creates temporary tables to make querying faster -- uses 'genomic_precompute.properties'"
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
 
             doLast {
                 def ant = new AntBuilder()
                 ant.taskdef(name: "precomputeQueries", classname: "org.intermine.task.PrecomputeTask") {
                     classpath {
+                        dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
@@ -225,7 +237,7 @@ class WebAppPlugin implements Plugin<Project> {
         project.tasks.register('precomputeTemplates') {
             group = TaskConstants.TASK_GROUP
             description = "Creates temporary tables to make querying faster -- uses the results of your template queries"
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
 
             doLast {
                 def ant = new AntBuilder()
@@ -237,6 +249,7 @@ class WebAppPlugin implements Plugin<Project> {
 
                 ant.taskdef(name: "precomputeTemplates", classname: "org.intermine.web.task.PrecomputeTemplatesTask") {
                     classpath {
+                        dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }

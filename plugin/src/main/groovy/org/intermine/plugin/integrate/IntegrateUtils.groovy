@@ -31,6 +31,7 @@ class IntegrateUtils {
 
             ant.taskdef(name: 'preRetrieve', classname: bioSourceProperties.getPreRetrieveClassName(sourceName)) {
                 classpath {
+                    dirset(dir: DBModelUtils.imDir(gradleProject).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                     dirset(dir: DBModelUtils.buildDirectory(gradleProject).absolutePath)
                     pathelement(path: DBModelUtils.antClasspath(gradleProject).asPath)
                     pathelement(path: gradleProject.configurations.getByName("integrateSource").asPath)
@@ -73,6 +74,7 @@ class IntegrateUtils {
         }
         ant.taskdef(name: "convertFile", classname: "org.intermine.task.FileConverterTask") {
             classpath {
+                dirset(dir: DBModelUtils.imDir(gradleProject).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: DBModelUtils.buildDirectory(gradleProject).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(gradleProject).asPath)
                 pathelement(path: gradleProject.configurations.getByName("integrateSource").asPath)
@@ -99,6 +101,7 @@ class IntegrateUtils {
         }
         ant.taskdef(name: "convertDB", classname: "org.intermine.task.DBConverterTask") {
             classpath {
+                dirset(dir: DBModelUtils.imDir(gradleProject).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: DBModelUtils.buildDirectory(gradleProject).absolutePath)
                 dirset(dir: buildResourcesMainDir)//to read default.intermine.properties
                 pathelement(path: DBModelUtils.antClasspath(gradleProject).asPath)
@@ -120,6 +123,7 @@ class IntegrateUtils {
         }
         ant.taskdef(name: "convertDir", classname: "org.intermine.task.DirectoryConverterTask") {
             classpath {
+                dirset(dir: DBModelUtils.imDir(gradleProject).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: DBModelUtils.buildDirectory(gradleProject).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(gradleProject).asPath)
                 pathelement(path: gradleProject.configurations.getByName("integrateSource").asPath)
@@ -138,6 +142,7 @@ class IntegrateUtils {
         }
         ant.taskdef(name: "insertXMLData", classname: "org.intermine.dataloader.XmlDataLoaderTask") {
             classpath {
+                dirset(dir: DBModelUtils.imDir(gradleProject).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: DBModelUtils.buildDirectory(gradleProject).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(gradleProject).asPath)
                 pathelement(path: gradleProject.configurations.getByName("integrateSource").asPath)
@@ -171,6 +176,7 @@ class IntegrateUtils {
         }
         ant.taskdef(name: "convertFullXMLFile", classname: "org.intermine.task.FullXmlConverterTask") {
             classpath {
+                dirset(dir: DBModelUtils.imDir(gradleProject).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: DBModelUtils.buildDirectory(gradleProject).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(gradleProject).asPath)
                 pathelement(path: gradleProject.configurations.getByName("integrateSource").asPath)
@@ -210,6 +216,7 @@ class IntegrateUtils {
 
         ant.taskdef(name: "convertGFF3File", classname: "org.intermine.bio.task.GFF3ConverterTask") {
             classpath {
+                dirset(dir: DBModelUtils.imDir(gradleProject).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: DBModelUtils.buildDirectory(gradleProject).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(gradleProject).asPath)
                 pathelement(path: gradleProject.configurations.getByName("integrateSource").asPath)
@@ -259,6 +266,7 @@ class IntegrateUtils {
 
         ant.taskdef(name: "convertOBO", classname: "org.intermine.bio.task.OboConverterTask") {
             classpath {
+                dirset(dir: DBModelUtils.imDir(gradleProject).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: DBModelUtils.buildDirectory(gradleProject).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(gradleProject).asPath)
                 pathelement(path: gradleProject.configurations.getByName("integrateSource").asPath)
@@ -296,6 +304,7 @@ class IntegrateUtils {
         }
         ant.taskdef(name: "dataLoad", classname: classname) {
             classpath {
+                dirset(dir: DBModelUtils.imDir(gradleProject).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: DBModelUtils.buildDirectory(gradleProject).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(gradleProject).asPath)
                 pathelement(path: gradleProject.configurations.getByName("integrateSource").asPath)

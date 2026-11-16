@@ -80,45 +80,50 @@ class DBModelPlugin implements Plugin<Project> {
         // which is published or copied into a war.
         project.tasks.named('jar').configure { exclude 'intermine.properties' }
 
-        // The model tasks write into build/resources/main, which processResources also writes:
-        // they must run after it so that processResources does not overwrite their files. That is
-        // ordering only; processResources is scheduled by whatever reads the files. These tasks do
-        // not declare outputs: their files share processResources' directory, and the model file
-        // is merged in place by mergeModels. They are cheap, and the model tasks are skipped once
-        // build/gen exists. Consumers name the file they read (DBModelUtils.resource), which
-        // schedules the producer.
-        String afterResources = 'processResources'
-
+        // The files below are for the plugin's own tasks and the tests, not for the jar: each task writes them into
+        // a directory of its own (DBModelUtils.taskDir, build/im/<task>), which it declares as its output, so that it is
+        // up to date when its inputs have not changed. build/resources/main, which the jar packs and javadoc reads,
+        // holds what processResources puts there and nothing else. The Ant tasks find the directories on their
+        // classpath (DBModelUtils.imDir); the tests through testReads; every other consumer names the file it reads
+        // (DBModelUtils.output), which schedules the producer.
         project.tasks.register('copyDefaultInterMineProperties') {
-            description = "Copies default.intermine.integrate.properties file into resources output"
-            mustRunAfter afterResources
+            description = "Copies the default.intermine.properties file (defaultInterminePropertiesFile) into build/im, for the tests and the Ant tasks"
+            inputs.files({ project.configurations.getByName("commonResources") })
+            inputs.property('defaultInterminePropertiesFile', { config.defaultInterminePropertiesFile ?: '' })
+            outputs.dir(DBModelUtils.taskDir(project, name))
             doLast {
-                dbUtils.copyDefaultPropertiesFile(config.defaultInterminePropertiesFile)
+                dbUtils.copyDefaultPropertiesFile(config.defaultInterminePropertiesFile, DBModelUtils.cleanTaskDir(project, name))
             }
         }
+        DBModelUtils.testReads(project, ['copyDefaultInterMineProperties'])
 
         project.tasks.register('copyGenomicModel') {
-            mustRunAfter afterResources
-            onlyIf { regenerateModel(project) }
-            doLast {
-                DBModelUtils.copyFromArchive(project, modelArchive(project).singleFile, "genomic_model.xml",
-                        dbUtils.buildResourcesMainDir + File.separator + config.modelName + "_model.xml")
-            }
+            description = "Kept for build files that name it: the model now comes from mergeModels, which starts from the genomic model of bio-model"
+            // lifecycle alias: it has no work of its own (it used to copy genomic_model.xml into build/resources/main,
+            // where mergeModels then merged into it in place)
+            dependsOn 'mergeModels'
         }
 
         project.tasks.register('copyGenomicKeys') {
             description = "Copies default keys for bio in the case of unit tests."
-            mustRunAfter afterResources
+            inputs.files({ modelArchive(project) })
+            inputs.property('modelName', { config.modelName ?: '' })
+            outputs.dir(DBModelUtils.taskDir(project, name))
             doLast {
+                File dir = DBModelUtils.cleanTaskDir(project, name)
                 DBModelUtils.copyFromArchive(project, modelArchive(project).singleFile, "genomic_keyDefs.properties",
-                        dbUtils.buildResourcesMainDir + File.separator + config.modelName + "_keyDefs.properties")
+                        dir.absolutePath + File.separator + config.modelName + "_keyDefs.properties")
             }
         }
 
         project.tasks.register('generateKeys') {
             description = "Append keys for each source in project.xml to generated genomic_keyDefs.properties file"
-            mustRunAfter afterResources
             onlyIf { projectXml(project).exists() }
+            // project.xml and the bio-source jars it names (mergeSource), whose keys files are merged
+            inputs.files({ projectXml(project).exists() ? [projectXml(project)] : [] })
+            inputs.files({ project.configurations.getByName("mergeSource") })
+            inputs.property('modelName', { config.modelName ?: '' })
+            outputs.dir(DBModelUtils.taskDir(project, name))
 
             doLast {
 
@@ -193,15 +198,18 @@ class DBModelPlugin implements Plugin<Project> {
                     sourceProperties.load(sourceKeysFile.newDataInputStream())
                     keysProperties.putAll(sourceProperties)
                 }
-                File keysFile = new File(dbUtils.buildResourcesMainDir, config.modelName + "_keyDefs.properties")
-                keysFile.parentFile.mkdirs()
-                keysProperties.store(keysFile.newWriter(), null)
+                File keysFile = new File(DBModelUtils.cleanTaskDir(project, name), config.modelName + "_keyDefs.properties")
+                keysFile.withWriter { w -> keysProperties.store(w, null) }
             }
         }
 
         project.tasks.register('createSoModel') {
             description = "Reads SO OBO files and writes so_additions.xml"
             onlyIf { regenerateModel(project) }
+            // the SO term list and SOToModelTask's bio-model (whose so.obo it reads), and the so_additions.xml it writes
+            inputs.files({ rootFiles(project, config.soTermListFilePath) })
+            inputs.files({ project.name.equals("bio-model") ? [] : project.configurations.getByName("bioModelForSOOnly") })
+            outputs.files({ rootFiles(project, config.soAdditionFilePath) })
 
             doLast {
                 def ant = new AntBuilder()
@@ -209,6 +217,7 @@ class DBModelPlugin implements Plugin<Project> {
                 if (project.name.equals("bio-model")) {
                     ant.taskdef(name: "createSoModel", classname: "org.intermine.bio.task.SOToModelTask") {
                         classpath {
+                            dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                             dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
@@ -231,9 +240,9 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.register('generateModel') {
             description = "Merges different source model files into an intermine XML model"
             onlyIf { regenerateModel(project) }
-            // mergeModels (added by the biocore-, biomodel-, biosource- or mine-dbmodel plugin) leaves
-            // the merged <modelName>_model.xml in build/resources/main; this generates the Java from it.
-            inputs.files(DBModelUtils.resource(project, 'mergeModels') { config.modelName + "_model.xml" })
+            // mergeModels (added by the biocore-, biomodel-, biosource- or mine-dbmodel plugin) writes the
+            // merged <modelName>_model.xml into build/im/mergeModels; this generates the Java from it.
+            inputs.files(DBModelUtils.output(project, 'mergeModels') { config.modelName + "_model.xml" })
             outputs.dir(project.layout.buildDirectory.dir("gen"))
 
             doLast {
@@ -248,8 +257,9 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.register('buildDB') {
             group = TaskConstants.TASK_GROUP
             description = "Build the database for the webapp"
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties() +
-                    ['generateKeys': { config.modelName + "_keyDefs.properties" }])
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project) +
+                    [DBModelUtils.output(project, 'mergeModels') { config.modelName + "_model.xml" },
+                     DBModelUtils.output(project, 'generateKeys') { config.modelName + "_keyDefs.properties" }])
 
             doLast {
                 dbUtils.createSchema(config.objectStoreName)
@@ -266,9 +276,9 @@ class DBModelPlugin implements Plugin<Project> {
 
         project.tasks.register('buildUnitTestDB') {
             description = "Build the database for the webapp"
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties() +
-                    ['copyGenomicModel': { config.modelName + "_model.xml" },
-                     'copyGenomicKeys': { config.modelName + "_keyDefs.properties" }])
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project) +
+                    [DBModelUtils.output(project, 'mergeModels') { config.modelName + "_model.xml" },
+                     DBModelUtils.output(project, 'copyGenomicKeys') { config.modelName + "_keyDefs.properties" }])
 
             doLast {
                 dbUtils.createSchema(config.objectStoreName)
@@ -278,20 +288,23 @@ class DBModelPlugin implements Plugin<Project> {
         }
 
         project.tasks.register('copyUserProfileModel') {
-            mustRunAfter afterResources
+            description = "Copies the userprofile model of intermine-api into build/im, for createUserDB"
+            inputs.files({ project.configurations.getByName(DBModelUtils.IM_API_JAR) })
+            inputs.property('userProfileModelName', { config.userProfileModelName ?: '' })
+            outputs.dir(DBModelUtils.taskDir(project, name))
 
             doLast {
+                File dir = DBModelUtils.cleanTaskDir(project, name)
                 DBModelUtils.copyFromArchive(project, project.configurations.getByName(DBModelUtils.IM_API_JAR).singleFile,
-                        "userprofile_model.xml",
-                        dbUtils.buildResourcesMainDir + File.separator + config.userProfileModelName + "_model.xml")
+                        "userprofile_model.xml", dir.absolutePath + File.separator + config.userProfileModelName + "_model.xml")
             }
         }
 
         project.tasks.register('createUserDB') {
             group = TaskConstants.TASK_GROUP
             description = "Creates empty tables in the userprofile database."
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties() +
-                    ['copyUserProfileModel': { config.userProfileModelName + "_model.xml" }])
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project) +
+                    [DBModelUtils.output(project, 'copyUserProfileModel') { config.userProfileModelName + "_model.xml" }])
 
             doFirst {
                 dbUtils.createSchema(config.userProfileObjectStoreName)
@@ -310,7 +323,7 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.register('runAcceptanceTests') {
             group = TaskConstants.TASK_GROUP
             description = "Run the configured acceptance tests against the production database, uses <MINE_NAME>_acceptance_test.conf"
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
 
             doLast {
                 def ant = new AntBuilder()
@@ -321,6 +334,7 @@ class DBModelPlugin implements Plugin<Project> {
 
                 ant.taskdef(name: "acceptanceTest", classname: "org.intermine.task.AcceptanceTestTask") {
                     classpath {
+                        dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
@@ -333,7 +347,7 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.register('runIQLQuery') {
             group = TaskConstants.TASK_GROUP
             description = "Run an IQL query against the database, e.g. -Pquery=SELECT DISTINCT a2_.primaryIdentifier AS a1_ FROM org.intermine.model.bio.Gene AS a2_"
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
 
             doLast {
                 def ant = new AntBuilder()
@@ -341,6 +355,7 @@ class DBModelPlugin implements Plugin<Project> {
                     def query = project.properties['query']
                     ant.taskdef(name: "runIQLQuery", classname: "org.intermine.task.RunIqlQueryTask") {
                         classpath {
+                            dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                             dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                             pathelement(path: project.configurations.getByName(IM_ANTLR).asPath)
@@ -354,13 +369,14 @@ class DBModelPlugin implements Plugin<Project> {
         project.tasks.register('generateUpdateTriggers') {
             group = TaskConstants.TASK_GROUP
             description = "Generates SQL files for manual CRUD operations on InterMine database. THIS IS AN EXPERIMENTAL FEATURE, USE AT YOUR OWN RISK."
-            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties())
+            DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
 
             doLast {
                 def ant = new AntBuilder()
                 String buildResourcesMainDir = dbUtils.buildResourcesMainDir
                 ant.taskdef(name: "generateUpdateTriggers", classname: "org.intermine.task.GenerateUpdateTriggersTask") {
                     classpath {
+                        dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                         dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
@@ -379,6 +395,11 @@ class DBModelPlugin implements Plugin<Project> {
 
     static File projectXml(Project project) {
         new File(project.getParent().getProjectDir(), "project.xml")
+    }
+
+    /** The file at a path of dbModelConfig (DBModelUtils.rootPath), as a list for a task input or output: empty if unset. */
+    static List<File> rootFiles(Project project, String path) {
+        path == null ? [] : [new File(DBModelUtils.rootPath(project, path))]
     }
 
     static File genDir(Project project) {
