@@ -89,4 +89,31 @@ subprojects {
         from copyMineProperties
         from copyDefaultProperties
     }
+
+    // The Ant tasks below run InterMine code with the log4j 1 API (reload4j) in a class loader of their own, and nothing on
+    // their class path configures it (intermine-resources has no log4j.properties), so every logger printed "log4j:WARN
+    // No appenders could be found" and the messages were lost. As the plugin does for a mine (DBModelUtils.antLoggingDir,
+    // which this build does not use): a console appender, from a directory of its own that goes on the class path of each
+    // taskdef. org.intermine.sql is WARN: with the appender buildDB's "Dropping table" lines would be shown, one per table.
+    // log4j.ignoreTCL makes reload4j load the classes of the configuration from its own class loader: Gradle's, which is the
+    // thread context class loader of the Ant task, has the log4j-over-slf4j classes (Appender, ConsoleAppender,
+    // PatternLayout) and the appender would be dropped as "not assignable to a Appender variable".
+    ext.antLoggingDir = {
+        System.setProperty('log4j.ignoreTCL', 'true')
+        File dir = layout.buildDirectory.dir('im/antLogging').get().asFile
+        File config = new File(dir, 'log4j.properties')
+        String text = '''# written by testmine/build.gradle for the Ant tasks
+log4j.rootLogger=INFO, console
+log4j.logger.org.intermine.sql=WARN
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+log4j.appender.console.Target=System.out
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.layout.ConversionPattern=%d{HH:mm:ss} %-5p %c{1} - %m%n
+'''
+        if (!config.exists() || config.text != text) {
+            dir.mkdirs()
+            config.text = text
+        }
+        dir
+    }
 }

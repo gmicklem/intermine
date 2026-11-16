@@ -96,6 +96,7 @@ processResources {
 void buildDatabase(osname, model) {
     ant.taskdef(name: 'torque', classname: 'org.intermine.objectstore.intermine.TorqueModelOutputTask') {
         classpath {
+            pathelement(location: antLoggingDir()) // log4j.properties of the Ant tasks (root build file)
             pathelement(path: configurations.runtimeClasspath.asPath)
             dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties
             dirset(dir: 'build/resources/main') // intermine.properties
@@ -104,6 +105,7 @@ void buildDatabase(osname, model) {
     ant.torque(osname: "os.$osname", destFile: layout.buildDirectory.file("os.${osname}-schema.xml").get().asFile)
     ant.taskdef(name: 'buildDB', classname: 'org.intermine.task.BuildDbTask') {
         classpath {
+            pathelement(location: antLoggingDir()) // log4j.properties of the Ant tasks (root build file)
             pathelement(path: configurations.runtimeClasspath.asPath)
             pathelement(path: configurations.torqueRuntime.asPath)
             dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties, os.unittest-schema.xml
@@ -113,6 +115,7 @@ void buildDatabase(osname, model) {
     ant.buildDB(osname: "os.$osname", model: "$model", schemafile:"os.$osname-schema.xml", tempDir: layout.buildDirectory.dir("tmp").get().asFile)
     ant.taskdef(name: 'insertModel', classname: 'org.intermine.task.StoreMetadataTask') {
         classpath {
+            pathelement(location: antLoggingDir()) // log4j.properties of the Ant tasks (root build file)
             pathelement(path: configurations.runtimeClasspath.asPath)
             dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties
             dirset(dir: 'build/resources/main') // intermine.properties
@@ -129,6 +132,7 @@ void insertDataUnitTest() {
     // <delete file="${objectstoresummary.properties}"/>
     ant.taskdef(name: 'insertDataUnittest', classname: 'org.intermine.dataloader.XmlDataLoaderTask') {
         classpath {
+            pathelement(location: antLoggingDir()) // log4j.properties of the Ant tasks (root build file)
             pathelement(path: configurations.runtimeClasspath.asPath)
             dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties
             dirset(dir: 'build/resources/main') // intermine.properties
@@ -142,6 +146,7 @@ void loadsadataLoader() {
     // <delete file="${objectstoresummary.properties}"/>
     ant.taskdef(name: 'loadsadata', classname: 'org.intermine.dataloader.XmlDataLoaderTask') {
         classpath {
+            pathelement(location: antLoggingDir()) // log4j.properties of the Ant tasks (root build file)
             pathelement(path: configurations.runtimeClasspath.asPath)
             dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties
             dirset(dir: 'build/resources/main') // intermine.properties
@@ -156,6 +161,7 @@ void enormocorpLoader() {
     // <delete file="${objectstoresummary.properties}"/>
     ant.taskdef(name: 'enormocorp', classname: 'org.intermine.dataloader.XmlDataLoaderTask') {
         classpath {
+            pathelement(location: antLoggingDir()) // log4j.properties of the Ant tasks (root build file)
             pathelement(path: configurations.runtimeClasspath.asPath)
             dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties
             dirset(dir: 'build/resources/main') // intermine.properties
@@ -203,6 +209,7 @@ task insertData(dependsOn: 'buildDB') {
 void insertUserTestData() {
     ant.taskdef(name: 'readUserprofileXML', classname: 'org.intermine.web.task.ProfileReadTask') {
         classpath {
+            pathelement(location: antLoggingDir()) // log4j.properties of the Ant tasks (root build file)
             pathelement(path: configurations.runtimeClasspath.asPath)
             dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties
             dirset(dir: 'build/resources/main') // intermine.properties
@@ -214,6 +221,7 @@ void insertUserTestData() {
 void loadTemplates() {
     ant.taskdef(name: 'loadDefaultTemplates', classname: 'org.intermine.web.task.LoadDefaultTemplatesTask') {
         classpath {
+            pathelement(location: antLoggingDir()) // log4j.properties of the Ant tasks (root build file)
             pathelement(path: configurations.runtimeClasspath.asPath)
             dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties
             dirset(dir: 'build/resources/main') // intermine.properties
@@ -242,6 +250,7 @@ task createSearchIndex {
     doLast {
         ant.taskdef(name: "createSearchIndexTask", classname: "org.intermine.web.task.CreateSearchIndexTask") {
             classpath {
+                pathelement(location: antLoggingDir()) // log4j.properties of the Ant tasks (root build file)
                 dirset(dir: layout.buildDirectory.get().asFile)
                 pathelement(path: configurations.runtimeClasspath.asPath)
             }
