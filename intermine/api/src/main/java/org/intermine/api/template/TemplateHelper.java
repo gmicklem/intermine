@@ -77,6 +77,7 @@ public final class TemplateHelper
                 TemplateQueryBinding.marshal(template, writer, version);
             }
             writer.writeEndElement();
+            writer.flush();
         } catch (XMLStreamException e) {
             throw new RuntimeException(e);
         }
@@ -154,6 +155,7 @@ public final class TemplateHelper
             } catch (ObjectStoreException ex) {
 
             }
+            writer.flush();
         } catch (XMLStreamException e) {
             throw new RuntimeException(e);
         }

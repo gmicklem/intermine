@@ -2,6 +2,8 @@ package org.intermine.web.logic.query;
 
 import junit.framework.TestCase;
 
+import org.custommonkey.xmlunit.XMLAssert;
+
 import org.intermine.metadata.Model;
 import org.intermine.pathquery.Constraints;
 import org.intermine.pathquery.PathQuery;
@@ -9,6 +11,14 @@ import org.intermine.pathquery.PathQuery;
 
 public class ConstraintsTest extends TestCase
 {
+    /**
+     * Compared as XML: whether '>' in an attribute value is written as &gt; (the JDK's StAX writer) or as
+     * itself (Woodstox, which solr-solrj puts on the class path) is not for the test to decide.
+     */
+    private static void assertXmlEquals(String expected, String actual) throws Exception {
+        XMLAssert.assertXMLEqual(expected, actual);
+    }
+
     public void testEq() {
         PathQuery q = new PathQuery(Model.getInstanceByName("testmodel"));
         q.addConstraint(Constraints.eq("Employee.name", "monkey"));
@@ -57,16 +67,16 @@ public class ConstraintsTest extends TestCase
         assertEquals("<query name=\"query\" model=\"testmodel\" view=\"\" longDescription=\"\"><constraint path=\"Employee.name\" op=\"IS NOT NULL\"/></query>", q.toXml(1));
     }
 
-    public void testGreaterThan() {
+    public void testGreaterThan() throws Exception {
         PathQuery q = new PathQuery(Model.getInstanceByName("testmodel"));
         q.addConstraint(Constraints.greaterThan("Employee.length", "1"));
-        assertEquals("<query name=\"query\" model=\"testmodel\" view=\"\" longDescription=\"\"><constraint path=\"Employee.length\" op=\"&gt;\" value=\"1\"/></query>", q.toXml(1));
+        assertXmlEquals("<query name=\"query\" model=\"testmodel\" view=\"\" longDescription=\"\"><constraint path=\"Employee.length\" op=\"&gt;\" value=\"1\"/></query>", q.toXml(1));
     }
 
-    public void testGreaterThanEquals() {
+    public void testGreaterThanEquals() throws Exception {
         PathQuery q = new PathQuery(Model.getInstanceByName("testmodel"));
         q.addConstraint(Constraints.greaterThanEqualTo("Employee.length", "-1"));
-        assertEquals("<query name=\"query\" model=\"testmodel\" view=\"\" longDescription=\"\"><constraint path=\"Employee.length\" op=\"&gt;=\" value=\"-1\"/></query>", q.toXml(1));
+        assertXmlEquals("<query name=\"query\" model=\"testmodel\" view=\"\" longDescription=\"\"><constraint path=\"Employee.length\" op=\"&gt;=\" value=\"-1\"/></query>", q.toXml(1));
     }
 
     public void testLessThan() {

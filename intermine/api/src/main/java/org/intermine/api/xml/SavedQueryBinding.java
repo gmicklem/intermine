@@ -74,6 +74,7 @@ public final class SavedQueryBinding
         try {
             XMLStreamWriter writer = factory.createXMLStreamWriter(sw);
             marshal(query, writer, version);
+            writer.flush();
         } catch (XMLStreamException e) {
             throw new RuntimeException(e);
         }

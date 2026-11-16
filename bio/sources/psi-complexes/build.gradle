@@ -18,8 +18,8 @@ sourceSets {
 }
 
 dependencies {
-    runtimeOnly group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
-    api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
+    runtimeOnly(libs.bio.model) { transitive = false }
+    api libs.intermine.integrate
     // one release of the four jami jars (catalog entry jami-complexes); libs.jami.core is the
     // version bio/webapp uses
     implementation libs.jami.commons
@@ -28,7 +28,7 @@ dependencies {
     implementation libs.jami.xml
     // reads the ChEBI REST API's answers (the same Jackson as the isa source)
     implementation libs.jackson.databind
-    bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
+    bioModel(libs.bio.model) { transitive = false }
 }
 
 processResources {

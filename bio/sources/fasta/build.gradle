@@ -20,7 +20,7 @@ sourceSets {
 dependencies {
     bioModel group: 'org.intermine', name: 'bio-source-flymine-static', version: System.getProperty("flymineVersion"), transitive: false
     testImplementation group: 'org.intermine', name: 'bio-source-flymine-static', version: System.getProperty("flymineVersion"), transitive: false
-    api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
+    api libs.intermine.integrate
     api libs.biojava.core
 }
 

@@ -16,6 +16,9 @@ import java.util.HashMap;
 
 import junit.framework.TestCase;
 
+import org.custommonkey.xmlunit.XMLAssert;
+import org.custommonkey.xmlunit.XMLUnit;
+
 import org.intermine.api.profile.SavedQuery;
 import org.intermine.metadata.Model;
 import org.intermine.pathquery.PathQuery;
@@ -37,6 +40,10 @@ public class SavedQueryBindingTest extends TestCase
         SavedQuery sq2 = (SavedQuery) SavedQueryBinding.unmarshal(new StringReader(xml),
                 new HashMap(), PathQuery.USERPROFILE_VERSION).values().iterator().next();
         String expected = "\n<saved-query name=\"hello\" date-created=\"1124276877010\"><query name=\"hello\" model=\"testmodel\" view=\"\" longDescription=\"\"></query></saved-query>";
-        assertEquals(expected, xml);
+        // compared as XML: the StAX writer in use decides whether an empty element is written as
+        // <query ...></query> (the JDK's) or <query .../> (Woodstox, which solr-solrj brings)
+        XMLUnit.setIgnoreWhitespace(true);
+        XMLAssert.assertXMLEqual(expected, xml);
+        assertEquals(sq.getName(), sq2.getName());
     }
 }

@@ -100,6 +100,7 @@ public class DeregistrationService extends WebService
                     PathQuery.USERPROFILE_VERSION,
                     im.getClassKeys()
             );
+            writer.flush();
         } catch (Exception e) {
             throw new ServiceException("Error exporting userprofile", e);
         }

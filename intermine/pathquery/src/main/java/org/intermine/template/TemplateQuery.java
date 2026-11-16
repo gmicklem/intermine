@@ -507,6 +507,7 @@ public class TemplateQuery extends PathQuery
         try {
             XMLStreamWriter writer = factory.createXMLStreamWriter(sw);
             TemplateQueryBinding.marshal(this, writer, version);
+            writer.flush();
         } catch (XMLStreamException e) {
             throw new RuntimeException(e);
         }

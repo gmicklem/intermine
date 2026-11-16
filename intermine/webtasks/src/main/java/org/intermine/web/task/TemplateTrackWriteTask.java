@@ -73,6 +73,7 @@ public class TemplateTrackWriteTask extends Task
             XMLOutputFactory factory = XMLOutputFactory.newInstance();
             XMLStreamWriter writer = factory.createXMLStreamWriter(fw);
             TemplateTrackBinding.marshal(userProfileOS, writer);
+            writer.flush();
         } catch (Exception e) {
             throw new BuildException(e);
         } finally {

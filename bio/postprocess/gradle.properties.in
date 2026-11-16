@@ -1,5 +1,6 @@
-systemProp.imVersion=5.1.1
-systemProp.bioVersion=5.1.1
+# the version of the InterMine release: filled in by config/lib/install_intermine.py from gradle/libs.versions.toml
+systemProp.imVersion=@@im_version@@
+systemProp.bioVersion=@@bio_version@@
 
 # Install from internet or local Sonatype Nexus repo
 intermine.maven.central=@@im_central_url@@

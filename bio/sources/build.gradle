@@ -15,21 +15,13 @@ buildscript {
             url = project.getProperty("intermine.maven.central")
         }
     }
-    // the version catalog (libs) is not available in buildscript {} on Gradle 7.6: the plugin version comes from the
-    // imVersion system property (gradle.properties), as for the deployer mines
     dependencies {
-        classpath group: 'org.intermine', name: 'plugin', version: System.getProperty("imVersion")
+        classpath libs.intermine.plugin
     }
 }
 
 // `centralBundle`: zip of all signed publications for the Maven Central Portal (docs/RELEASING.md)
 apply from: "${rootDir}/../../config/gradle/central-bundle.gradle"
-
-ext {
-    // set here to make available to individual bio-sources
-    bioVersion = System.getProperty("bioVersion")
-    imVersion = System.getProperty("imVersion")
-}
 
 subprojects {
     group = 'org.intermine'
@@ -114,10 +106,10 @@ subprojects {
         // give the runtime scope in the POM.
         runtimeOnly(libs.hikaricp) { transitive = false }
         api libs.ant
-        api group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false
-        api group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion") // log4j
-        runtimeOnly group : "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion") // log4j; property files only
-        api group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
+        api(libs.bio.core) { transitive = false }
+        api libs.intermine.objectstore // log4j
+        runtimeOnly libs.intermine.resources // log4j; property files only
+        api libs.intermine.model
         api libs.commons.collections
         implementation libs.commons.io
         implementation libs.commons.lang3
@@ -125,15 +117,15 @@ subprojects {
         api libs.reload4j
         api libs.slf4j.reload4j
         testImplementation libs.junit
-        testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion"), classifier: "testClasses"
+        testImplementation(variantOf(libs.intermine.integrate) { classifier "testClasses" })
         testImplementation libs.opencsv // version 2.3 not available in maven
         // the InterMine jars come from build/libs without their POMs, so intermine-objectstore's run-time dependency
         // (DynamicBean, objects of more than one model class) is declared here
         testImplementation libs.byte.buddy
         mergeModel libs.reload4j
         mergeModel libs.slf4j.reload4j
-        mergeModel group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
-        mergeModel group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
+        mergeModel libs.intermine.objectstore
+        mergeModel libs.intermine.model
         mergeModel libs.commons.lang3
 
         // javax.activation, which JDK 11 removed: psi-complexes' JAXB (jami-xml's own jaxb-impl 2.2.7, see

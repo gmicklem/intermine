@@ -16,7 +16,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'org.intermine', name: 'plugin', version: System.getProperty("imVersion")
+        classpath libs.intermine.plugin
     }
 }
 
@@ -42,8 +42,8 @@ processResources {
 
 dependencies {
     // the generated model classes extend and use the types of these two
-    api group: "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
-    api group: "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
+    api libs.intermine.model
+    api libs.intermine.objectstore
     api libs.commons.lang3
     api libs.reload4j
     implementation libs.slf4j.reload4j // logging binding (runtime scope in the POM)

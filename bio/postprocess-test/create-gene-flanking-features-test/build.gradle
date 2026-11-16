@@ -10,7 +10,7 @@ sourceSets {
 }
 
 dependencies {
-    implementation group: 'org.intermine', name: 'bio-postprocess-create-gene-flanking-features', version: bioVersion
+    implementation libs.bio.postprocess.create.gene.flanking.features
     bioModel group: 'org.intermine', name: 'bio-source-flymine-static', version: flymineVersion, transitive: false
     implementation group: 'org.intermine', name: 'bio-source-flymine-static', version: flymineVersion, transitive: false}
 

@@ -45,6 +45,7 @@ public class SharedBagBinding
         try {
             XMLStreamWriter writer = factory.createXMLStreamWriter(sw);
             marshal(profile, writer);
+            writer.flush();
         } catch (XMLStreamException e) {
             throw new RuntimeException(e);
         }

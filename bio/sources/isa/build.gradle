@@ -18,12 +18,12 @@ sourceSets {
 }
 
 dependencies {
-    runtimeOnly group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
-    api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
+    runtimeOnly(libs.bio.model) { transitive = false }
+    api libs.intermine.integrate
     implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jackson.annotations
-    bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
+    bioModel(libs.bio.model) { transitive = false }
 }
 
 processResources {

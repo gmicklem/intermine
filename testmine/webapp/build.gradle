@@ -11,7 +11,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.bmuschko:gradle-cargo-plugin:2.9.0'
+        classpath libs.cargo.plugin
     }
 }
 apply plugin: "com.bmuschko.cargo"
@@ -37,10 +37,10 @@ dependencies {
     // in the dbmodel jar (dbmodel's copyTestModel puts them into its resources). A java-library project
     // dependency compiles against dbmodel's classes directory, which does not contain them, so they are
     // taken from here; compileOnly keeps this jar out of the war.
-    compileOnly group: "org.intermine", name: "intermine-testresources", version: imVersion, transitive: false
-    implementation group: "org.intermine", name: "intermine-webapp", version: imVersion, classifier: "classes"
-    implementation group: "org.intermine", name: "intermine-api", version: imVersion
-    implementation group: "org.intermine", name: "intermine-webtasks", version: imVersion
+    compileOnly(libs.intermine.testresources) { transitive = false }
+    implementation(variantOf(libs.intermine.webapp) { classifier "classes" })
+    implementation libs.intermine.api
+    implementation libs.intermine.webtasks
     // Struts, DWR, JSTL and JavaMail are in WEB-INF/lib of the intermine-webapp war that unwarIMWebApp explodes into
     // the final war, with the versions of its pom. This build resolves intermine-webapp from a local directory without
     // the pom, so as implementation these libraries came with Struts' own old commons-beanutils 1.8.0,
@@ -57,7 +57,7 @@ dependencies {
     runtimeOnly libs.taglibs.string
     runtimeOnly libs.commons.fileupload
     runtimeOnly libs.json
-    imWebApp group: "org.intermine", name: "intermine-webapp", version: imVersion, transitive: false, ext: "war"
+    imWebApp(libs.intermine.webapp) { transitive = false; artifact { name = 'intermine-webapp'; type = 'war'; extension = 'war' } }
     providedCompile libs.javax.servlet.api
     // the catalog supplies group, name and version; a catalog entry cannot carry the artifact type, so the "@zip" is spelled out
     tomcat(libs.tomcat) {
