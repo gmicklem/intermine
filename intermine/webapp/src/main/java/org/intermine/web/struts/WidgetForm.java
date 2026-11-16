@@ -27,6 +27,8 @@ import org.intermine.metadata.StringUtil;
 public class WidgetForm extends ActionForm
 {
 
+    private static final long serialVersionUID = 1L;
+
     private String link;
     private String bagName;
     private String[] selected;

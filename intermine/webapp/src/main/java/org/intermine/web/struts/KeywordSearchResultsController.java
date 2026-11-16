@@ -23,7 +23,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.struts.action.ActionForm;
@@ -145,7 +144,7 @@ public class KeywordSearchResultsController extends TilesAction
         // there are needed in the form too so we have to use request (i think...)
         request.setAttribute("searchResults", searchResultsParsed);
         request.setAttribute("searchTerm", searchTerm);
-        request.setAttribute("searchBag", StringEscapeUtils.escapeHtml(searchBag));
+        request.setAttribute("searchBag", searchBag);
         request.setAttribute("searchFacetValues", facetValues);
 
         // used for re-running the search in case of creating a list for ALL results
@@ -207,8 +206,16 @@ public class KeywordSearchResultsController extends TilesAction
         return ids;
     }
 
+    /**
+     * The facet selections of the request. The values are as the user chose them (not HTML
+     * escaped): they are put into the Solr filter and into the links of the page, and the JSPs
+     * escape them where they print them.
+     * @param request the request
+     * @param facets the configured facets, other facet_ parameters are ignored
+     * @return selected value by facet field
+     */
     @SuppressWarnings("unchecked")
-    private Map<String, String> getFacetValues(HttpServletRequest request,
+    static Map<String, String> getFacetValues(HttpServletRequest request,
             Vector<KeywordSearchFacetData> facets) {
         HashMap<String, String> facetValues = new HashMap<String, String>();
         // if this is a new search (searchSubmit set) only keep facets if
@@ -231,8 +238,9 @@ public class KeywordSearchResultsController extends TilesAction
                         }
                     }
                     if (found) {
-                        facetValues.put(facetField,
-                            StringEscapeUtils.escapeHtml(requestParameter.getValue()[0]));
+                        // the raw value: it is what the Solr filter and the links must
+                        // carry, the JSPs escape it where they print it
+                        facetValues.put(facetField, requestParameter.getValue()[0]);
                     }
                 }
             }

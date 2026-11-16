@@ -18,10 +18,12 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -62,7 +64,17 @@ public class DataTracker
     private HashMap<Source, String> sourceToName = new HashMap<Source, String>();
     private Connection conn;
     private Connection storeConn;
-    protected Exception broken = null;
+    /**
+     * The failure that made the tracker refuse further operations, or null. It is written by the
+     * CacheStorer thread (a failed background write) as well as by the caller's thread, hence
+     * volatile. A failed write is reported to the next caller by checkBroken() and then cleared
+     * (the batch that failed is put back in the cache, so a later flush() retries it); a failed
+     * read is never cleared.
+     */
+    protected volatile Exception broken = null;
+    // Set (with broken) when the failure came from a write that was rolled back and can be retried
+    private volatile boolean brokenRecoverable = false;
+    private final Object failureLock = new Object();
     private CacheStorer cacheStorer;
     private int version = 0;
     // This reference is here so that the Database doesn't get garbage collected.
@@ -159,11 +171,7 @@ public class DataTracker
             long startTime = System.currentTimeMillis();
             Set<Integer> toFetch = new HashSet<Integer>();
             synchronized (this) {
-                if (broken != null) {
-                    IllegalArgumentException e = new IllegalArgumentException();
-                    e.initCause(broken);
-                    throw e;
-                }
+                checkBroken();
                 for (Integer id : ids) {
                     ObjectDescription desc = cache.get(id);
                     if (desc == null) {
@@ -211,10 +219,7 @@ public class DataTracker
                                                            stringToSource(r.getString(3)));
                             }
                         } catch (SQLException e) {
-                            broken = e;
-                            IllegalArgumentException e2 = new IllegalArgumentException();
-                            e2.initCause(broken);
-                            throw e2;
+                            throw readFailed("prefetching tracker entries", e);
                         }
                         needComma = false;
                         sql = new StringBuffer();
@@ -231,10 +236,7 @@ public class DataTracker
             }
             timeSpentPrefetching += System.currentTimeMillis() - startTime;
         } catch (SQLException e) {
-            broken = e;
-            IllegalArgumentException e2 = new IllegalArgumentException();
-            e2.initCause(broken);
-            throw e2;
+            throw readFailed("prefetching tracker entries", e);
         } finally {
             if (prefetchConn != null) {
                 try {
@@ -257,11 +259,7 @@ public class DataTracker
         if (id == null) {
             throw new NullPointerException("id cannot be null");
         }
-        if (broken != null) {
-            IllegalArgumentException e = new IllegalArgumentException();
-            e.initCause(broken);
-            throw e;
-        }
+        checkBroken();
         ObjectDescription desc = getDesc(id, false);
         return desc.getSource(field);
     }
@@ -305,10 +303,7 @@ public class DataTracker
                     conn.createStatement().execute("SET enable_seqscan = off;");
                 }
             } catch (SQLException e) {
-                broken = e;
-                IllegalArgumentException e2 = new IllegalArgumentException();
-                e2.initCause(broken);
-                throw e2;
+                throw readFailed("reading a tracker entry", e);
             }
             cache.put(id, desc);
             maybePoke();
@@ -338,11 +333,7 @@ public class DataTracker
             throw new NullPointerException("Could not find given source (" + source
                     + ") in tracker. sourceToName = " + sourceToName);
         }
-        if (broken != null) {
-            IllegalArgumentException e = new IllegalArgumentException();
-            e.initCause(broken);
-            throw e;
-        }
+        checkBroken();
         ObjectDescription desc = getDesc(id, true);
         desc.put(field.intern(), source);
         // Lastly, we put the description into the cache, just in case we got it out of the
@@ -361,11 +352,7 @@ public class DataTracker
      * @param id the ID of the object
      */
     public synchronized void clearObj(Integer id) {
-        if (broken != null) {
-            IllegalArgumentException e = new IllegalArgumentException();
-            e.initCause(broken);
-            throw e;
-        }
+        checkBroken();
         ObjectDescription desc = new ObjectDescription();
         cache.put(id, desc);
         maybePoke();
@@ -377,11 +364,25 @@ public class DataTracker
      * @return true if some action was performed
      */
     public boolean doWrite() {
-        if (broken != null) {
-            IllegalArgumentException e = new IllegalArgumentException();
-            e.initCause(broken);
-            throw e;
+        checkBroken();
+        return writeNextBatch(false);
+    }
+
+    /**
+     * Writes a batch for the CacheStorer thread. A failure is recorded, to be reported to the next
+     * caller of the tracker (checkBroken()), rather than lost in the thread's log; until then the
+     * thread writes nothing more.
+     */
+    private boolean doBackgroundWrite() {
+        Exception failure = broken;
+        if (failure != null) {
+            throw new IllegalArgumentException("DataTracker is unusable after an earlier failure: "
+                    + failure, failure);
         }
+        return writeNextBatch(true);
+    }
+
+    private boolean writeNextBatch(boolean background) {
         synchronized (writeBack) {
             int cacheSize = cache.size();
             Map<Integer, ObjectDescription> writeBatch = getWriteBatch();
@@ -391,10 +392,9 @@ public class DataTracker
                 try {
                     writeMap(writeBatch, false);
                 } catch (SQLException e) {
-                    broken = e;
-                    IllegalArgumentException e2 = new IllegalArgumentException();
-                    e2.initCause(broken);
-                    throw e2;
+                    restoreWriteBatch(writeBatch);
+                    throw writeFailed("writing a batch of tracker entries to the database", e,
+                            background);
                 }
                 clearWriteBack();
                 return true;
@@ -406,14 +406,86 @@ public class DataTracker
     }
 
     /**
+     * Puts the entries of a batch that could not be written back in the cache (unless a newer
+     * version of an entry is already there), so that they are written by a later batch or flush()
+     * instead of being lost, and empties the write-back cache.
+     *
+     * @param writeBatch the batch that failed
+     */
+    private synchronized void restoreWriteBatch(Map<Integer, ObjectDescription> writeBatch) {
+        for (Map.Entry<Integer, ObjectDescription> entry : writeBatch.entrySet()) {
+            if (!cache.containsKey(entry.getKey())) {
+                cache.put(entry.getKey(), entry.getValue());
+            }
+        }
+        writeBack.clear();
+    }
+
+    /**
+     * Throws the exception reporting an earlier failure of this tracker, if there was one. A
+     * failure of a write is reported once and then forgotten: the data of the failed batch is
+     * still in the cache, so the tracker stays usable and the next flush() tries again. A failure
+     * of a read leaves the tracker unusable.
+     */
+    private void checkBroken() {
+        synchronized (failureLock) {
+            Exception failure = broken;
+            if (failure != null) {
+                boolean recoverable = brokenRecoverable;
+                if (recoverable) {
+                    brokenRecoverable = false;
+                    broken = null;
+                }
+                throw new IllegalArgumentException("DataTracker is unusable after an earlier "
+                        + "failure" + (recoverable ? " (reported once; the failed write will be "
+                            + "retried)" : "") + ": " + failure, failure);
+            }
+        }
+    }
+
+    private Exception takeRecoverableFailure() {
+        synchronized (failureLock) {
+            Exception failure = broken;
+            if (failure != null && brokenRecoverable) {
+                brokenRecoverable = false;
+                broken = null;
+                return failure;
+            }
+            return null;
+        }
+    }
+
+    private IllegalArgumentException readFailed(String action, SQLException e) {
+        synchronized (failureLock) {
+            brokenRecoverable = false;
+            broken = e;
+        }
+        return new IllegalArgumentException("DataTracker failed while " + action + ": " + e, e);
+    }
+
+    /**
+     * The exception for a failed write. The data is still in the cache and the batch was rolled
+     * back, so nothing is lost: if the write was in the CacheStorer thread the failure is recorded
+     * for the next caller, otherwise the exception thrown here is the report.
+     */
+    private IllegalArgumentException writeFailed(String action, SQLException e,
+            boolean background) {
+        synchronized (failureLock) {
+            // Never turn an earlier read failure (which cannot be recovered) into a recoverable one
+            if (background && broken == null) {
+                brokenRecoverable = true;
+                broken = e;
+            }
+        }
+        return new IllegalArgumentException("DataTracker failed while " + action + ": " + e, e);
+    }
+
+
+    /**
      * Flushes everything to the backing database.
      */
     public void flush() {
-        if (broken != null) {
-            IllegalArgumentException e = new IllegalArgumentException();
-            e.initCause(broken);
-            throw e;
-        }
+        checkBroken();
         LOG.info("Flushing cache - size: " + cache.size());
         // Synchronise in this order to prevent deadlocks.
         synchronized (writeBack) {
@@ -421,10 +493,7 @@ public class DataTracker
                 try {
                     writeMap(cache, true);
                 } catch (SQLException e) {
-                    broken = e;
-                    IllegalArgumentException e2 = new IllegalArgumentException();
-                    e2.initCause(broken);
-                    throw e2;
+                    throw writeFailed("flushing the tracker to the database", e, false);
                 }
             }
         }
@@ -439,17 +508,24 @@ public class DataTracker
                 + ", time spent reading: " + timeSpentReading + ", prefetched: " + batched
                 + ", time spent prefetching: " + timeSpentPrefetching);
         cacheStorer.die();
-        flush();
-        synchronized (this) {
-            try {
-                conn.close();
-                storeConn.close();
-                conn = null;
-                storeConn = null;
-            } catch (SQLException e) {
-                IllegalArgumentException e2 = new IllegalArgumentException();
-                e2.initCause(e);
-                throw e2;
+        try {
+            Exception pending = takeRecoverableFailure();
+            if (pending != null) {
+                LOG.warn("Retrying the write that failed earlier before closing", pending);
+            }
+            flush();
+        } finally {
+            // Release the connections even if the final flush failed
+            synchronized (this) {
+                try {
+                    conn.close();
+                    storeConn.close();
+                    conn = null;
+                    storeConn = null;
+                } catch (SQLException e) {
+                    throw new IllegalArgumentException("DataTracker could not close its "
+                            + "connections: " + e, e);
+                }
             }
         }
     }
@@ -509,6 +585,9 @@ public class DataTracker
      */
     private void writeMap(Map<Integer, ObjectDescription> map, boolean clean) throws SQLException {
         long start = System.currentTimeMillis();
+        // Entries are only cleaned once the batch is committed, so that a failed write does not
+        // make the tracker forget what was never stored.
+        List<ObjectDescription> toClean = new ArrayList<ObjectDescription>();
         try {
             org.postgresql.copy.CopyManager copyManager = null;
             ByteArrayOutputStream baos = null;
@@ -559,7 +638,7 @@ public class DataTracker
                         }
                     }
                     if (clean) {
-                        desc.clean();
+                        toClean.add(desc);
                     }
                 }
             }
@@ -573,11 +652,29 @@ public class DataTracker
             }
             version++;
             storeConn.commit();
+            for (ObjectDescription desc : toClean) {
+                desc.clean();
+            }
         } catch (IOException e) {
+            rollbackQuietly();
             throw new SQLException(e.toString());
+        } catch (SQLException e) {
+            rollbackQuietly();
+            throw e;
+        } catch (RuntimeException e) {
+            rollbackQuietly();
+            throw e;
         }
         long now = System.currentTimeMillis();
         LOG.debug("Finished storing batch (time = " + (now - start) + " ms)");
+    }
+
+    private void rollbackQuietly() {
+        try {
+            storeConn.rollback();
+        } catch (SQLException e) {
+            LOG.warn("Could not roll back the failed tracker write", e);
+        }
     }
 
     /**
@@ -679,7 +776,7 @@ public class DataTracker
                         synchronized (this) {
                             needAction = false;
                         }
-                        boolean tempNeedAction = doWrite();
+                        boolean tempNeedAction = doBackgroundWrite();
                         synchronized (this) {
                             needAction = needAction || tempNeedAction;
                         }

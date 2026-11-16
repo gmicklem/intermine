@@ -32,6 +32,9 @@ import org.intermine.web.logic.session.SessionMethods;
  */
 public class CreateAccountForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     protected String username, password, password2;
     protected boolean mailinglist;
 

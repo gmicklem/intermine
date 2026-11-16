@@ -22,6 +22,9 @@ import org.apache.struts.action.ActionMapping;
  */
 public class ModifyBagForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     protected String[] selectedBags;
     protected String newBagName;
     protected String pageName;

@@ -31,6 +31,9 @@ import org.intermine.pathquery.PathQueryBinding;
  */
 public class ImportQueriesForm extends ImportXMLForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     private Map<String, PathQuery> map;
     private String queryBuilder;
 

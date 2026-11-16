@@ -24,6 +24,8 @@ import org.apache.struts.action.ActionMapping;
 public class SaveBagForm extends ActionForm
 {
 
+    private static final long serialVersionUID = 1L;
+
     protected String existingBagName, newBagName;
     protected String[] selectedObjects;
     protected String operationButton;

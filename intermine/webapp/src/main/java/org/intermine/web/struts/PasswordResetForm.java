@@ -25,6 +25,9 @@ import org.apache.struts.action.ActionMessages;
  */
 public class PasswordResetForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     protected String token, newpassword, newpassword2;
 
     /**

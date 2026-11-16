@@ -768,11 +768,14 @@ public class Profile
     /**
      * Rename an existing bag, throw exceptions when bag doesn't exist of if new name already
      * exists.  Moves tags from old bag to new bag.
+     * The check and the rename are one step, so of two concurrent renames to the same new name
+     * one succeeds and the other gets the ProfileAlreadyExistsException.
      * @param oldName the bag to rename
      * @param newName new name for the bag
      * @throws ObjectStoreException if problems storing
      */
-    public void renameBag(String oldName, String newName) throws ObjectStoreException {
+    public synchronized void renameBag(String oldName, String newName)
+        throws ObjectStoreException {
         if (!getAllBags().containsKey(oldName)) {
             throw new BagDoesNotExistException("Attempting to rename " + oldName);
         }

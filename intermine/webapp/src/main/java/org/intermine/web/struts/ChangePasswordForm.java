@@ -26,6 +26,9 @@ import org.apache.struts.action.ActionMessages;
  */
 public class ChangePasswordForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     private String oldpassword, newpassword, newpassword2;
 
     /**
