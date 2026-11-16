@@ -57,7 +57,5 @@ task createUnitTestDatabases {
         // create ones that aren't there
         createDbInternal('bio-test')
         grantPrivileges('bio-test')
-        createDbInternal('bio-fulldata-test')
-        grantPrivileges('bio-fulldata-test')
     }
 }

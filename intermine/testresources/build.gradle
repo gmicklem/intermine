@@ -204,8 +204,7 @@ task dropDBs {
     description = "drop all the test databases. used for debugging only."
     doLast {
         // fail silently if a database is not there
-        ['notxmltest', 'truncunittest', 'flatmodetest', 'fulldatatest', 'userprofile-test', 'unittest', 'bio-test',
-         'bio-fulldata-test'].each { dbName ->
+        ['notxmltest', 'truncunittest', 'flatmodetest', 'fulldatatest', 'userprofile-test', 'unittest', 'bio-test'].each { dbName ->
             println psqlOutput(providers.exec {
                 ignoreExitValue = true
                 commandLine 'psql', '-d', 'postgres', '-c', "drop database \"" + dbName + "\";"
