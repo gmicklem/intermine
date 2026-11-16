@@ -49,7 +49,8 @@ class AntLoggingTest {
         BuildResult result = mine.run(':dbmodel:processResources', ':dbmodel:createSoModel')
         assert result.task(':dbmodel:createSoModel').outcome == SUCCESS
         assert !mine.file('dbmodel/build/im/antLogging/log4j.properties').exists()
-        // (createSoModel itself does not see the mine's file: its classpath has bio-model and the runtime classpath,
-        // not build/resources/main, which the other Ant tasks reach through their dirset of the build directory)
+        // and the Ant task logs with the mine's layout
+        assert result.output.contains('MINE-LAYOUT INFO stand-in SOToModelTask read 2 SO terms')
+        assert !result.output.contains('No appenders could be found')
     }
 }
