@@ -46,6 +46,26 @@ public class WebUtilTest extends TestCase {
         config = WebConfig.parse(context, model);
     }
 
+    public void testResolveHeadResourceUrl() {
+        // bundled libraries
+        assertEquals("/vendor/js/q/0.9.7/q.min.js",
+                WebUtil.resolveHeadResourceUrl("head.js.all.Aa", "js", "CDN/js/q/0.9.7/q.min.js"));
+        // the defunct cdn is mapped onto the bundled copy
+        assertEquals("/vendor/js/q/0.9.7/q.min.js", WebUtil.resolveHeadResourceUrl(
+                "head.js.all.Aa", "js", "https://cdn.intermine.org/js/q/0.9.7/q.min.js"));
+        assertEquals("/vendor/js/q/0.9.7/q.min.js", WebUtil.resolveHeadResourceUrl(
+                "head.js.all.Aa", "js", "http://cdn.intermine.org/js/q/0.9.7/q.min.js"));
+        // everything else is unchanged
+        assertEquals("https://www.google.com/jsapi",
+                WebUtil.resolveHeadResourceUrl("head.js.all.L", "js", "https://www.google.com/jsapi"));
+        assertEquals("/dwr/engine.js",
+                WebUtil.resolveHeadResourceUrl("head.js.all.D", "js", "/dwr/engine.js"));
+        assertEquals("/js/imutils.js",
+                WebUtil.resolveHeadResourceUrl("head.js.all.G", "js", "imutils.js"));
+        assertEquals("/css/resultstables.css",
+                WebUtil.resolveHeadResourceUrl("head.css.all.B", "css", "resultstables.css"));
+    }
+
     public void testFormatPath() throws PathException {
         Path p = new Path(model, "Employee.name");
         String expected = "Angestellter > Name";
