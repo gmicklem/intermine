@@ -70,6 +70,8 @@ javac -cp $CP -d /tmp/elsweep/out docs/tools/ElSweep.java
 java -cp /tmp/elsweep/out:$CP ElSweep intermine/webapp/src bio/webapp/src
 ```
 
+   Also run the three webapp sweeps of [`docs/tools/README-webapp-sweeps.md`](tools/README-webapp-sweeps.md) (`msgkeys.py`, `tilescheck.py`, `classrefs.py`): `msgkeys.py` must report `unused 0` and `tilescheck.py` nothing; every name `classrefs.py` prints is a reference to a class that no longer exists and must be fixed or removed.
+
 3. Check that no asset is loaded from `cdn.intermine.org` (gone): `grep -rn --exclude-dir=vendor cdn.intermine.org intermine/webapp/src/main intermine/api/src/main bio/webapp/src/main` must print only the places that name it on purpose, namely `WebUtil.java` (the mapping of old absolute URLs to `vendor/`, and its warning), a comment in `htmlHead.jsp` and a comment in `global.web.properties`; the files of `vendor/` are checked against `vendor/SHA256SUMS` (`cd intermine/webapp/src/main/webapp/vendor && sha256sum -c SHA256SUMS`) and still name the host in a json3 fallback that never runs (see its README). No `head.*` property may start with `http://cdn.intermine.org` or use `head.cdn.location`.
 4. Run the full gate (below) on the commit that will be released.
 5. Tag the release commit `intermine-X.Y.Z` (for example `intermine-5.1.1`) and push the tag. Older releases use the same naming (`intermine-5.1.0`).
