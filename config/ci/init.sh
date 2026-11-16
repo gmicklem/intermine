@@ -43,7 +43,6 @@ setup_postgres() {
     dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists unittest
     dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists userprofile-test
     dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists bio-test
-    dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists bio-fulldata-test
     dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists intermine-demo
     dropdb -w -h "$PSQL_HOST" -U "$PG_ADMIN_USER" --if-exists userprofile-demo
 
