@@ -40,7 +40,7 @@ public class GeneIdentifiersDisplayer extends ReportDisplayer
         super(config, im);
     }
 
-    /** @String[] which identifiers to use? */
+    /** which identifiers to use? */
     private final String[] identifiers = new String []{"primaryIdentifier", "secondaryIdentifier",
         "symbol"};
 

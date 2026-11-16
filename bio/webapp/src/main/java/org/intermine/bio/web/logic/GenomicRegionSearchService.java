@@ -1864,7 +1864,7 @@ public class GenomicRegionSearchService
     }
 
     /**
-     * A wrapper of generateJBrowseURL(GenomicRegion s, List<String> featureTypes)
+     * A wrapper of {@code generateJBrowseURL(GenomicRegion s, List<String> featureTypes)}
      * @param s GenomicRegion
      * @return jbrowse url
      */

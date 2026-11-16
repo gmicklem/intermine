@@ -324,14 +324,20 @@ class DBModelPlugin implements Plugin<Project> {
 
         project.tasks.register('runAcceptanceTests') {
             group = TaskConstants.TASK_GROUP
-            description = "Run the configured acceptance tests against the production database, uses <MINE_NAME>_acceptance_test.conf"
+            description = "Run the configured acceptance tests against the production database, uses <MINE_NAME>_acceptance_test.conf; " +
+                    "writes build/im/runAcceptanceTests/acceptance_test.html"
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
+            // The report goes into a directory of its own: it used to be written into build/resources/main, so that the
+            // dbmodel jar and the war carried the report of the last run (im-ee7.56). The result depends on the database,
+            // which is no input, so the task always runs.
+            outputs.dir(DBModelUtils.taskDir(project, name))
+            outputs.upToDateWhen { false }
 
             doLast {
                 def ant = new AntBuilder()
 
                 String buildResourcesMainDir = dbUtils.buildResourcesMainDir
-                String outputFilePath = buildResourcesMainDir + File.separator + "acceptance_test.html"
+                String outputFilePath = new File(DBModelUtils.cleanTaskDir(project, name), "acceptance_test.html").absolutePath
                 String acceptanceTestFilePath = buildResourcesMainDir + File.separator + config.mineName + "_acceptance_test.conf"
 
                 ant.taskdef(name: "acceptanceTest", classname: "org.intermine.task.AcceptanceTestTask") {
@@ -372,12 +378,17 @@ class DBModelPlugin implements Plugin<Project> {
 
         project.tasks.register('generateUpdateTriggers') {
             group = TaskConstants.TASK_GROUP
-            description = "Generates SQL files for manual CRUD operations on InterMine database. THIS IS AN EXPERIMENTAL FEATURE, USE AT YOUR OWN RISK."
+            description = "Generates SQL files for manual CRUD operations on InterMine database, into build/im/generateUpdateTriggers. " +
+                    "THIS IS AN EXPERIMENTAL FEATURE, USE AT YOUR OWN RISK."
             DBModelUtils.readsRuntime(it, DBModelUtils.mineProperties(project))
+            // the SQL files go into a directory of their own, not build/resources/main (im-ee7.56); the object store is
+            // no input, so the task always runs
+            outputs.dir(DBModelUtils.taskDir(project, name))
+            outputs.upToDateWhen { false }
 
             doLast {
                 def ant = new AntBuilder()
-                String buildResourcesMainDir = dbUtils.buildResourcesMainDir
+                String destDir = DBModelUtils.cleanTaskDir(project, name).absolutePath
                 ant.taskdef(name: "generateUpdateTriggers", classname: "org.intermine.task.GenerateUpdateTriggersTask") {
                     classpath {
                         dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
@@ -386,7 +397,7 @@ class DBModelPlugin implements Plugin<Project> {
                         pathelement(path: DBModelUtils.antClasspath(project).asPath)
                     }
                 }
-                ant.generateUpdateTriggers(osName: config.objectStoreName, destDir: buildResourcesMainDir)
+                ant.generateUpdateTriggers(osName: config.objectStoreName, destDir: destDir)
             }
         }
     }

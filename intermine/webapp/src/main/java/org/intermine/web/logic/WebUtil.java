@@ -594,7 +594,7 @@ public abstract class WebUtil
      * Format a path represented as a string to the formatted fields, without
      * the class name.
      *
-     * So <code>Employee.department.manager.age<code> becomes
+     * So <code>Employee.department.manager.age</code> becomes
      * <code>Department &gt; Manager &gt; Years Alive</code>
      *
      * @param s The path string

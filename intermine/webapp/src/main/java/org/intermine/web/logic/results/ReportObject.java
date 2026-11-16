@@ -81,7 +81,7 @@ public class ReportObject
     private InterMineAPI im;
 
     /**
-     * @List<ReportObjectField> setup list of summary fields this object has
+     * setup list of the ReportObjectField summary fields this object has
      */
     private List<ReportObjectField> objectSummaryFields;
 
@@ -106,7 +106,7 @@ public class ReportObject
 
     /**
      * @var webProperties so we can resolve # of rows to show in Collections
-     * @see DisplayReference/DisplayCollection -> DisplayField -> getTable()
+     * (see DisplayReference and DisplayCollection, then DisplayField and its getTable())
      */
     private Properties webProperties;
 
@@ -236,7 +236,7 @@ public class ReportObject
 
     /**
      * A listing of object fields as pieced together from the various ReportObject methods
-     * @return <ReportObjectField>s List
+     * @return List of the ReportObjectFields
      */
     public List<ReportObjectField> getObjectSummaryFields() {
         long startTime = System.currentTimeMillis();
@@ -348,7 +348,7 @@ public class ReportObject
 
     /**
      * Return a list of field configs
-     * @return Collection<FieldConfig>
+     * @return {@code Collection<FieldConfig>}
      */
     public Collection<FieldConfig> getFieldConfigs() {
         return webConfig.getFieldConfigs(reportClass.getName());
@@ -537,7 +537,7 @@ public class ReportObject
 
     /**
      * Get the main or sub title of the page.
-     * @param key: main|sub
+     * @param key main or sub
      * @return the titles string as resolved based on the path(s) under key
      */
     private Map<String, TitleValue> getTitles(String key) {
@@ -693,7 +693,8 @@ public class ReportObject
      * @param listConfig retrieved from Type
      * @param bagOfInlineListNames is a bag of names of lists we have resolved so far so these
      *        fields are not resolved elsewhere and skipped instead
-     * @see setDescriptorOnInlineList() is still needed when traversing FieldDescriptors
+     * {@link #setDescriptorOnInlineList(String, FieldDescriptor)} is still needed when traversing
+     * FieldDescriptors
      */
     private void initialiseInlineList(InlineListConfig listConfig,
             HashMap<String, Boolean> bagOfInlineListNames) {

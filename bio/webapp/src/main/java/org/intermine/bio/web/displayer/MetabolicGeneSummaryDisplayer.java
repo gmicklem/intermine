@@ -169,8 +169,8 @@ public class MetabolicGeneSummaryDisplayer extends ReportDisplayer
 
     /**
      * EMTAB-62 link generator from ebi.ac.uk
-     * @param primaryId
-     * @return
+     * @param primaryId the primary identifier of the gene
+     * @return the URL of the image, or null if there is no primary identifier
      * @deprecated because the image is too big
      */
     @SuppressWarnings("unused")

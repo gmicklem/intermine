@@ -897,7 +897,7 @@ public class IsaConverter extends BioFileConverter
     /**
      * adds an element to a list which is the value of a map
      *
-     * @param m     the map (<String, List<String>>)
+     * @param m     the map ({@code Map<String, List<String>>})
      * @param key   the key for the map
      * @param value the list
      */

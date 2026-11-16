@@ -508,7 +508,7 @@ public abstract class WebService
      *
      * <ul>
      *   <li>
-     *     <h4>Basic Authentication</h3>
+     *     <h4>Basic Authentication</h4>
      *     Standard username and password stuff - best avoided.
      *   </li>
      *   <li>
@@ -531,8 +531,8 @@ public abstract class WebService
      *   </li>
      * </ul>
      *
-     * {@link "http://en.wikipedia.org/wiki/Basic_access_authentication"}
-     * {@link "http://jwt.io/"}
+     * See <a href="http://en.wikipedia.org/wiki/Basic_access_authentication">Basic access
+     * authentication</a> and <a href="http://jwt.io/">JSON Web Tokens</a>.
      */
     private void authenticate() {
 

@@ -117,5 +117,4 @@ jar {
     }
     // the entries of the bundled jars (META-INF, ...) may overlap: keep the first, as Gradle 6 did by default
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    exclude 'genomic_model.xml'
 }

@@ -1924,12 +1924,12 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
     }
 
     /**
-     * @param value
-     * @param type
-     * @param dataId
-     * @param name
-     * @return
-     * @throws ObjectStoreException
+     * @param value the value of the attribute
+     * @param type the type of the attribute
+     * @param dataId the id of the applied data that the attribute belongs to
+     * @param name the name of the attribute
+     * @return the stored SubmissionDataAttribute
+     * @throws ObjectStoreException if the item cannot be stored
      */
     private Item storeDataAttribute(String value, String type, Integer dataId,
             String name) throws ObjectStoreException {
@@ -4103,7 +4103,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
 
     /**
      * adds an element to a list which is the value of a map
-     * @param m       the map (<Integer, List<String>>)
+     * @param m       the map ({@code Map<Integer, List<String>>})
      * @param key     the key for the map
      * @param value   the list
      */

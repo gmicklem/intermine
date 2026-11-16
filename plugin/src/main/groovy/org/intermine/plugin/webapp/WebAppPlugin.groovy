@@ -1,6 +1,7 @@
 package org.intermine.plugin.webapp
 
 import groovy.ant.AntBuilder
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
@@ -95,7 +96,9 @@ class WebAppPlugin implements Plugin<Project> {
             sync.inputs.files(DBModelUtils.processedResources(project))
 
             sync.doLast {
-                File buildResDir = DBModelUtils.buildFile(project, "resources/main")
+                // where processResources puts the model's fragments: the source set's resources output, which a mine
+                // may have moved from build/resources/main (im-ee7.32)
+                File buildResDir = new File(DBModelUtils.resourcesDir(project))
                 File webInf = new File(explodedWebApp(project), "WEB-INF")
                 File strutsConfigModelPath = new File(buildResDir, "struts-config-model.xml")
                 File strutsConfigFormPath = new File(buildResDir, "struts-config-form-model.xml")
@@ -295,6 +298,68 @@ class WebAppPlugin implements Plugin<Project> {
                 }
             }
         }
+        checkWarLibraries(project)
+    }
+
+    /**
+     * checkWarLibraries: warns (or fails, with -PimWarDuplicateLibraries=fail or the same property in gradle.properties)
+     * when WEB-INF/lib of the war would hold two versions of one library. duplicatesStrategy EXCLUDE only collapses
+     * entries of the same name (foo-1.0.jar twice), not foo-1.0.jar next to foo-1.1.jar (im-ee7.54). The war takes its
+     * report as an input, so that it is not built when the check fails.
+     */
+    private static void checkWarLibraries(Project project) {
+        def war = project.tasks.named('war', War)
+        def artifacts = project.configurations.getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME).incoming.artifacts
+        def bioWebAppLibs = project.fileTree(explodedWebApp(project)) {
+            include 'WEB-INF/lib/*.jar'
+            builtBy 'unwarBioWebApp'
+        }
+        def reportFile = project.layout.buildDirectory.file("reports/war-libraries.txt")
+        def check = project.tasks.register('checkWarLibraries') {
+            group = 'verification'
+            description = "Warns when the war would carry two versions of one library in WEB-INF/lib " +
+                    "(-PimWarDuplicateLibraries=fail makes it an error)"
+            inputs.files({ war.get().classpath }).withPropertyName('warClasspath')
+            inputs.files(artifacts.artifactFiles).withPropertyName('resolvedArtifacts')
+            inputs.files(bioWebAppLibs).withPropertyName('bioWebAppLibraries')
+            inputs.files({ project.fileTree(war.get().webAppDirectory) { include 'WEB-INF/lib/*.jar' } })
+                    .withPropertyName('webappLibraries')
+            inputs.property('imWarDuplicateLibraries', project.providers.gradleProperty('imWarDuplicateLibraries').orElse('warn'))
+            outputs.file(reportFile)
+            // the warning is for every build, not for the first one that sees the libraries
+            outputs.upToDateWhen { false }
+
+            doLast {
+                // the resolved libraries of the classpath first: their module names tell where the name of a jar that no
+                // resolution knows ends
+                List<WarLibraries.Library> libraries = WarLibraries.ofClasspath(war.get().classpath.files.toList(),
+                        artifacts.artifacts, 'classpath')
+                Set<String> knownNames = libraries.findAll { it.group != null }*.name as Set
+                // WEB-INF/lib of the mine's own src/main/webapp (the first entry of a name wins in the war) and of bio-webapp
+                libraries.addAll(0, project.fileTree(war.get().webAppDirectory) { include 'WEB-INF/lib/*.jar' }.files
+                        .sort { it.name }.collect { WarLibraries.fromFileName(it.name, 'src/main/webapp', knownNames) })
+                libraries.addAll(bioWebAppLibs.files.sort { it.name }
+                        .collect { WarLibraries.fromFileName(it.name, 'bio-webapp', knownNames) })
+                List<String> duplicates = WarLibraries.duplicates(libraries)
+                File report = reportFile.get().asFile
+                report.parentFile.mkdirs()
+                report.text = duplicates.collect { it + '\n' }.join('')
+                if (duplicates) {
+                    String mode = project.providers.gradleProperty('imWarDuplicateLibraries').getOrElse('warn')
+                    String message = "The war would carry two versions of ${duplicates.size() == 1 ? 'a library' : 'libraries'} " +
+                            "in WEB-INF/lib:\n  " + duplicates.join('\n  ') +
+                            "\nKeep one: force the version in the mine (configurations.all { resolutionStrategy.force '...' }) " +
+                            "or exclude the library from the dependency that brings the other (bio-webapp's jars are those " +
+                            "marked bio-webapp). -PimWarDuplicateLibraries=fail turns this warning into an error."
+                    if (mode == 'fail') {
+                        throw new GradleException(message)
+                    } else if (mode != 'ignore') {
+                        project.logger.warn(message)
+                    }
+                }
+            }
+        }
+        war.configure { it.inputs.files(check).withPropertyName('warLibrariesReport') }
     }
 
     /** The jars of the legacy `ant:ant` coordinate (pre-Apache groupId) on the mine's runtime classpath, if any. */

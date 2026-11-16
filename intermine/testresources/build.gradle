@@ -233,11 +233,13 @@ void createTables(osname, model) {
 }
 
 task buildDB {
-    // the Ant tasks load the test model classes from build/ (not a declared input) and need the databases
-    dependsOn 'compileTestJava'
+    // lifecycle: the databases themselves have no file output to wire
     dependsOn 'createUnitTestDatabases'
     description = "Create tables for database for intermine tests"
     inputs.files(configurations.testRuntimeClasspath)
+    // the Ant tasks load the test model classes and the model XML from build/ and src/test/resources: the compiled test
+    // classes and the processed test resources, which schedule compileTestJava and processTestResources
+    inputs.files(sourceSets.test.output)
     doLast {
         createTables('unittest', 'testmodel')
         createTables('truncunittest', 'testmodel')

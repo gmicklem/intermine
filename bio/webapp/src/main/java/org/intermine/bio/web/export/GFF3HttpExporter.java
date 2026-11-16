@@ -212,7 +212,7 @@ public class GFF3HttpExporter extends HttpExporterBase implements TableHttpExpor
     /**
      *
      * @param pt PagedTable
-     * @return List<Path>
+     * @return {@code List<Path>}
      */
     public List<Path> getExportClassPaths(PagedTable pt) {
         return new ArrayList<Path>();
