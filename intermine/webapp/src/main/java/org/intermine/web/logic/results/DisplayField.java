@@ -40,7 +40,7 @@ public class DisplayField
     protected static final Logger LOG = Logger.getLogger(DisplayField.class);
     private final Map<String, List<FieldDescriptor>> classKeys;
 
-    /** @List<Class<?> PathQueryResultHelper resolved */
+    /** the types that PathQueryResultHelper resolved */
     private List<Class<?>> listOfTypes = null;
 
     /** @var webProperties so we can resolve # of rows to show in Collections */

@@ -5,6 +5,5 @@
  <suppress checks="[a-zA-Z0-9]*" files="(Command|CommandRunner|Commands|Config|Endpoint|MapListener|Names|Queries|Segment|ArrayFormatter|NameSpacedProperties|ObjectFormatter)\.java"/>
  <suppress checks="JavadocMethod" files="(RegistryResponse|Instance)\.java"/>
  <suppress checks="Header" files="(R2RML|R2RMLMappingProcess)\.java"/>
- <suppress checks="MissingDeprecated" files="\.java$" message="has parse error"/>
 </suppressions>
 

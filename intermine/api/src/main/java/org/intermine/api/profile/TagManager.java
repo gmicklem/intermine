@@ -53,7 +53,7 @@ import org.intermine.util.DynamicUtil;
 /**
  * Manager class for tags. Implements retrieving, adding and deleting tags in user profile
  * database.
- * @author Jakub Kulaviak <jakub@flymine.org>
+ * @author Jakub Kulaviak &lt;jakub@flymine.org&gt;
  * @author Alex Kalderimis
  * @author Daniela Butano
  */

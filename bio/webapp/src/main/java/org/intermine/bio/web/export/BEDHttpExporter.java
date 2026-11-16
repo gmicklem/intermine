@@ -161,7 +161,7 @@ public class BEDHttpExporter extends HttpExporterBase implements TableHttpExport
     /**
      *
      * @param pt PagedTable
-     * @return List<Path>
+     * @return {@code List<Path>}
      */
     public List<Path> getExportClassPaths(PagedTable pt) {
         return new ArrayList<Path>();

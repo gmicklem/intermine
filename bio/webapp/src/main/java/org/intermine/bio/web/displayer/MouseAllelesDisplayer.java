@@ -275,7 +275,7 @@ public class MouseAllelesDisplayer extends ReportDisplayer
     }
 
     /**
-     * Given columns: [symbol, primaryId, id] in a List<ResultElement> row, give us a nice
+     * Given columns: [symbol, primaryId, id] in a {@code List<ResultElement>} row, give us a nice
      *  identifier back
      * @param row
      * @return nice identifier

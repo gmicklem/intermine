@@ -212,8 +212,8 @@ public final class OrganismRepository
     }
 
     /**
-     * Look up OrganismData objects by a full name that is genus <space> species.  Returns null if
-     * there is no OrganismData in this OrganismRepository that matches.
+     * Look up OrganismData objects by a full name that is {@code genus <space> species}.
+     * Returns null if there is no OrganismData in this OrganismRepository that matches.
      * @param fullName the genus and species separated by a space
      * @return the OrganismData
      */

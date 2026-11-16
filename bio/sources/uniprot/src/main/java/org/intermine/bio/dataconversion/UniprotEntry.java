@@ -203,8 +203,8 @@ public class UniprotEntry
 
     /**
      * new feature for protein
-     * feature.type and feature.description are set first.  then the <location> bit is processed.
-     * we hold this (already stored) object just until the location object is stored.
+     * feature.type and feature.description are set first.  then the {@code <location>} bit is
+     * processed. we hold this (already stored) object just until the location object is stored.
      * @param item temporary object
      */
     public void addFeature(Item item) {
@@ -733,7 +733,7 @@ public class UniprotEntry
     // ============== genes =========================
 
     /**
-     * From <genes>
+     * From {@code <genes>}
      *
      * @param type type of variable, eg. ORF, primary
      * @param value value of variable, eg FBgn, CG
@@ -771,12 +771,14 @@ public class UniprotEntry
 
     /**
      * add dbref to list.  these will be processed later for gene identifiers
-     * eg <dbReference type="FlyBase" id="FBgn0004889" key="52">
+     * eg {@code <dbReference type="FlyBase" id="FBgn0004889" key="52">}
      *
      * if a protein has multiple genes, the gene designation is needed too.
+     * <pre>{@code
      * <dbReference type="SGD" id="S000004157" key="95">
      *   <property type="gene designation" value="RPS31"/>
      * </dbReference>
+     * }</pre>
      *
      * @param type datasource
      * @param id identifier

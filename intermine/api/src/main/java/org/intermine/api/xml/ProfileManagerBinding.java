@@ -107,7 +107,7 @@ public final class ProfileManagerBinding
     /** Returns profile format version from database. Version 0 corresponds to
      * situation when constraint values are saved in the internal format. Internal
      * format is format where '*' are replaced with % and other changes.
-     * @see #Util.wildcardSqlToUser()
+     * @see org.intermine.metadata.Util#wildcardSqlToUser(String)
      * @return saved format version or "0" if not saved in database
      */
     private static String getProfileVersion(ObjectStore os) {
