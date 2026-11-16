@@ -204,6 +204,10 @@ What to do:
 - `commons-lang` 2.6 and `commons-io` 1.2 stay on your compile classpath when you declare `bio-core`: `bio/core/build.gradle` declares both as `api`, so they are `compile` entries of the `bio-core` POM. The `bio-source-*` POMs themselves list them as `runtime`. `commons-logging` and `postgresql` are `runtime` in `bio-core` too.
 - To see what a POM gives you: `./gradlew dependencies --configuration compileClasspath` in your project, or the `<scope>` entries of the POM on Maven Central.
 
+## DWR servlet settings in web.xml (5.1.1)
+
+In the `web.xml` that InterMine ships, the `dwr-invoker` servlet no longer runs with `debug=true` (the `/dwr/` index and test pages listed every exposed class and ran any method from a browser form), `allowGetForSafariButMakeForgeryEasier=true` (GET calls are what a forged cross-site request needs; the DWR client only uses GET for Safari older than 1.3) or `activeReverseAjaxEnabled=true` (nothing in the webapp uses reverse Ajax). `allowScriptTagRemoting=false` and `crossDomainSessionSecurity=true`, the DWR defaults, are now written out. `/dwr/index.html` and `/dwr/test/*` now answer 501 Not Implemented (what DWR sends with `debug` off), and a GET call is refused with `GET Disalowed`; the pages' own DWR calls are POSTs and are unchanged. A mine that has its own copy of `web.xml` should take the same four values; a mine that wants the DWR test pages back on a development server sets `debug` to `true` there only.
+
 ## 5.1.1 to 6.0.0
 
 The 6.0.0 release is a breaking change of the mine's build files (Gradle 8.14.6, JDK 17, the plugin composes the war, the bio-source scopes above, `commons-lang3`, and more), and its guide lives in the `maint-2026` branch, not here: https://github.com/gmicklem/intermine/blob/maint-2026/docs/UPGRADING-build.md. It has the ordered steps, a worked HumanMine example, a table of error messages and the JDK 17 notes. It can be followed from 5.0.x, 5.1.0 or a mine already on 5.1.1; the steps in this guide are not a prerequisite, but steps 3 and 4 of the list above (the `stopExecutionIfEmpty` line and gretty) are repeated there.

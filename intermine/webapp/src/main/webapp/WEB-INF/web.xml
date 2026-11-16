@@ -38,16 +38,31 @@
   <servlet>
   <servlet-name>dwr-invoker</servlet-name>
   <servlet-class>org.directwebremoting.servlet.DwrServlet</servlet-class>
+  <!-- DWR hardening (see docs/UPGRADING-build.md, "DWR servlet settings"):
+       debug=false: no /dwr/ test pages that list the exposed classes and run any method;
+       activeReverseAjaxEnabled=false: nothing in the webapp uses reverse Ajax (polling/Comet);
+       allowGetForSafariButMakeForgeryEasier=false: the DWR client only uses GET for Safari
+         older than 1.3, and a GET call is trivially forged from another site (CSRF);
+       allowScriptTagRemoting=false and crossDomainSessionSecurity=true are the DWR defaults,
+         set here so that they are not changed by accident. -->
   <init-param>
      <param-name>debug</param-name>
-     <param-value>true</param-value>
+     <param-value>false</param-value>
   </init-param>
     <init-param>
       <param-name>activeReverseAjaxEnabled</param-name>
-      <param-value>true</param-value>
+      <param-value>false</param-value>
     </init-param>
     <init-param>
       <param-name>allowGetForSafariButMakeForgeryEasier</param-name>
+      <param-value>false</param-value>
+    </init-param>
+    <init-param>
+      <param-name>allowScriptTagRemoting</param-name>
+      <param-value>false</param-value>
+    </init-param>
+    <init-param>
+      <param-name>crossDomainSessionSecurity</param-name>
       <param-value>true</param-value>
     </init-param>
     <load-on-startup>2</load-on-startup>
