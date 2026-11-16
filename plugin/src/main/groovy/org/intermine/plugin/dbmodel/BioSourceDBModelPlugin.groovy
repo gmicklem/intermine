@@ -22,19 +22,13 @@ class BioSourceDBModelPlugin implements Plugin<Project>{
 
         project.tasks.register('createTestPrioritiesFile') {
             description = "Creates a blank genomic_priorities file for unit tests. When building, the mine's priority file will be used."
-            // ordering only: it writes into processResources' output directory.
-            mustRunAfter 'processResources'
+            outputs.dir(DBModelUtils.taskDir(project, name))
 
             doLast {
-                def file = new File(DBModelUtils.resourcesDir(project), "genomic_priorities.properties")
-                file.parentFile.mkdirs()
-                file.newWriter().withWriter { w ->
+                new File(DBModelUtils.cleanTaskDir(project, name), "genomic_priorities.properties").withWriter { w ->
                     w << "# dummy file for unit tests"
                 }
             }
-        }
-        project.tasks.named('test').configure {
-            inputs.files(DBModelUtils.resource(project, 'createTestPrioritiesFile') { "genomic_priorities.properties" })
         }
 
         // One task copies genomic_model.xml from bio-model and merges this source's additions into it
@@ -96,6 +90,9 @@ class BioSourceDBModelPlugin implements Plugin<Project>{
                 }
             }
         }
+
+        // the unit tests read the test keys and priorities (and, from dbmodel, default.intermine.properties)
+        DBModelUtils.testReads(project, ['copyGenomicKeys', 'createTestPrioritiesFile'])
     }
 
     /** The configured global additions file under the root project, or null if there is none. */

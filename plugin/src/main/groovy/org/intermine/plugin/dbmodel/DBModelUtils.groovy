@@ -7,6 +7,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
+import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.util.PatternSet
 
@@ -65,20 +66,72 @@ class DBModelUtils {
         path == null ? null : project.rootProject.file(path).absolutePath
     }
 
-    /** The main source set's resources output directory, where the InterMine runtime files live. */
+    /** The main source set's resources output directory, where processResources puts the files of the jar. */
     static String resourcesDir(Project project) {
-        SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
-        sourceSets.getByName("main").getOutput().resourcesDir.toString()
+        sourceSets(project).getByName("main").getOutput().resourcesDir.toString()
+    }
+
+    static SourceSetContainer sourceSets(Project project) {
+        project.extensions.getByType(SourceSetContainer)
     }
 
     /**
-     * A file in the resources output directory that task {@code producer} writes, as a task
-     * input: the consuming task then depends on the producer through its inputs instead of an
-     * explicit dependsOn. The producers write into a directory shared with processResources, so
-     * most of them do not declare outputs; the file name is resolved when the input is read.
+     * The directory that the plugin's task {@code taskName} writes: build/im/<taskName>, its declared output. The
+     * plugin's files that the jar must not carry (the test database configuration, the model and keys of the unit
+     * tests, so.obo) used to be written into build/resources/main, processResources' output, so that the jar and javadoc
+     * saw them, or not, depending on which tasks had run, and were never up to date. Each producer has a directory of
+     * its own, so that it can declare it as its output without overlapping another task's.
+     */
+    static File taskDir(Project project, String taskName) {
+        buildFile(project, "im/" + taskName)
+    }
+
+    /**
+     * The parent of every taskDir. The plugin's Ant tasks put its subdirectories first on their classpath
+     * ({@code dirset(dir: imDir, includes: '*')}), before the dirset of the whole build directory, whose scan order is
+     * that of the file system: a file of a task (the merged model, generateKeys' genomic_keyDefs.properties) then wins
+     * over one of the same name in build/resources/main or in a jar, as it did when the tasks overwrote the copy in
+     * build/resources/main.
+     */
+    static File imDir(Project project) {
+        buildFile(project, "im")
+    }
+
+    /** Empties (or creates) a task's own output directory before the task writes it, so that no stale file stays. */
+    static File cleanTaskDir(Project project, String taskName) {
+        File dir = taskDir(project, taskName)
+        dir.deleteDir()
+        dir.mkdirs()
+        dir
+    }
+
+    /**
+     * A file in the resources output directory (build/resources/main) that task {@code producer} puts there, as a
+     * task input: the consuming task then depends on the producer through its inputs instead of an explicit
+     * dependsOn. intermine.properties is read this way (a mine's copyMineProperties feeds processResources or, in a
+     * 5.x style build file, copies into the directory itself), and so is the model, which copyGenomicModel and
+     * mergeModels still merge in place there.
      */
     static FileCollection resource(Project project, String producer, Closure<String> fileName) {
         project.files({ new File(resourcesDir(project), fileName.call()) }).builtBy(producer)
+    }
+
+    /** A file that task {@code producer} writes into its own directory (taskDir), as a task input. */
+    static FileCollection output(Project project, String producer, Closure<String> fileName) {
+        project.files({ new File(taskDir(project, producer), fileName.call()) }).builtBy(producer)
+    }
+
+    /**
+     * Puts the directories of the given tasks (taskDir) on the test runtime classpath: the files that the tests
+     * read and the jar must not carry. They go after the test and main outputs and before the dependencies, whose
+     * jars may hold a file of the same name (bio-model's unmerged genomic_model.xml), as when the files were in
+     * build/resources/main. The test task depends on the producers through its classpath.
+     */
+    static void testReads(Project project, List<String> producers) {
+        SourceSet test = sourceSets(project).getByName("test")
+        SourceSet main = sourceSets(project).getByName("main")
+        FileCollection dirs = project.files({ producers.collect { taskDir(project, it) } }).builtBy(producers as Object[])
+        test.runtimeClasspath = project.files(test.output, main.output, dirs, test.runtimeClasspath)
     }
 
     /**
@@ -96,23 +149,25 @@ class DBModelUtils {
      * Declares what a task that runs InterMine code (an Ant task on this project's classpath)
      * reads: the compiled classes and resources (this replaces dependsOn 'jar' / 'compileJava';
      * the Ant tasks use build/ directly, not the jar), the runtime classpath (which also builds
-     * project dependencies such as a mine's dbmodel jar), and the runtime property files that
-     * the given tasks put into the resources directory.
+     * project dependencies such as a mine's dbmodel jar), and the runtime files that other tasks
+     * write (resource, output).
      */
-    static void readsRuntime(Task task, Map<String, Closure<String>> resources = [:]) {
+    static void readsRuntime(Task task, List<FileCollection> files = []) {
         Project project = task.project
-        SourceSetContainer sourceSets = (SourceSetContainer) project.getProperties().get("sourceSets")
-        task.inputs.files(sourceSets.getByName("main").output)
+        task.inputs.files(sourceSets(project).getByName("main").output)
         task.inputs.files(antClasspath(project))
-        resources.each { String producer, Closure<String> fileName ->
-            task.inputs.files(resource(project, producer, fileName))
+        files.each { FileCollection file ->
+            task.inputs.files(file)
         }
     }
 
-    /** intermine.properties (the mine's own build file copies it in) and default.intermine.properties. */
-    static Map<String, Closure<String>> mineProperties() {
-        ['copyMineProperties': { 'intermine.properties' },
-         'copyDefaultInterMineProperties': { 'default.intermine.properties' }]
+    /**
+     * intermine.properties (the mine's own build file copies it into the resources) and default.intermine.properties
+     * (copyDefaultInterMineProperties).
+     */
+    static List<FileCollection> mineProperties(Project project) {
+        [resource(project, 'copyMineProperties') { 'intermine.properties' },
+         output(project, 'copyDefaultInterMineProperties') { 'default.intermine.properties' }]
     }
 
     /**
@@ -139,10 +194,12 @@ class DBModelUtils {
         resourcesDir(project)
     }
 
-    protected copyDefaultPropertiesFile = { String defaultPropertiesFile ->
+    /** Copies the given file of intermine-resources as default.intermine.properties into {@code destination}. */
+    protected copyDefaultPropertiesFile = { String defaultPropertiesFile, File destination ->
         copyFromArchive(project, project.configurations.getByName("commonResources").singleFile,
-                defaultPropertiesFile, buildResourcesMainDir + File.separator + "default.intermine.properties")
+                defaultPropertiesFile, new File(destination, "default.intermine.properties").absolutePath)
     }
+
 
     /** The bio-source-<postfix> jar, for the mergeSource configuration. */
     Dependency bioSourceDependency(sourcePostfix, sourceVersion) {
@@ -162,6 +219,7 @@ class DBModelUtils {
         }
         ant.taskdef(name: "modelOutputTask", classname: "org.intermine.task.ModelOutputTask") {
             classpath {
+                dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                 pathelement(path: project.configurations.getByName("bioModel").asPath)
@@ -178,6 +236,7 @@ class DBModelUtils {
         def ant = new AntBuilder()
         ant.taskdef(name: "torque", classname: "org.intermine.objectstore.intermine.TorqueModelOutputTask") {
             classpath {
+                dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                 pathelement(path: project.configurations.getByName("bioModel").asPath)
@@ -195,7 +254,8 @@ class DBModelUtils {
         def ant = new AntBuilder()
         ant.taskdef(name: "buildDB", classname: "org.intermine.task.BuildDbTask") {
             classpath {
-                dirset(dir: buildResourcesMainDir)//to read default.intermine.properties
+                dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
+                dirset(dir: buildResourcesMainDir) // intermine.properties
                 pathelement(path: DBModelUtils.buildDirectory(project).absolutePath)//to read the schema
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
             }
@@ -209,6 +269,7 @@ class DBModelUtils {
         def ant = new AntBuilder()
         ant.taskdef(name: 'insertModel', classname: 'org.intermine.task.StoreMetadataTask') {
             classpath {
+                dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: buildResourcesMainDir) // intermine.properties
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
                 pathelement(path: project.configurations.getByName(IM_API_JAR).asPath) //userprofile_keyDefs.properties
@@ -223,6 +284,7 @@ class DBModelUtils {
         def ant = new AntBuilder()
         ant.taskdef(name: 'analyse', classname: 'org.intermine.task.AnalyseDbTask') {
             classpath {
+                dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: buildResourcesMainDir) // intermine.properties
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
             }
@@ -236,6 +298,7 @@ class DBModelUtils {
         def ant = new AntBuilder()
         ant.taskdef(name: 'createIndexes', classname: 'org.intermine.task.CreateIndexesTask') {
             classpath {
+                dirset(dir: DBModelUtils.imDir(project).absolutePath, includes: '*', erroronmissingdir: false) // DBModelUtils.imDir
                 dirset(dir: buildResourcesMainDir) // intermine.properties
                 dirset(dir: DBModelUtils.buildDirectory(project).absolutePath)
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)

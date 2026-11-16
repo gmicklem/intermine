@@ -17,5 +17,7 @@ class BioCoreDBModelPlugin implements Plugin<Project>{
             // model but instead use ones already provided. 'mergeModels' is required however
             // so that's why you are reading this empty method.
         }
+        // the unit tests read the test keys (and, from dbmodel, default.intermine.properties)
+        DBModelUtils.testReads(project, ['copyGenomicKeys'])
     }
 }
