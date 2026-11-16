@@ -135,9 +135,11 @@ subprojects {
         mergeModel group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
         mergeModel group: 'commons-lang', name: 'commons-lang', version: '2.6'
 
-        // JAX-B dependencies for JDK 9+
-        implementation "jakarta.xml.bind:jakarta.xml.bind-api:2.3.2"
-        implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
+        // javax.activation, which JDK 11 removed: psi-complexes' JAXB (jami-xml's own jaxb-impl 2.2.7, see
+        // psi-complexes/build.gradle) and the update-data-sources test use it. There is deliberately no
+        // jaxb-runtime or jakarta.xml.bind-api here: JAXB 2.3.x on the class path takes over from jami-xml's
+        // JAXB 2.2.7 and then binds none of the PSI-MI XML elements, so psi-complexes got no participants [im-jqz.51].
+        implementation "jakarta.activation:jakarta.activation-api:1.2.1"
         implementation "javax.annotation:javax.annotation-api:1.3.2"
     }
 
