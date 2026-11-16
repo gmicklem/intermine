@@ -51,3 +51,10 @@ All run inside one build directory, after the script above has generated the pro
 ```
 
 `-Dmaven.repo.local=<dir>` makes `publishToMavenLocal` install into `<dir>` instead of `~/.m2`. These are the commands in `CONTRIBUTING.md` and `config/ci/run.sh`.
+
+## Version stances
+
+The dependency versions are literal in the `build.gradle` files on this branch (there is no version catalog). Two decisions that are not obvious from the numbers:
+
+- Jena is 3.17.0, the last release that runs on Java 8 (4.x needs Java 11, 5.x Java 17). Only the RDF model API is used, to write RDF, so `jena-core` is the compile dependency (`intermine/api`, `intermine/webapp`, `bio/postprocess/create-R2RML-mapping`) and `jena-arq` is a run-time one: with it on the class path `Model.write()` uses the RIOT writers, and the N-Triples and Turtle text differ without it (`RDFSerialisationTest` pins the output). RIOT's start-up also needs `libthrift` and `commons-compress` even for write-only use, so they cannot be excluded.
+- `solr-solrj` 8.11.4 is declared with its Netty, Jetty (HTTP/2) and Snappy dependencies excluded (in `intermine/api`, `intermine/webapp`, `bio/postprocess` and `testmine/dbmodel`): they are only loaded by `Http2SolrClient` and the SolrCloud client, and InterMine uses `HttpSolrClient`. `zookeeper` must stay, because the javabin decoder calls a class in it.
