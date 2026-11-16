@@ -17,7 +17,11 @@ ant = "1.10.18"
 antlr = "2.7.6"
 base64 = "2.3.8"
 biojava = "4.2.0"
-cglib = "3.1"
+# Byte Buddy generates the classes of objects of more than one model class (org.intermine.util.DynamicBean; it replaced
+# cglib 3.1 in 6.0, which needed --add-opens java.base/java.lang on JDK 16+). The release that easymock 5.7.0 brings to the
+# test classpath, so there is one copy; vetted in decisions/package-vetting.md (im-jqz.6 test scope, im-jqz.29 runtime).
+# 1.18.x runs on Java 8 and has no dependencies (ASM is shaded inside it).
+byte-buddy = "1.18.12"
 # 1.11.0 clears CVE-2025-48734 (the one advisory on 1.9.4); only pinned for Struts 1.3.10 (intermine/webapp), no InterMine code uses it
 commons-beanutils = "1.11.0"
 # 3.2.2: CVE-2015-7501 / CVE-2015-6420 (functor deserialisation); same API as 3.2
@@ -98,7 +102,7 @@ antlr = { module = "antlr:antlr", version.ref = "antlr" }
 base64 = { module = "net.iharder:base64", version.ref = "base64" }
 biojava-core = { module = "org.biojava:biojava-core", version.ref = "biojava" }
 biojava-ontology = { module = "org.biojava:biojava-ontology", version.ref = "biojava" }
-cglib = { module = "cglib:cglib", version.ref = "cglib" }
+byte-buddy = { module = "net.bytebuddy:byte-buddy", version.ref = "byte-buddy" }
 commons-beanutils = { module = "commons-beanutils:commons-beanutils", version.ref = "commons-beanutils" }
 commons-collections = { module = "commons-collections:commons-collections", version.ref = "commons-collections" }
 commons-fileupload = { module = "commons-fileupload:commons-fileupload", version.ref = "commons-fileupload" }

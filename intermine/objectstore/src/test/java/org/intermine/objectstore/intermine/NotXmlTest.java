@@ -14,6 +14,8 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import org.intermine.model.DynamicObject;
+import org.intermine.model.testmodel.Broke;
 import org.intermine.model.testmodel.Company;
 import org.intermine.model.testmodel.Department;
 import org.intermine.model.testmodel.Employee;
@@ -69,21 +71,52 @@ public class NotXmlTest extends TestCase
 
     public void testParseDynamic() throws Exception {
 
-        String s = NotXmlParser.DELIM + "org.intermine.model.testmodel.Company net.sf.cglib.proxy.Factory"
+        String s = NotXmlParser.DELIM + "org.intermine.model.testmodel.Company org.intermine.model.testmodel.Broke"
             + NotXmlParser.DELIM + "raddress" + NotXmlParser.DELIM + "74328"
             + NotXmlParser.DELIM + "avatNumber" + NotXmlParser.DELIM + "100"
+            + NotXmlParser.DELIM + "adebt" + NotXmlParser.DELIM + "42"
+            + NotXmlParser.DELIM + "aname" + NotXmlParser.DELIM + "CompanyC"
+            + NotXmlParser.DELIM + "aid" + NotXmlParser.DELIM + "74350";
+
+        Company obj1 = (Company) NotXmlParser.parse(s, os);
+
+        assertTrue(obj1 instanceof Broke);
+        assertEquals("CompanyC", obj1.getName());
+        assertEquals(100, obj1.getVatNumber());
+        assertEquals(42, ((Broke) obj1).getDebt());
+        assertEquals(new Integer(74350), obj1.getId());
+        Map fieldMap = ((DynamicBean) ((DynamicObject) obj1).dynamicHandler()).getMap();
+        ProxyReference addressRef = (ProxyReference) fieldMap.get("address");
+        assertNotNull(addressRef);
+        assertEquals(new Integer(74328), addressRef.getId());
+
+        // and back: the same classes and fields
+        String rendered = NotXmlRenderer.render(obj1).toString();
+        assertTrue(rendered, rendered.startsWith(NotXmlParser.DELIM
+                    + "org.intermine.model.testmodel.Broke org.intermine.model.testmodel.Company"
+                    + NotXmlParser.DELIM));
+        Company obj2 = (Company) NotXmlParser.parse(rendered, os);
+        assertSame(obj1.getClass(), obj2.getClass());
+        assertEquals(42, ((Broke) obj2).getDebt());
+        assertEquals(100, obj2.getVatNumber());
+        assertEquals("CompanyC", obj2.getName());
+        assertEquals(new Integer(74350), obj2.getId());
+        assertEquals(new Integer(74328), ((ProxyReference) ((DynamicBean) ((DynamicObject) obj2)
+                .dynamicHandler()).getMap().get("address")).getId());
+    }
+
+    // cglib's marker interface, which InterMine before 6.0 put on its classes of more than one
+    // model class, is skipped if a stored object names it
+    public void testParseCglibFactoryName() throws Exception {
+        String s = NotXmlParser.DELIM + "org.intermine.model.testmodel.Company net.sf.cglib.proxy.Factory"
             + NotXmlParser.DELIM + "aname" + NotXmlParser.DELIM + "CompanyC"
             + NotXmlParser.DELIM + "aid" + NotXmlParser.DELIM + "74350";
 
         Company obj1 = (Company) NotXmlParser.parse(s, os);
 
         assertEquals("CompanyC", obj1.getName());
-        assertEquals(100, obj1.getVatNumber());
         assertEquals(new Integer(74350), obj1.getId());
-        Map fieldMap = ((DynamicBean) ((net.sf.cglib.proxy.Factory) obj1).getCallback(0)).getMap();
-        ProxyReference addressRef = (ProxyReference) fieldMap.get("address");
-        assertNotNull(addressRef);
-        assertEquals(new Integer(74328), addressRef.getId());
+        assertFalse(obj1 instanceof DynamicObject);
     }
 
     public void testHandleDelims() throws Exception {

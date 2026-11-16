@@ -39,7 +39,7 @@ subprojects {
     apply plugin: 'biocore-dbmodel'
     apply plugin: "checkstyle"
 
-    // Java 8 bytecode whatever the build JDK; --release 8 and the test JVM options on JDK 9+
+    // Java 8 bytecode whatever the build JDK; --release 8 on JDK 9+
     apply from: "${rootDir}/../../config/gradle/java-target.gradle"
 
     // -------------------------
@@ -108,7 +108,9 @@ subprojects {
         testImplementation libs.junit
         testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
         testImplementation libs.xmlunit
-        testImplementation libs.cglib
+        // the InterMine jars come from build/libs without their POMs, so intermine-objectstore's run-time dependency
+        // (DynamicBean, objects of more than one model class) is declared here
+        testImplementation libs.byte.buddy
         mergeModel group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
         implementation group: 'org.intermine', name: 'bio-postprocess-create-chromosome-locations-and-lengths', version: bioVersion
         testImplementation group: 'org.intermine', name: 'bio-postprocess-create-chromosome-locations-and-lengths', version: bioVersion

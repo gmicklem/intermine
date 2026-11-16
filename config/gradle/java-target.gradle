@@ -17,12 +17,4 @@ if (JavaVersion.current().isJava9Compatible()) {
     tasks.withType(JavaCompile).configureEach {
         options.release = 8
     }
-
-    // cglib 3.1 (org.intermine.util.DynamicBean, the proxies for objects of more than one model class) defines its generated
-    // classes by calling ClassLoader.defineClass through reflection, which JDK 16+ refuses unless java.base opens java.lang.
-    // The Gradle daemon and Tomcat 9's catalina.sh already pass this option; Gradle's test workers do not. Any other JVM that
-    // runs InterMine code on JDK 16+ needs it too. Delete this when cglib is replaced.
-    tasks.withType(Test).configureEach {
-        jvmArgs '--add-opens=java.base/java.lang=ALL-UNNAMED'
-    }
 }

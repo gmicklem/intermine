@@ -18,13 +18,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import net.sf.cglib.proxy.Factory;
-
 import org.apache.log4j.Logger;
 import org.intermine.metadata.CollectionDescriptor;
 import org.intermine.metadata.FieldDescriptor;
 import org.intermine.metadata.ReferenceDescriptor;
 import org.intermine.metadata.TypeUtil;
+import org.intermine.model.DynamicObject;
 import org.intermine.model.FastPathObject;
 import org.intermine.model.InterMineObject;
 import org.intermine.objectstore.proxy.ProxyCollection;
@@ -57,6 +56,11 @@ public final class NotXmlParser
      */
     public static final Pattern SPLITTER = Pattern.compile(DELIM, Pattern.LITERAL);
     private static final Pattern SPACE_SPLITTER = Pattern.compile(" ", Pattern.LITERAL);
+    /**
+     * cglib's marker interface, which InterMine before 6.0 put on its classes of more than one
+     * model class. NotXmlRenderer never wrote it, but it is skipped should a stored object name it.
+     */
+    private static final String CGLIB_FACTORY = "net.sf.cglib.proxy.Factory";
     private static int opCount = 0;
     private static long splitTime = 0;
     private static long classTime = 0;
@@ -93,7 +97,9 @@ public final class NotXmlParser
             if (!"".equals(a[1])) {
                 String[] b = SPACE_SPLITTER.split(a[1]);
                 for (int i = 0; i < b.length; i++) {
-                    classes.add(Class.forName(b[i]));
+                    if (!CGLIB_FACTORY.equals(b[i])) {
+                        classes.add(Class.forName(b[i]));
+                    }
                 }
             }
             time1 = System.currentTimeMillis();
@@ -110,8 +116,8 @@ public final class NotXmlParser
         time2 = System.currentTimeMillis();
         createTime += time2 - time1;
 
-        if (retval instanceof Factory) {
-            DynamicBean bean = (DynamicBean) ((Factory) retval).getCallback(0);
+        if (retval instanceof DynamicObject) {
+            DynamicBean bean = (DynamicBean) ((DynamicObject) retval).dynamicHandler();
             Map<String, Object> valueMap = bean.getMap();
             Map<String, FieldDescriptor> fields = os.getModel()
                 .getFieldDescriptorsForClass(retval.getClass());

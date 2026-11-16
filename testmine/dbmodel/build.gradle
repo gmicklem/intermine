@@ -45,7 +45,9 @@ dependencies {
     api libs.lucene.snowball
     api libs.postgresql
     testModelProps group: "org.intermine", name: "intermine-testresources", version: imVersion, transitive: false
-    api libs.cglib
+    // the InterMine jars come from build/libs without their POMs, so intermine-objectstore's run-time dependency
+    // (DynamicBean, objects of more than one model class) is declared here
+    api libs.byte.buddy
     api(libs.solr.solrj) {
         exclude group: 'io.netty'
         exclude group: 'org.eclipse.jetty'

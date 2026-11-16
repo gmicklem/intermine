@@ -4,7 +4,7 @@ apply plugin: 'java'
 group = 'org.intermine'
 version = '5.1.1'
 
-// Java 8 bytecode whatever the build JDK; --release 8 and the test JVM options on JDK 9+
+// Java 8 bytecode whatever the build JDK; --release 8 on JDK 9+
 apply from: "${rootDir}/../config/gradle/java-target.gradle"
 
 repositories {

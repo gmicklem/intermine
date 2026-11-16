@@ -17,6 +17,9 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+import org.intermine.metadata.TypeUtil;
+import org.intermine.metadata.Util;
+import org.intermine.model.DynamicObject;
 import org.intermine.model.FastPathObject;
 import org.intermine.model.testmodel.Broke;
 import org.intermine.model.testmodel.CEO;
@@ -138,10 +141,101 @@ public class DynamicUtilTest extends TestCase
 
     public void testConstructors() throws Exception {
         Class c = DynamicUtil.composeClass(Company.class, Broke.class);
+        // the constructor creates the DynamicBean
         Company obj = (Company) c.newInstance();
-        ((net.sf.cglib.proxy.Factory) obj).setCallback(0, new DynamicBean());
         obj.setName("Fred");
         assertEquals("Fred", obj.getName());
+        assertTrue(obj instanceof DynamicObject);
+        assertEquals("Fred", ((DynamicBean) ((DynamicObject) obj).dynamicHandler()).getMap().get("name"));
+        // each object has its own
+        Company obj2 = (Company) c.newInstance();
+        assertNull(obj2.getName());
+    }
+
+    public void testComposeClassIsCached() throws Exception {
+        Class c1 = DynamicUtil.composeClass(Company.class, Broke.class);
+        Class c2 = DynamicUtil.composeClass(Broke.class, Company.class);
+        assertSame(c1, c2);
+        assertSame(c1, DynamicUtil.createObject(new HashSet(Arrays.asList(Broke.class, Company.class))).getClass());
+        assertSame(c1, DynamicBean.createClass(null, new Class[] {Broke.class, Company.class}));
+    }
+
+    public void testShadowAndPlainClassesAreNotDynamic() throws Exception {
+        assertFalse(DynamicUtil.createObject(Collections.singleton(Company.class)) instanceof DynamicObject);
+        assertFalse(DynamicUtil.createObject(Collections.singleton(Employee.class)) instanceof DynamicObject);
+    }
+
+    public void testDynamicClassName() throws Exception {
+        assertEquals("org.intermine.model.testmodel.Broke_Company$$Dynamic",
+                DynamicUtil.composeClass(Company.class, Broke.class).getName());
+        assertEquals("org.intermine.model.testmodel.Broke_CEO$$Dynamic",
+                DynamicUtil.composeClass(CEO.class, Broke.class).getName());
+    }
+
+    // decomposeClass, getFriendlyName and the simple-class methods look at the classes a
+    // dynamic class is made of, not at its generated name
+    public void testDecomposeDynamicClass() throws Exception {
+        Class c = DynamicUtil.composeClass(Company.class, Broke.class);
+        assertEquals(new HashSet(Arrays.asList(Company.class, Broke.class)), Util.decomposeClass(c));
+        assertEquals("Broke,Company", Util.getFriendlyName(c));
+
+        Class ceo = DynamicUtil.composeClass(CEO.class, Broke.class);
+        assertEquals(new HashSet(Arrays.asList(CEO.class, Broke.class)), Util.decomposeClass(ceo));
+        assertEquals("Broke,CEO", Util.getFriendlyName(ceo));
+        assertTrue(DynamicUtil.isAssignableFrom(Manager.class, ceo));
+        assertTrue(DynamicUtil.isAssignableFrom(c, DynamicUtil.composeClass(Company.class, Broke.class)));
+        assertFalse(DynamicUtil.isAssignableFrom(c, ceo));
+
+        // a redundant interface is dropped: CEO is already an Employable
+        Class ceo2 = DynamicUtil.composeClass(CEO.class, Broke.class, Employable.class);
+        assertEquals(new HashSet(Arrays.asList(CEO.class, Broke.class)), Util.decomposeClass(ceo2));
+    }
+
+    public void testSimpleClassOfDynamicClassWithOneModelClass() throws Exception {
+        // a dynamic class of one model class only (DynamicBean.create, no Shadow class used)
+        Class c = DynamicBean.createClass(null, new Class[] {Company.class});
+        assertEquals(Company.class, DynamicUtil.getSimpleClass(c));
+        assertEquals(Company.class.getName(), DynamicUtil.getSimpleClassName(c));
+        assertEquals("Company", Util.getFriendlyName(c));
+        assertEquals("Company", DynamicUtil.getSimpleClass(c).getSimpleName());
+    }
+
+    public void testDynamicObjectMethods() throws Exception {
+        Set classes = new HashSet(Arrays.asList(Company.class, Broke.class));
+        Company c = (Company) DynamicUtil.createObject(classes);
+        // primitives that were never set are 0, as with a plain object
+        assertEquals(0, ((Broke) c).getDebt());
+        assertEquals(0, c.getVatNumber());
+        c.setId(new Integer(17));
+        c.setName("Wotsit");
+        ((Broke) c).setDebt(40);
+        assertEquals("Broke,Company [debt=\"40\", id=\"17\", name=\"Wotsit\"]", c.toString());
+        Company same = (Company) DynamicUtil.createObject(classes);
+        same.setId(new Integer(17));
+        assertEquals(c, same);
+        assertEquals(c.hashCode(), same.hashCode());
+        assertEquals("Wotsit", c.getFieldValue("name"));
+        assertEquals(Integer.valueOf(40), c.getFieldValue("debt"));
+        assertEquals(Integer.TYPE, c.getFieldType("debt"));
+        assertEquals("Broke,Company:17", DynamicUtil.getFriendlyDesc(c));
+        // the model fields of the class, and not the DynamicObject method
+        assertEquals(new HashSet(Arrays.asList("address", "bank", "CEO", "contractors", "debt", "departments",
+                "id", "interestRate", "name", "oldContracts", "owedBy", "secretarys", "vatNumber")),
+                TypeUtil.getFieldInfos(c.getClass()).keySet());
+    }
+
+    public void testConcreteSuperclassDynamicObject() throws Exception {
+        CEO ceo = (CEO) DynamicUtil.createObject(new HashSet(Arrays.asList(CEO.class, Broke.class)));
+        ceo.setName("Fred");
+        ceo.setSalary(100);
+        ((Broke) ceo).setDebt(30);
+        assertEquals("Fred", ceo.getName());
+        assertEquals(100, ceo.getSalary());
+        assertEquals(30, ((Broke) ceo).getDebt());
+        assertTrue(ceo instanceof Manager);
+        assertTrue(ceo instanceof DynamicObject);
+        // the values are in the DynamicBean, not in the fields of CEO
+        assertEquals("Fred", ((DynamicBean) ((DynamicObject) ceo).dynamicHandler()).getMap().get("name"));
     }
 
     public void testInstantiateObjectNullClassName() throws Exception {
