@@ -29,6 +29,13 @@ public class XmlUtilTest extends TestCase
         assertEquals(output, expected);
     }
 
+    public void testIndentXmlSimpleKeepsNonAscii() throws Exception {
+        // not changed by the platform's default charset (im-jqz.62)
+        String input = "<a><b name=\"Robert\u2013 caf\u00e9\"/></a>";
+        assertEquals("<a>\n  <b name=\"Robert\u2013 caf\u00e9\"/>\n</a>",
+                XmlUtil.indentXmlSimple(input));
+    }
+
     public void testFixEntityNames() throws Exception {
         assertEquals("foo &gamma; bar &beta; zz",
                      XmlUtil.fixEntityNames("foo &ggr; bar &bgr; zz"));

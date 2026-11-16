@@ -24,6 +24,9 @@ import org.apache.struts.action.ActionMessages;
  */
 public class ModifyQueryForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     protected String[] selectedQueries;
 
     /**

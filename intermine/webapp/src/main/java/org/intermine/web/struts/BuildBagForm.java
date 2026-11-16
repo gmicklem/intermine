@@ -24,7 +24,11 @@ import org.apache.struts.upload.FormFile;
 public class BuildBagForm extends ActionForm
 {
 
-    private FormFile formFile;
+    private static final long serialVersionUID = 1L;
+
+    // the upload of one request, not state of the session that holds this form, and not
+    // Serializable
+    private transient FormFile formFile;
     private String text;
     private String type;
     private String extraFieldValue;

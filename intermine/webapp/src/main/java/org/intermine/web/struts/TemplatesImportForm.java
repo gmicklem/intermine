@@ -38,6 +38,9 @@ import org.intermine.web.logic.session.SessionMethods;
  */
 public class TemplatesImportForm extends ImportXMLForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     private boolean overwriting = false;
     private boolean deleteTracks = false;
     private Map<String, TemplateQuery> map;

@@ -2,9 +2,11 @@ package org.intermine.web.logic.results;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -13,7 +15,10 @@ import org.intermine.api.InterMineAPITestCase;
 import org.intermine.metadata.CollectionDescriptor;
 import org.intermine.metadata.FieldDescriptor;
 import org.intermine.metadata.ReferenceDescriptor;
+import org.intermine.model.InterMineObject;
 import org.intermine.model.testmodel.Address;
+import org.intermine.model.testmodel.Broke;
+import org.intermine.model.testmodel.CEO;
 import org.intermine.model.testmodel.Company;
 import org.intermine.util.DynamicUtil;
 import org.intermine.web.logic.config.FieldConfig;
@@ -71,6 +76,40 @@ public class ReportObjectTest extends InterMineAPITestCase
         } catch (IOException ioe) {
             ioe.printStackTrace();
         }
+    }
+
+    /**
+     * An object of two classes (Broke,CEO) made the report page fail with "No simple class for
+     * Broke,CEO" (im-jqz.62).
+     */
+    public void testObjectOfSeveralClasses() throws Exception {
+        InterMineObject broke = (InterMineObject) DynamicUtil.createObject(
+                new HashSet<Class<?>>(Arrays.<Class<?>>asList(Broke.class, CEO.class)));
+        broke.setId(new Integer(2));
+
+        // no config for either class: the first by name, both named in the label
+        ReportObject noConfig = new ReportObject(broke, new WebConfig(), im, null);
+        assertEquals("Broke", noConfig.getType());
+        assertEquals("Broke, CEO", noConfig.getTypeLabel());
+        assertEquals("Broke", noConfig.getClassDescriptor().getUnqualifiedName());
+
+        // config for CEO: the report page is that of CEO
+        WebConfig ceoConfig = new WebConfig();
+        Type type = new Type();
+        type.setClassName("org.intermine.model.testmodel.CEO");
+        FieldConfig fc = new FieldConfig();
+        fc.setFieldExpr("name");
+        type.addFieldConfig(fc);
+        ceoConfig.addType(type);
+        ReportObject configured = new ReportObject(broke, ceoConfig, im, null);
+        assertEquals("CEO", configured.getType());
+        assertEquals("Broke, CEO", configured.getTypeLabel());
+        assertEquals(1, configured.getFieldConfigs().size());
+
+        // an object of one class is as before
+        ReportObject single = new ReportObject(company, webConfig, im, null);
+        assertEquals("Company", single.getType());
+        assertEquals("Company", single.getTypeLabel());
     }
 
     public void testFieldConfigsNoConfig() throws Exception {

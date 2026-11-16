@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -69,6 +70,8 @@ public class ListInput
     public static final String REPLACE_PARAMETER = "replaceExisting";
     /** A suffix to attach to temporary lists **/
     public static final String TEMP_SUFFIX = "_temp";
+    /** The temporary list name of this request, see {@link #getTemporaryListName()} **/
+    private final String temporaryListName;
     /** extra value parameter **/
     public static final String EXTRA_PARAMETER = "extraValue";
     /** The default list name if none is provided **/
@@ -88,6 +91,10 @@ public class ListInput
         this.profile = profile;
 
         this.listName = produceName();
+        // unique per request: two concurrent requests for the same list name must not share (and
+        // rename or delete each other's) temporary list
+        this.temporaryListName = listName + TEMP_SUFFIX + "_"
+                + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         this.description = request.getParameter(DESCRIPTION_PARAMETER);
         this.replaceExisting = Boolean.parseBoolean(request.getParameter(REPLACE_PARAMETER));
         this.type = request.getParameter(TYPE_PARAMETER);
@@ -131,9 +138,14 @@ public class ListInput
         return this.extraValue;
     }
 
-    /** @return the temporary list name **/
+    /**
+     * The name of the list that is filled in while the request runs, and renamed to the list name
+     * when it is complete. It is different for every request (it has a random part after the
+     * suffix), so concurrent requests for one list name cannot collide on it.
+     * @return the temporary list name
+     **/
     public String getTemporaryListName() {
-        return this.listName + TEMP_SUFFIX;
+        return this.temporaryListName;
     }
 
     /** @return the description **/

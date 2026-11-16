@@ -40,7 +40,7 @@ import org.intermine.objectstore.proxy.ProxyReference;
 import org.intermine.objectstore.query.ClobAccess;
 import org.intermine.pathquery.Path;
 import org.intermine.pathquery.PathException;
-import org.intermine.util.DynamicUtil;
+import org.intermine.metadata.Util;
 import org.intermine.web.displayer.DisplayerManager;
 import org.intermine.web.displayer.ReportDisplayer;
 import org.intermine.web.fair.SemanticMarkupFormatter;
@@ -69,7 +69,12 @@ public class ReportObject
     private InterMineObject object;
     private final WebConfig webConfig;
     /** unqualified (!!) object type string */
+    // the class this report page is built from, for an object of several classes see
+    // chooseReportClass
+    private final Class<?> reportClass;
     private final String objectType;
+    // all the classes of the object, comma separated: Broke, CEO
+    private final String typeLabel;
 
     private Map<String, Object> fieldValues;
 
@@ -122,8 +127,45 @@ public class ReportObject
         this.im = im;
         this.webProperties = webProperties;
 
-        // infer dynamic type of IM object
-        this.objectType = DynamicUtil.getSimpleClass(object).getSimpleName();
+        // infer dynamic type of IM object: an object can be of several classes at once
+        // (Broke,CEO), which is not an error
+        Set<Class<?>> classes = Util.decomposeClass(object.getClass());
+        this.reportClass = chooseReportClass(classes, webConfig);
+        this.objectType = reportClass.getSimpleName();
+        List<String> names = new ArrayList<String>();
+        for (Class<?> cls : classes) {
+            names.add(cls.getSimpleName());
+        }
+        this.typeLabel = StringUtils.join(names, ", ");
+    }
+
+    /**
+     * The class that the report page of an object is configured and laid out by. For an object of
+     * one class that is the class. For an object of several classes it is the first of them
+     * (in the order of their names) that has report page configuration in the web config (a
+     * header, field configs, inline lists or displayers), or the first of them if none has.
+     * @param classes the classes of the object (see Util.decomposeClass), at least one
+     * @param webConfig the web config
+     * @return one of the classes
+     */
+    static Class<?> chooseReportClass(Set<Class<?>> classes, WebConfig webConfig) {
+        Class<?> first = null;
+        for (Class<?> cls : classes) {
+            if (first == null) {
+                first = cls;
+            }
+            Type type = webConfig.getTypes().get(cls.getName());
+            if (type != null && (type.getHeaderConfigTitle() != null
+                    || !type.getFieldConfigs().isEmpty()
+                    || !type.getInlineListConfig().isEmpty()
+                    || !type.getLongDisplayers().isEmpty())) {
+                return cls;
+            }
+        }
+        if (first == null) {
+            throw new IllegalArgumentException("An object of no class has no report page");
+        }
+        return first;
     }
 
     /**
@@ -309,8 +351,7 @@ public class ReportObject
      * @return Collection<FieldConfig>
      */
     public Collection<FieldConfig> getFieldConfigs() {
-        String qualifiedType = DynamicUtil.getSimpleClass(object).getName();
-        return webConfig.getFieldConfigs(qualifiedType);
+        return webConfig.getFieldConfigs(reportClass.getName());
     }
 
     /**
@@ -430,6 +471,15 @@ public class ReportObject
     }
 
     /**
+     * The names of all the classes of the object, for display: <code>Broke, CEO</code> for an
+     * object that is both. For an object of one class this is the same as {@link #getType()}.
+     * @return the unqualified class names, separated by commas
+     */
+    public String getTypeLabel() {
+        return typeLabel;
+    }
+
+    /**
      * Fetch a header string to use as the page title.  The title will be type of the object plus
      * the main and sub titles if configured, otherwise any value fetched from a class key.
      *
@@ -441,7 +491,7 @@ public class ReportObject
     public String getHtmlHeadTitle() {
         if (pageTitle == null) {
             StringBuilder sb = new StringBuilder();
-            sb.append(this.objectType);
+            sb.append(this.typeLabel);
             sb.append(" ");
 
             Map<String, TitleValue> mainTitles = getTitles(HeaderConfigTitle.MAIN);
@@ -493,8 +543,8 @@ public class ReportObject
     private Map<String, TitleValue> getTitles(String key) {
         if (headerTitles == null) {
             headerTitles = new HashMap<String, Map<String, TitleValue>>();
-            Type type = webConfig.getTypes().get(DynamicUtil.getSimpleClassName(object));
-            HeaderConfigTitle hc = type.getHeaderConfigTitle();
+            Type type = webConfig.getTypes().get(reportClass.getName());
+            HeaderConfigTitle hc = (type == null) ? null : type.getHeaderConfigTitle();
 
             for (String part : HeaderConfigTitle.TYPES) {
                 headerTitles.put(part, new LinkedHashMap<String, TitleValue>());
@@ -655,8 +705,7 @@ public class ReportObject
         try {
             // create a new path to the collection of objects
             Path path = new Path(im.getModel(),
-                    DynamicUtil.getSimpleClass(object.getClass()).getSimpleName()
-                    + '.' + listConfig.getPath());
+                    objectType + '.' + listConfig.getPath());
             try {
                 // save the suffix, the value we will show the list by
                 columnToDisplayBy = path.getLastElement();
@@ -913,8 +962,7 @@ public class ReportObject
 
     private Set<ReportDisplayer> getAllReportDisplayers() {
         DisplayerManager displayerManager = DisplayerManager.getInstance(webConfig, im);
-        String clsName = DynamicUtil.getSimpleClass(object).getSimpleName();
-        return displayerManager.getAllReportDisplayersForType(clsName);
+        return displayerManager.getAllReportDisplayersForType(objectType);
     }
 
     /**

@@ -24,6 +24,8 @@ import org.intermine.api.profile.InterMineBag;
 public class EnrichmentWidgetForm extends ActionForm
 {
 
+    private static final long serialVersionUID = 1L;
+
     private String ldr, title, link, descr, filterLabel, label;
     private String errorCorrection, filter;
     private String filters;

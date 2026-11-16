@@ -27,6 +27,9 @@ import org.intermine.web.logic.session.SessionMethods;
 @SuppressWarnings("deprecation")
 public class ChangeTableSizeForm extends ActionForm
 {
+
+    private static final long serialVersionUID = 1L;
+
     /**  */
     protected String pageSize;
 
