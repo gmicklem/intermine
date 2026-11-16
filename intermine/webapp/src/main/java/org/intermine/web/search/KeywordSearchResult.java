@@ -19,6 +19,7 @@ import org.apache.log4j.Logger;
 import org.intermine.api.config.ClassKeyHelper;
 import org.intermine.metadata.ClassDescriptor;
 import org.intermine.metadata.FieldDescriptor;
+import org.intermine.metadata.ReferenceDescriptor;
 import org.intermine.model.InterMineObject;
 import org.intermine.template.TemplateQuery;
 import org.intermine.web.logic.config.FieldConfig;
@@ -71,6 +72,13 @@ public class KeywordSearchResult
 
         for (FieldConfig fieldConfig : fieldConfigList) {
             if (fieldConfig.getShowInSummary()) {
+                // the web config can name a field the model of this mine does not have (a
+                // shared config for several models): skip it, it has no value to show
+                if (!isFieldInModel(classDescriptor, fieldConfig.getFieldExpr())) {
+                    LOG.debug("Not showing " + classDescriptor.getName() + "."
+                            + fieldConfig.getFieldExpr() + ", it is not in the model");
+                    continue;
+                }
                 fieldConfigs.put(fieldConfig.getFieldExpr(), fieldConfig);
 
                 if (ClassKeyHelper.isKeyField(classKeys, classDescriptor.getName(), fieldConfig
@@ -97,6 +105,34 @@ public class KeywordSearchResult
         this.templates = templates;
         this.points = Math.round(Math.max(0.1F, Math.min(1, getScore())) * 10); // range 1..10
         this.linkRedirect = linkRedirect;
+    }
+
+    /**
+     * Whether a field expression (attributes and references separated by dots) can be followed
+     * from a class in the model.
+     * @param classDescriptor the class the expression starts from
+     * @param expression field expression, for example study.firstAuthor
+     * @return true if every part of the expression is a field of the class it is applied to
+     */
+    static boolean isFieldInModel(ClassDescriptor classDescriptor, String expression) {
+        ClassDescriptor current = classDescriptor;
+        String[] parts = expression.split("\\.");
+        for (int i = 0; i < parts.length; i++) {
+            if (current == null) {
+                return false;
+            }
+            FieldDescriptor field = current.getFieldDescriptorByName(parts[i]);
+            if (field == null) {
+                return false;
+            }
+            if (i < parts.length - 1) {
+                if (!field.isReference() && !field.isCollection()) {
+                    return false;
+                }
+                current = ((ReferenceDescriptor) field).getReferencedClassDescriptor();
+            }
+        }
+        return true;
     }
 
     private Object getValueForField(InterMineObject object, String expression) {
