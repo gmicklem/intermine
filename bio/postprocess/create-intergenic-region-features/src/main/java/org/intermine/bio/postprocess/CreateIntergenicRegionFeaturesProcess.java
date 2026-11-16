@@ -156,6 +156,8 @@ public class CreateIntergenicRegionFeaturesProcess extends PostProcessor
 
     /**
      * Store the objects returned by createIntergenicRegionFeatures().
+     * @throws IllegalAccessException if a field of the object cannot be read
+     * @throws ObjectStoreException if the objectstore cannot be read or written
      */
     private static void storeIntergenicRegions(ObjectStoreWriter objectStoreWriter,
         Iterator<SequenceFeature> irIter) throws ObjectStoreException, IllegalAccessException {

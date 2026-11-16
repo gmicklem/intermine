@@ -187,6 +187,7 @@ public class GoPostprocess extends PostProcessor
      *
      * @param restrictToPrimaryGoTermsOnly Only get primary Annotation items linking the gene
      *  and the go term.
+     * @throws ObjectStoreException if the objectstore cannot be read or written
      */
     private Iterator<?> findProteinProperties(boolean restrictToPrimaryGoTermsOnly)
         throws ObjectStoreException {

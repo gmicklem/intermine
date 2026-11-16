@@ -84,6 +84,13 @@ elif [ "$TEST_SUITE" = "checkstyle" ]; then
     run_gradle bio/postprocess checkstyleMain
 
     "${WORKSPACE_DIR}"/config/lib/parse_checkstyle_report.py "${WORKSPACE_DIR}"
+
+    # A checked exception that a method declares needs a Javadoc @throws tag; checkstyle 9.3 cannot check it
+    # (docs/BUILDING.md, "@throws tags"). Fails with the list of methods. Fast: the jars of init.sh are built already.
+    run_gradle intermine checkThrowsDocs
+    run_gradle bio checkThrowsDocs
+    run_gradle bio/sources checkThrowsDocs
+    run_gradle bio/postprocess checkThrowsDocs
 elif [ "$TEST_SUITE" = "ws" ]; then
     "${WORKSPACE_DIR}"/config/run-ws-tests.sh "${WORKSPACE_DIR}" "${PYTHON}" "${CLIENT}" "${TESTMODEL_URL}"
 fi

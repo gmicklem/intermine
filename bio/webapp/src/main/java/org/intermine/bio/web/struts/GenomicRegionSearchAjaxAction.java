@@ -537,6 +537,7 @@ public class GenomicRegionSearchAjaxAction extends Action
 
     /**
      * Get a list of regions (comma separated) to populate a dropdown list on jsp
+     * @throws IOException if a file or stream cannot be read or written
      */
     private void getRegionsForDropDownList(HttpServletResponse response)
         throws IOException {

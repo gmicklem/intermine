@@ -51,18 +51,26 @@ public class LoadQueryAction extends InterMineDispatchAction
      * @param form The optional ActionForm bean for this request (if any)
      * @param request The HTTP request we are processing
      * @param response The HTTP response we are creating
-     * @return an ActionForward object defining where control goes next
+     * @return an ActionForward object defining where control goes next, or null if the response
+     *  has been written (an export, or a 400 when the query parameter is missing)
      * @exception Exception if the application business logic throws
      *  an exception
      */
     public ActionForward xml(ActionMapping mapping, ActionForm form, HttpServletRequest request,
             HttpServletResponse response)
         throws Exception {
+        String queryXml = request.getParameter("query");
+        if (queryXml == null) {
+            // without this the unmarshaller throws a NullPointerException (an HTTP 500)
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                    "No query specified: the 'query' request parameter (path query XML) is "
+                    + "required");
+            return null;
+        }
         HttpSession session = request.getSession();
         final InterMineAPI im = SessionMethods.getInterMineAPI(session);
         Profile profile = SessionMethods.getProfile(session);
         String trail = request.getParameter("trail");
-        String queryXml = request.getParameter("query");
         Boolean skipBuilder = Boolean.valueOf(request.getParameter("skipBuilder"));
         String exportFormat = request.getParameter("exportFormat");
         PathQuery query = PathQueryBinding.unmarshalPathQuery(new StringReader(queryXml),

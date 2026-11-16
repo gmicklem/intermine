@@ -8,6 +8,9 @@ subprojects {
     // Java 8 bytecode whatever the build JDK; --release 8 on JDK 9+
     apply from: "${rootDir}/../config/gradle/java-target.gradle"
 
+    // checkThrowsDocs: a checked exception that a method declares needs a @throws tag (docs/BUILDING.md)
+    apply from: "${rootDir}/../config/gradle/doclint-throws.gradle"
+
     // -------------------------
     // Build localDirs list
     // -------------------------

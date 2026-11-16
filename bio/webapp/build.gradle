@@ -69,6 +69,8 @@ dependencies {
 
     runtimeOnly libs.lucene.snowball
 
+    testImplementation libs.easymock
+
     imWebApp(libs.intermine.webapp) { transitive = false; artifact { name = 'intermine-webapp'; type = 'war'; extension = 'war' } }
 }
 

@@ -13,6 +13,7 @@ package org.intermine.objectstore.query.iql;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -89,7 +90,7 @@ public final class IqlQueryParser
         AST ast = null;
 
         try {
-            InputStream is = new ByteArrayInputStream(iql.getBytes());
+            InputStream is = new ByteArrayInputStream(iql.getBytes(StandardCharsets.UTF_8));
 
             IqlLexer lexer = new IqlLexer(is);
             IqlParser parser = new IqlParser(lexer);
@@ -110,7 +111,7 @@ public final class IqlQueryParser
             visitor.visit(ast);
             StringBuffer message = new StringBuffer();
             try {
-                InputStream is = new ByteArrayInputStream(iql.getBytes());
+                InputStream is = new ByteArrayInputStream(iql.getBytes(StandardCharsets.UTF_8));
                 IqlLexer lexer = new IqlLexer(is);
                 boolean needComma = false;
                 antlr.Token token;

@@ -384,6 +384,13 @@ public class GFF3Converter extends DataConverter
         Double score = record.getScore();
         if (score != null && !"".equals(String.valueOf(score))) {
             feature.setAttribute("score", String.valueOf(score));
+            // the source column (the program that made the feature) says what the score is; set
+            // it for every source, as before May 2021 (d49e9d6cd8 took it out), unless the
+            // source's attribute configuration has already set scoreType from column 9
+            if (record.getSource() != null && cd.getFieldDescriptorByName("scoreType") != null
+                    && !feature.hasAttribute("scoreType")) {
+                feature.setAttribute("scoreType", record.getSource());
+            }
         }
 
         for (Item synonym : synonymsToAdd) {

@@ -1,0 +1,14 @@
+<model name="genesummary" package="org.intermine.model.genesummary">
+<class name="Organism" is-interface="true">
+    <attribute name="genus" type="java.lang.String"/>
+    <attribute name="shortName" type="java.lang.String"/>
+</class>
+<class name="Pathway" is-interface="true">
+    <attribute name="name" type="java.lang.String"/>
+</class>
+<class name="Gene" is-interface="true">
+    <attribute name="primaryIdentifier" type="java.lang.String"/>
+    <reference name="organism" referenced-type="Organism"/>
+    <collection name="pathways" referenced-type="Pathway"/>
+</class>
+</model>

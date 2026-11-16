@@ -37,8 +37,9 @@
 
     <!-- Checkstyle 8.20 and 8.21 split the "missing Javadoc" half of JavadocType and JavadocMethod into their own
          checks; the settings are those the old checks had. JavadocMethod no longer loads the exception
-         classes of `throws` clauses (8.28), so a declared exception without a @throws tag is not reported (docs/BUILDING.md,
-         "@throws tags are not checked", has the measurements of validateThrows and javac's -Xdoclint:missing). -->
+         classes of `throws` clauses (8.28), so a declared exception without a @throws tag is not reported here: the Gradle task
+         checkThrowsDocs (config/gradle/doclint-throws.gradle) does that with javac's -Xdoclint:missing (docs/BUILDING.md,
+         "@throws tags", has the measurements of validateThrows and of javac's -Xdoclint:missing). -->
     <module name="MissingJavadocType">
       <property name="scope" value="package" />
       <property name="tokens" value="INTERFACE_DEF,CLASS_DEF" />

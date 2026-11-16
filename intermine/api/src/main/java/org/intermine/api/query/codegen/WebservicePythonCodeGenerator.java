@@ -525,6 +525,7 @@ public class WebservicePythonCodeGenerator implements WebserviceCodeGenerator
      * @param opCode
      *            operation code
      * @return a line of source code
+     * @throws UnhandledFeatureException if the query has an unsupported feature
      */
     private static String templateConstraintUtil(PathConstraint pc, String opCode)
         throws UnhandledFeatureException {

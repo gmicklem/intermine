@@ -206,6 +206,7 @@ public class MakeSpanningLocationsProcess extends PostProcessor
     /**
      * Query a class like Transcript that refers to a collection of located classes (like Exon) and
      * return an Results object containing Transcript, Exon, Exon location and location.object
+     * @throws ObjectStoreException if the objectstore cannot be read or written
      */
     private static Iterator<?> findCollections(ObjectStore os, Class<?> parentClass,
                                                Class<?> childClass, String refField)

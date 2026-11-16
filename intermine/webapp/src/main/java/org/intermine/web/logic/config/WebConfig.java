@@ -279,6 +279,7 @@ public class WebConfig
      * configuration for the appropriate classes and fields.
      * @param context The servlet context to use to find configuration with.
      * @param model The data model which lists our classes and fields.
+     * @throws IOException if a file or stream cannot be read or written
      */
     private void loadLabelsFromMappingsFile(
         final ServletContext context,

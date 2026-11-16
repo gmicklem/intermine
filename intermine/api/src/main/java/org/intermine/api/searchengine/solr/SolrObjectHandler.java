@@ -321,6 +321,7 @@ public class SolrObjectHandler extends Thread
 
     /**
      * Add object references to search document.
+     * @throws IllegalAccessException if a field of the object cannot be read
      */
     private void addReferences(
             InterMineObject object,
