@@ -77,6 +77,14 @@ processResources {
 war {
     dependsOn 'mergeProperties', 'summariseTestObjectStore', 'unwarIMWebApp'
     finalizedBy 'warTestModelWebApp'
+    // A dependency on the legacy `ant:ant` coordinate (a 2005 Ant that Gradle takes for another library than
+    // org.apache.ant:ant) would put a second Ant into WEB-INF/lib, as the webapp plugin's war leaves it out (im-ee7.54).
+    // It stays on the other classpaths of this build.
+    classpath = classpath.minus(configurations.runtimeClasspath.incoming.artifactView { view ->
+        view.componentFilter { id ->
+            id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier && id.group == 'ant' && id.module == 'ant'
+        }
+    }.files)
 }
 
 // intermine.properties is this project's own copy (processResources, see the root build file); until 2026-11 a
