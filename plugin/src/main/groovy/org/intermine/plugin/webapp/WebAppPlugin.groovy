@@ -3,7 +3,9 @@ package org.intermine.plugin.webapp
 import groovy.ant.AntBuilder
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.tasks.Sync
@@ -255,7 +257,30 @@ class WebAppPlugin implements Plugin<Project> {
             war.exclude "WEB-INF/web.properties"
             war.from(project.tasks.named('unwarBioWebApp'))
             war.webInf.from(project.files({ config.propsDir }).builtBy('mergeProperties', 'summariseObjectStore'))
+
+            // A mine of the 5.x line declares compile('ant:ant:1.6.5'): a 2005 Ant under the legacy groupId `ant`, which
+            // Gradle takes for a different library from org.apache.ant:ant:1.10.x that InterMine brings, so both jars
+            // would go to WEB-INF/lib. Nothing at run time needs it (the classes of the old jar are in the new one).
+            // It stays on the mine's other classpaths (the Ant tasks of the build); the war leaves it out.
+            FileCollection legacyAnt = legacyAntJars(project)
+            war.classpath = war.classpath.minus(legacyAnt)
+            war.doFirst {
+                if (!legacyAnt.empty) {
+                    project.logger.warn("The war leaves out ${legacyAnt.files*.name.join(', ')} (legacy groupId 'ant', the " +
+                            "org.apache.ant:ant jar of InterMine is in the war): delete the ant:ant:1.6.5 dependency " +
+                            "from the build files of the mine (docs/UPGRADING-build.md, step 3)")
+                }
+            }
         }
+    }
+
+    /** The jars of the legacy `ant:ant` coordinate (pre-Apache groupId) on the mine's runtime classpath, if any. */
+    static FileCollection legacyAntJars(Project project) {
+        project.configurations.getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME).incoming.artifactView { view ->
+            view.componentFilter { id ->
+                id instanceof ModuleComponentIdentifier && id.group == 'ant' && id.module == 'ant'
+            }
+        }.files
     }
 
     static File explodedWebApp(Project project) {
