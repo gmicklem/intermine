@@ -131,6 +131,8 @@ public class ObjectStoreInterMineImpl extends ObjectStoreAbstractImpl implements
     protected int sequenceBase = 0;
     protected int sequenceOffset = SEQUENCE_MULTIPLE;
     protected static final int SEQUENCE_MULTIPLE = 1000000;
+    // guards sequenceBase and sequenceOffset: one instance hands out ids to many threads
+    private final Object serialLock = new Object();
     protected boolean logExplains = false;
     protected boolean disableResultsCache = false;
 
@@ -2355,26 +2357,109 @@ public class ObjectStoreInterMineImpl extends ObjectStoreAbstractImpl implements
     /**
      * Gets an ID number which is unique in the database, given a Connection.
      *
+     * Ids are handed out in batches of SEQUENCE_MULTIPLE: each value of the 'serial' sequence
+     * reserves the ids from value * SEQUENCE_MULTIPLE + 1 upwards for this instance. Before a
+     * new batch is used it is checked against the largest id already stored in the database
+     * (see {@link #advanceSequencePastStoredIds(Connection, long)}), so rows that were inserted
+     * without going through the sequence (for example with plain SQL) cannot be given the same
+     * id again. The batch refill and the increment are done under one lock, as one instance is
+     * shared by many threads in the webapp.
+     *
      * @param c the Connection
      * @return an Integer
      * @throws SQLException if a problem occurs
      */
     protected Integer getSerialWithConnection(Connection c) throws SQLException {
-        if (sequenceOffset >= SEQUENCE_MULTIPLE) {
-            sequenceOffset = 0;
-            Statement s = c.createStatement();
-            ResultSet r = s.executeQuery("SELECT nextval('serial');");
+        synchronized (serialLock) {
+            if (sequenceOffset >= SEQUENCE_MULTIPLE) {
+                long nextSequence = advanceSequencePastStoredIds(c, nextSerialValue(c));
+                sequenceBase = (int) (nextSequence * SEQUENCE_MULTIPLE);
+                sequenceOffset = 0;
+                LOG.info("Got new set of serial numbers with base " + sequenceBase);
+            }
+            return sequenceBase + ++sequenceOffset;
+        }
+    }
 
+    private static long nextSerialValue(Connection c) throws SQLException {
+        Statement s = c.createStatement();
+        try {
+            ResultSet r = s.executeQuery("SELECT nextval('serial')");
             if (!r.next()) {
                 throw new SQLException("No result while attempting to get a unique id");
             }
-
-            long nextSequence = r.getLong(1);
-            sequenceBase = (int) (nextSequence * SEQUENCE_MULTIPLE);
-            LOG.info("Got new set of serial numbers with base " + sequenceBase);
+            return r.getLong(1);
+        } finally {
+            s.close();
         }
+    }
 
-        return sequenceBase + ++sequenceOffset;
+    /**
+     * Makes sure that the batch of ids reserved by a value of the 'serial' sequence lies above
+     * every id already stored in the database. The ids are read from every table of the current
+     * schema with an integer id, bagid or clobid column that leads an index (so each lookup is
+     * an index scan). If a stored id is in or above the batch, for example because rows were
+     * inserted with hardcoded ids, the sequence is moved on with nextval (never setval, so a
+     * concurrent process can never be handed a value twice) and the new value is returned.
+     *
+     * @param c the Connection
+     * @param sequenceValue a value just returned by nextval('serial')
+     * @return a value of the sequence, reserved for the caller, whose batch is free
+     * @throws SQLException if a problem occurs
+     */
+    protected long advanceSequencePastStoredIds(Connection c, long sequenceValue)
+        throws SQLException {
+        String maxTable = null;
+        long maxId = Long.MIN_VALUE;
+        Statement s = c.createStatement();
+        try {
+            List<String> selects = new ArrayList<String>();
+            ResultSet r = s.executeQuery("SELECT DISTINCT c.relname, a.attname"
+                    + " FROM pg_index i"
+                    + " JOIN pg_class c ON c.oid = i.indrelid"
+                    + " JOIN pg_namespace n ON n.oid = c.relnamespace"
+                    + " JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum = i.indkey[0]"
+                    + " WHERE n.nspname = current_schema() AND c.relkind = 'r'"
+                    + " AND a.attname IN ('id', 'bagid', 'clobid')"
+                    + " AND a.atttypid IN ('int4'::regtype, 'int8'::regtype)"
+                    + " ORDER BY c.relname, a.attname");
+            while (r.next()) {
+                String table = r.getString(1).replace("\"", "\"\"");
+                String column = r.getString(2);
+                selects.add("SELECT '" + table.replace("'", "''") + "." + column + "', max(\""
+                        + column + "\") FROM \"" + table + "\"");
+            }
+            if (selects.isEmpty()) {
+                return sequenceValue;
+            }
+            r = s.executeQuery(String.join(" UNION ALL ", selects));
+            while (r.next()) {
+                long id = r.getLong(2);
+                if (!r.wasNull() && (id > maxId)) {
+                    maxId = id;
+                    maxTable = r.getString(1);
+                }
+            }
+            // The batch of value v is v * SEQUENCE_MULTIPLE + 1 .. (v + 1) * SEQUENCE_MULTIPLE.
+            if ((maxTable == null) || (sequenceValue * SEQUENCE_MULTIPLE >= maxId)) {
+                return sequenceValue;
+            }
+            long needed = maxId / SEQUENCE_MULTIPLE + 1;
+            r = s.executeQuery("SELECT max(nextval('serial')) FROM generate_series(1, "
+                    + (needed - sequenceValue) + ")");
+            if (!r.next()) {
+                throw new SQLException("No result while attempting to advance the sequence");
+            }
+            long advanced = r.getLong(1);
+            LOG.warn("The 'serial' sequence of " + getDatabase().getURL() + " was at "
+                    + sequenceValue + " but " + maxTable + " already holds id " + maxId
+                    + " (rows inserted without using the sequence?):"
+                    + " advanced the sequence to " + advanced
+                    + " so new ids start at " + (advanced * SEQUENCE_MULTIPLE + 1));
+            return advanced;
+        } finally {
+            s.close();
+        }
     }
 
     /**
