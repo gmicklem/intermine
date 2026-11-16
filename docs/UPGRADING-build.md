@@ -58,13 +58,14 @@ The identifier [class] is not a valid Java identifier as required by section 1.1
 <%@ taglib uri="/WEB-INF/functions.tld" prefix="imf" %>
 ```
 
-**Find them before your users do: `ElSweep`.** `ElSweep.java` parses every `${...}` and `#{...}` expression in the `.jsp`, `.jspf`, `.jspx`, `.tag` and `.tagx` files of a source tree with Tomcat's own EL parser (`jasper-el`), without deploying anything. It is kept in the planning repository, https://github.com/gmicklem/intermine-planning, under `reference/jsp-el/` (`ElSweep.java` and `README-el-sweep.md`). It needs a JDK (8 or later) and two jars from the `lib/` directory of the Tomcat you deploy on, `el-api.jar` and `jasper-el.jar`; use the jars of that Tomcat version, because the check differs between versions. Run it from a directory that holds no untrusted `.class` files:
+**Find them before your users do: `ElSweep`.** `ElSweep.java` parses every `${...}` and `#{...}` expression in the `.jsp`, `.jspf`, `.jspx`, `.tag` and `.tagx` files of a source tree with Tomcat's own EL parser (`jasper-el`), without deploying anything. It is part of this repository, in [`docs/tools/`](tools/): [`ElSweep.java`](tools/ElSweep.java) and its [README](tools/README-el-sweep.md). It needs a JDK (8 or later) and two jars from the `lib/` directory of the Tomcat you deploy on, `el-api.jar` and `jasper-el.jar`; use the jars of that Tomcat version, because the check differs between versions. Run it from a directory that holds no untrusted `.class` files (the commands below take `docs/tools/ElSweep.java` from an InterMine checkout, `$IM`):
 
 ```bash
+IM=/path/to/intermine                              # a checkout of this repository
 TOMCAT_LIB=/path/to/apache-tomcat-9.0.x/lib        # or copy the two jars out of the container image
 CP=$TOMCAT_LIB/el-api.jar:$TOMCAT_LIB/jasper-el.jar
 mkdir -p /tmp/elsweep/out
-javac -cp $CP -d /tmp/elsweep/out ElSweep.java
+javac -cp $CP -d /tmp/elsweep/out $IM/docs/tools/ElSweep.java
 java -cp /tmp/elsweep/out:$CP ElSweep /path/to/mine/webapp/src/main/webapp
 ```
 
@@ -80,22 +81,34 @@ This only hides the problem: it switches off a check in the container that every
 
 ### cdn.intermine.org is gone
 
-`https://cdn.intermine.org` no longer answers. The InterMine webapp used it in three places, so a mine built from an unfixed InterMine loses its JavaScript and CSS:
+`https://cdn.intermine.org` no longer answers. Up to 5.1.0 the InterMine webapp took its JavaScript and CSS from it in three places, so a mine built from an InterMine without the fix loses its scripts and styles (`jQuery is not defined` in the browser, and the list upload confirmation page waits for ever on "Verifying identifiers"):
 
-- `head.cdn.location = https://cdn.intermine.org` in `WEB-INF/global.web.properties`, and every `head.js.*` / `head.css.*` property whose value starts with `CDN/` (`CDN` is replaced by `head.cdn.location` in `WebUtil.getHeadResources`): imjs, jQuery, underscore, Backbone, Q, the API loader, im-tables, the list widgets, pomme.js, font-awesome, bootstrap for the list pages, and the component-400 bundle that the bag upload confirm page loads;
-- `htmlHead.jsp` and `layout.jsp`, which pass the same location on to the JavaScript libraries as `CDN.server`;
-- the JavaScript code generator for queries and templates (`WebserviceJavaScriptCodeGenerator`), whose generated `<script src>` defaults to `http://cdn.intermine.org` when `head.cdn.location` is not set.
+- `head.cdn.location = https://cdn.intermine.org` in `WEB-INF/global.web.properties`, and every `head.js.*` / `head.css.*` property whose value starts with `CDN/` (`CDN` was replaced by `head.cdn.location` in `WebUtil.getHeadResources`): imjs, jQuery, underscore, Backbone, Q, the API loader, im-tables, the list widgets, pomme.js, font-awesome, bootstrap for the list pages, and the component-400 bundle that the bag upload confirm page loads;
+- `htmlHead.jsp` and `layout.jsp`, which passed the same location on to the JavaScript libraries as `CDN.server`;
+- the JavaScript code generator for queries and templates (`WebserviceJavaScriptCodeGenerator`), whose generated `<script src>` defaulted to `http://cdn.intermine.org`.
 
-**InterMine's side** is being fixed on `maint-2026` (issue im-jqz.43): the assets are to be served by the webapp itself or from cdnjs with Subresource Integrity (SRI) hashes, and the generated JavaScript is to load imjs from a live source. The exact property values and paths are in the release notes of the version that carries the fix (see `RELEASE_NOTES`); they are not settled yet, so do not copy them from this page.
+**What the fix does** (issues im-jqz.43 and im-jqz.45; it is in `maint-2026` and in the 5.1.1 candidate). The webapp serves its own copies, byte for byte from the public `intermine/CDN` repository, so a mine needs no external CDN for its own pages and works on an intranet:
 
-**What a deployer checks now**, in the mine's own source tree:
+- The files are in `<webapp>/vendor/` (`intermine/webapp/src/main/webapp/vendor/`, same layout as the old CDN). `vendor/README.md` lists every library with its version, path and the pages that use it; `vendor/SHA256SUMS` has the SHA-256 of each file (`sha256sum -c SHA256SUMS` from that directory checks the copy).
+- A `head.js.*` / `head.css.*` value that starts with `CDN/` is served from `<webapp>/vendor/...`: `head.js.all.Ae = CDN/js/intermine/imjs/3.18.1/im.js` becomes `<webapp>/vendor/js/intermine/imjs/3.18.1/im.js` (`WebUtil.resolveHeadResourceUrl`). The `global.web.properties` of InterMine keep their `CDN/` values.
+- `head.cdn.location` is removed. A mine that still sets it in its `web.properties` gets one warning in the log (`The web property head.cdn.location (...) is ignored: the libraries are served by the webapp itself from /vendor/`) and the value is not used.
+- An absolute `http(s)://cdn.intermine.org/...` URL in a mine's own `head.*` property is mapped to the bundled copy of the same path, with a warning (`Head resource ... names the defunct cdn.intermine.org, using the copy bundled in the webapp instead`). It works, but only for files that `vendor/` has; change the value to the `CDN/` form.
+- `htmlHead.jsp` and `layout.jsp` point the JavaScript libraries (`CDN.server`, the API loader's root) at `<context>/vendor`, and the code snippet generator now emits the mine's own im-tables 2.2.0-beta (`<mine>/vendor/js/intermine/im-tables/2.2.0-beta/imtables.js` and `main.sandboxed.css`, with the 2.x `imtables.loadTable` API) instead of a script from a third-party host. It also links the mine's `css/im-tables-fonts.css`, and `/vendor/fonts/*` is served with CORS headers, so a snippet pasted into another site contacts no host but the mine.
+- `branding.images.logo` defaults to `images/intermine-logo-45x45.png`, a file of the webapp (rawgit, where the old default lived, has been shut down). The `/service/branding` web service is read by clients on other sites, so it turns every `branding.images.*` value without a scheme into a full URL under the mine's base URL (`images/logo.png` becomes `<base URL of the webapp>/images/logo.png`); an absolute or protocol-relative value is returned as it is.
+- The only third-party script left is the Google Charts loader, `https://www.gstatic.com/charts/loader.js` (`head.js.bagDetails.Ca`), and only on the list analysis page (`bagDetails.do`): the vendored list-widgets 2.1.4 draws its charts with `google.visualization` and does not start without it. No other page contacts Google. A mine that must not contact Google has to replace the list widgets app: without the loader the list analysis page stops with `google is not defined`. Google Analytics only loads when `google.analytics.id` is set and the visitor agreed to tracking.
+- Two things stay as shipped inside the vendored files: a json3 fallback for Internet Explorer 7 and older in imjs and im-tables that names `cdn.intermine.org` and never runs in a supported browser, and the im-tables stylesheet's request to `netdna.bootstrapcdn.com` for icon fonts, which `css/im-tables-fonts.css` overrides with the fonts in `vendor/fonts`. See `vendor/README.md`, "Known remaining external references".
+
+**What a deployer checks**, in the mine's own source tree:
 
 ```bash
 grep -rn cdn.intermine.org webapp/                  # JSPs, JS, CSS, properties
 grep -rn "head.cdn.location\|CDN/" webapp/src/main/webapp/WEB-INF/web.properties
 ```
 
-Replace every hit with a file the mine serves itself (under the webapp's own `js/` and `css/`, so it works offline and does not depend on a third party) or with a pinned cdnjs URL (`https://cdnjs.cloudflare.com/ajax/libs/<library>/<exact version>/<file>`, with an `integrity=` hash if it is written into a JSP). If the mine overrides `head.js.*` or `head.css.*` entries and keeps the `CDN/` prefix, set `head.cdn.location` to a location that has those files, or replace the entries by a path that does. A custom JSP or JavaScript file that loads from `cdn.intermine.org` must be edited by hand.
+- A mine that does not touch `head.*` needs nothing.
+- A mine that overrides `head.js.*` or `head.css.*` and keeps a `CDN/` prefix gets the bundled copy, so the entry works if the file is in `vendor/`. Check the path against `vendor/README.md`: a `CDN/` path that the old CDN had and `vendor/` has not is a 404.
+- A mine that **hosts its own CDN mirror** (it sets `head.cdn.location` to its own server) must change the entries: `head.cdn.location` is ignored now, so `CDN/` no longer reaches the mirror. Write those entries as absolute URLs of the mirror (`https://static.example.org/js/...`), which are used as they are, or as `CDN/` to take the bundled copy.
+- A custom JSP, displayer or JavaScript file of the mine that loads from `cdn.intermine.org` must be edited by hand; the mapping above only covers `head.*` properties. Replace the reference with a path under the mine's own `js/` and `css/`, with a `vendor/` file (`<c:url value="/vendor/js/..."/>`), or with a pinned cdnjs URL (`https://cdnjs.cloudflare.com/ajax/libs/<library>/<exact version>/<file>`, with an `integrity=` hash if it is written into a JSP).
 
 ## 5.0.x or 5.1.0 to 5.1.1
 
