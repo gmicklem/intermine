@@ -1411,7 +1411,6 @@ form#queryBuilderTemplateSettings table input[type="text"], form#queryBuilderTem
 p#toggleWidgets, ol#widgetList { line-height:32px; vertical-align:middle; }
 
 /* list results low pagination */
-td.resBar span.tablePageLinks img { margin:0; padding:0; margin-right:5px; vertical-align:bottom; }
 
 /* template entry */
 ol#constraintList.templateForm label, ol#constraintList.templateForm input[type="checkbox"] { vertical-align:middle !important; }

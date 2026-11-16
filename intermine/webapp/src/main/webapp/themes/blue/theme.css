@@ -347,7 +347,6 @@ div.heading #tool_bar_div ul#button_bar li a { background:none !important; color
 
 /* results list */
 #tool_bar_div ul#button_bar li a { color:#FFF; }
-ul#button_bar li.tool_bar_link span.tablePageLinks { color:#FFF !important; }
 ul#button_bar li.tool_bar_link form span { color:#FFF !important; }
 
 /* homepage (begin.css) */
