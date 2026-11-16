@@ -21,6 +21,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -198,11 +199,10 @@ public class R2RMLMappingProcess extends PostProcessor
                     model.add(basicTableMapping, R2RML.SUBJECT_MAP, subjectMap);
                     model.add(subjectMap, R2RML.TEMPLATE, createURI(tableName));
 
-                    if (cd.getOntologyTerm() != null && !cd.getOntologyTerm().isEmpty()) {
-                        String[] terms = cd.getOntologyTerm().split(",");
-                        for (int index = 0; index < terms.length; index++) {
-                            Resource classInOutsideWorld =
-                                    ResourceFactory.createProperty(terms[index]);
+                    List<String> classTerms = RDFHelper.getClassTerms(cd);
+                    if (!classTerms.isEmpty()) {
+                        for (String term : classTerms) {
+                            Resource classInOutsideWorld = ResourceFactory.createProperty(term);
                             model.add(subjectMap, R2RML.CLASS_PROPERTY, classInOutsideWorld);
                         }
                     }  else {
