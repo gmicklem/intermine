@@ -26,9 +26,9 @@ class UnwarBioWebAppTest {
         assert new File(exploded, 'WEB-INF/struts-config.xml').text == strutsConfig
 
         // a new bio-webapp version without that file, and a stray file in the directory
-        mine.publishBioWebApp('5.1.2', ['new-version-only.jsp': '<p>only in the new version</p>'])
+        mine.publishBioWebApp('6.0.1', ['new-version-only.jsp': '<p>only in the new version</p>'])
         File properties = mine.file('gradle.properties')
-        properties.text = properties.text.replace('systemProp.bioVersion=5.1.1', 'systemProp.bioVersion=5.1.2')
+        properties.text = properties.text.replace('systemProp.bioVersion=6.0.0', 'systemProp.bioVersion=6.0.1')
         new File(exploded, 'stray.txt').text = 'left by something else'
 
         BuildResult third = mine.run(':webapp:unwarBioWebApp')

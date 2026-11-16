@@ -3,7 +3,7 @@
 Two releases are planned from two branches of https://github.com/gmicklem/intermine:
 
 - **5.1.1**: the non-breaking release, on Gradle 6.9.4 and JDK 8, from the branch `release/5.1.1-candidate` (the last 6.9.4 state; section 3). Mines on Gradle 4.9 keep working with its plugin.
-- **6.0.0**: the breaking release, on Gradle 8.14.6 and JDK 17, from `maint-2026` (section 4). Until it is cut, every version number in `maint-2026` still reads `5.1.1`, so artifacts built from that branch are *not* the 5.1.1 release: change the number to `6.0.0` first (see "Version bump").
+- **6.0.0**: the breaking release, on Gradle 8.14.6 and JDK 17, from `maint-2026` (section 4). `maint-2026` is already versioned 6.0.0 (one catalog entry, see "Version bump"), so a build of that branch publishes `6.0.0` artifacts, to Maven Central only when the release is cut.
 
 InterMine publishes these builds to Maven Central under the group `org.intermine`:
 
@@ -50,14 +50,14 @@ export CENTRAL_PASSWORD='...'                                        # Portal to
 
 ### Version bump
 
-The version appears in these places; change all of them in one commit (`release: 6.0.0`). On `release/5.1.1-candidate` there is no version catalog: the version is `version '5.1.1'` in each of the `build.gradle` files below (`subprojects { }` block, or the top level in `plugin`), and `imVersion` in `testmine/build.gradle`, and it is already 5.1.1. On `maint-2026` the catalog is the only build-file edit:
+The version appears in these places; `maint-2026` carries the 6.0.0 number from the start (im-89g.10), so cutting the release changes none of them; this list is where the number lives, and what to change for a later 6.0.x or 6.1.0. On `release/5.1.1-candidate` there is no version catalog: the version is `version '5.1.1'` in each of the `build.gradle` files below (`subprojects { }` block, or the top level in `plugin`), and `imVersion` in `testmine/build.gradle`, and it is already 5.1.1. On `maint-2026` the catalog is the only build-file edit (`release: 6.0.1`, say):
 
-- `gradle/libs.versions.toml`: `intermine = "5.1.1"` in `[versions]`. `plugin`, `intermine`, `bio`, `bio/sources`, `bio/postprocess`, `bio/postprocess-test` and `testmine` all read it as `libs.versions.intermine` (the plugin too since im-89g.13, so no `build.gradle` has a version number of its own).
+- `gradle/libs.versions.toml`: `intermine = "6.0.0"` in `[versions]`. `plugin`, `intermine`, `bio`, `bio/sources`, `bio/postprocess`, `bio/postprocess-test` and `testmine` all read it as `libs.versions.intermine` (the plugin too since im-89g.13, so no `build.gradle` has a version number of its own).
 - Nothing in the `gradle.properties.in` templates: `config/lib/install_intermine.py` writes `systemProp.imVersion` and `systemProp.bioVersion` of every generated `gradle.properties` from the `intermine` entry of `gradle/libs.versions.toml` (one version for all modules, so there is no separate `bio` entry). The generated files are git-ignored: regenerate them with `python3 -I config/lib/install_intermine.py` (or the gate) after the catalog edit, before building. (Before im-ee7.67 the six templates hard-coded the version and had to be edited with the catalog.)
-- `README.md`: the version badge (`badge/version-5.1.0-blue`).
+- `README.md`: the version badge (`badge/version-5.1.0-blue`). It names the last version *published* on Maven Central, not the version of the branch: bump it when the release is published (step 5 of section 5), and only then.
 - `intermine/webapp/src/main/java/org/intermine/web/logic/Constants.java`: `INTERMINE_VERSION`.
 
-Check that nothing was missed: `grep -rn "5\.1\.1" --include=*.gradle --include=*.toml --include=*.in --include=*.java .` should show only the new version.
+Check that nothing was missed: `git grep -n "6\.0\.0" -- '*.toml' '*.gradle' '*.in' '*.java' '*.groovy'` lists the places that carry the number (the catalog, `Constants.java`, and the plugin's TestKit tests `TestMine.groovy` and `UnwarBioWebAppTest.groovy`, whose stand-in mines publish `VERSION`); the old number must not appear in them.
 
 ### Changelog and tag
 
@@ -143,6 +143,7 @@ done
 
 6.0.0 ships the Gradle 8.14 build and plugin (steps 2 and 3 of `decisions/gradle-upgrade-path.md` in https://github.com/gmicklem/intermine-planning). The publishing scripts are written for Gradle 6.9.4 and also work unchanged on 7.x and 8.x (tested on 8.14.6 with JDK 17 against a sample multi-project build with a war module), so the procedure is the same as for 5.1.1:
 
+- Steps for the 6.0.0 cut, in order (the number itself is already in the tree, see "Version bump"): (1) `grep '^intermine = ' gradle/libs.versions.toml` prints `6.0.0`, and the generated `gradle.properties` agree (`python3 -I config/lib/install_intermine.py`); (2) the full gate on the commit; (3) the five `centralBundle` builds and the upload below; (4) tag `intermine-6.0.0` on that commit; (5) after the deployments are `PUBLISHED`, raise the README version badge to 6.0.0 (it names the last published version, so it stays at 5.1.0 until then); (6) the mine forks (`humanmine`, `flymine`, `humanmine-bio-sources`, `flymine-bio-sources`) already ask for `imVersion`/`bioVersion` `6.0.+` on their `maint-2026` branches, so they start to resolve from Central by themselves and their notes about publishing the InterMine checkout locally can go; (7) the testbed of `rdfc2im` (`tools/full-build.sh`) reads the version from this catalog, so it needs no change.
 - Run the five `centralBundle` builds with the Gradle 8.14 wrappers, then upload with the same `curl` calls (use the new version in `name=`).
 - The Portal plugin `com.gradleup.nmcp` was evaluated and vetted (`decisions/package-vetting.md` in the planning repository). It is safe but is not used: it needs JDK 17 and Gradle 8.2+ to run, the builds must still work on JDK 8 until 6.0.0 is out, and it would only replace the zip and the `curl` call above. Revisit it when JDK 8 is dropped and the builds become one composite build, where a single aggregated deployment (`com.gradleup.nmcp.aggregation`, credentials from `CENTRAL_USERNAME` / `CENTRAL_PASSWORD`, `nmcpAggregation { centralPortal { username = ...; password = ...; publishingType = 'USER_MANAGED' } }`) is worth the extra dependency.
 - Gradle 9 is not covered yet: re-run the publishing scripts with `--warning-mode all` when that step is done (`afterEvaluate` publication, `signing.useInMemoryPgpKeys`).
@@ -150,7 +151,7 @@ done
 
 ## 5. After the release
 
-1. Wait for the deployments to reach `PUBLISHED` (a few minutes up to an hour), then check that the files are visible, for example `https://repo1.maven.org/maven2/org/intermine/plugin/5.1.1/` and `https://repo1.maven.org/maven2/org/intermine/intermine-webapp/5.1.1/` (war, `-classes`, `-sources`, `-javadoc`, POM and signatures). The search index at https://central.sonatype.com can lag by up to a day.
+1. Wait for the deployments to reach `PUBLISHED` (a few minutes up to an hour), then check that the files are visible, for example `https://repo1.maven.org/maven2/org/intermine/plugin/6.0.0/` and `https://repo1.maven.org/maven2/org/intermine/intermine-webapp/6.0.0/` (war, `-classes`, `-sources`, `-javadoc`, POM and signatures). The search index at https://central.sonatype.com can lag by up to a day.
 2. Check one POM against the previous release: packaging `war` for `intermine-webapp` and `bio-webapp`, scopes `compile`/`runtime`/`provided` as before.
 3. From a clean cache, resolve the plugin and `intermine-webapp:classes` in a mine: `./gradlew --refresh-dependencies :dbmodel:tasks` with only Maven Central as repository.
 4. Update the mines (`humanmine`, `flymine`): `imVersion` and `bioVersion` in `gradle.properties` to the released version, then build them.
