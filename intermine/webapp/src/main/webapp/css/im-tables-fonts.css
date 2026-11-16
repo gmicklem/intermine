@@ -1,0 +1,20 @@
+/*
+ * The im-tables stylesheet (vendor/js/intermine/im-tables/2.2.0-beta/main.sandboxed.css) loads its
+ * icon fonts from netdna.bootstrapcdn.com, a third-party host that a mine on an intranet cannot
+ * reach (and which no longer sends the CORS headers browsers require for fonts). This file, loaded
+ * after it, defines the same font faces from the copies in vendor/fonts.
+ */
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('../vendor/fonts/font-awesome-4.7.0/fontawesome-webfont.woff2') format('woff2'),
+       url('../vendor/fonts/font-awesome-4.7.0/fontawesome-webfont.woff') format('woff'),
+       url('../vendor/fonts/font-awesome-4.7.0/fontawesome-webfont.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Glyphicons Halflings';
+  src: url('../vendor/fonts/bootstrap-3.3.2/glyphicons-halflings-regular.woff2') format('woff2'),
+       url('../vendor/fonts/bootstrap-3.3.2/glyphicons-halflings-regular.woff') format('woff'),
+       url('../vendor/fonts/bootstrap-3.3.2/glyphicons-halflings-regular.ttf') format('truetype');
+}

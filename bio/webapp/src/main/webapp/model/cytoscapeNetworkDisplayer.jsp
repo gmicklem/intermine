@@ -18,7 +18,7 @@
 
         <c:set var = "section" value = "gene-interaction-displayer" />
         <c:forEach var="res" items="${imf:getHeadResources(section, PROFILE.preferences)}">
-          paths["${res.type}"]["${res.key}".split(".").pop()] = "${res.url}";
+          paths["${res.type}"]["${res.key}".split(".").pop()] = "${res.isRelative ? pageContext.request.contextPath : ''}${res.url}";
         </c:forEach>
 
         var imload = function () {
