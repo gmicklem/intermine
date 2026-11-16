@@ -37,7 +37,7 @@ dependencies {
     api group: "javax.servlet", name: "jstl", version: "1.2"
     api group: 'commons-fileupload', name: 'commons-fileupload', version: '1.6.0'
     api group: 'com.github.erosb', name: 'everit-json-schema', version: '1.14.6' // formerly org.everit.json:org.everit.json.schema (same library, groupId moved)
-    api 'org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:1.0.1'
+    api 'org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:1.0.2' // brings oltu common 1.0.2: the one oltu version of the POM
     api 'com.fasterxml.jackson.core:jackson-databind:2.18.12'
     api 'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.18.12' // align jersey-media-json-jackson's 2.8.4 Jackson modules
     // Jersey's hk2 packages javax.inject twice: javax.inject:javax.inject:1 and its repackaging
@@ -53,8 +53,6 @@ dependencies {
     api group: 'javax.servlet', name: 'javax.servlet-api', version: '3.1.0'
 
     api files('libs/stringtree-json-2.0.5.jar')
-    providedCompile group: 'org.apache.oltu.oauth2', name: 'org.apache.oltu.oauth2.client', version: '1.0.0'
-    providedCompile group: 'org.apache.oltu.oauth2', name: 'org.apache.oltu.oauth2.common', version: '1.0.0'
     providedCompile group: 'javax.servlet.jsp', name: 'javax.servlet.jsp-api', version: '2.3.1'
     providedCompile group: 'org.expressme', name: 'JOpenId', version: '1.08'
     api group: 'org.apache.commons', name: 'commons-math3', version: '3.2'
