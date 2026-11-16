@@ -35,13 +35,13 @@ configurations {
 dependencies {
     providedCompile project(':bio-core')
     providedCompile project(':bio-model')
-    providedCompile group: "org.intermine", name: "intermine-webapp", version: System.getProperty("imVersion"), classifier: "classes"
+    providedCompile(variantOf(libs.intermine.webapp) { classifier "classes" })
     providedCompile libs.struts.tiles
     providedCompile libs.javax.servlet.api
 
     // api: types that appear in the public or protected signatures of the classes in the bio-webapp classes jar
     api (project(':bio-tools')) { transitive = false }
-    api group: "org.intermine", name: "intermine-jbrowse-endpoint", version: System.getProperty("imVersion")
+    api libs.intermine.jbrowse.endpoint
     api libs.jami.core
     api libs.biojava.core
     // implementation: used inside method bodies only
@@ -69,7 +69,7 @@ dependencies {
 
     runtimeOnly libs.lucene.snowball
 
-    imWebApp group: "org.intermine", name: "intermine-webapp", version: System.getProperty("imVersion"), transitive: false, ext: "war"
+    imWebApp(libs.intermine.webapp) { transitive = false; artifact { name = 'intermine-webapp'; type = 'war'; extension = 'war' } }
 }
 
 // A Sync, not a Copy: a Copy leaves the files of an earlier intermine-webapp war in the directory (and the war below

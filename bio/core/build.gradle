@@ -17,7 +17,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'org.intermine', name: 'plugin', version: System.getProperty("imVersion")
+        classpath libs.intermine.plugin
     }
 }
 
@@ -58,11 +58,11 @@ configurations {
 dependencies {
     // api: types that appear in the public signatures of bio-core, or that the bio sources and mines
     // compile against through it (they use bio-core's compile classpath transitively).
-    api group: "org.intermine", name: "intermine-api", version: System.getProperty("imVersion")
-    api group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
-    api group: "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
-    api group: "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion") // idresolver needs db
-    api group: "org.intermine", name: "intermine-pathquery", version: System.getProperty("imVersion")
+    api libs.intermine.api
+    api libs.intermine.integrate
+    api libs.intermine.model
+    api libs.intermine.objectstore // idresolver needs db
+    api libs.intermine.pathquery
     api libs.ant // org.apache.tools.ant.Task is a superclass in the public API
     api libs.reload4j
     api libs.commons.lang3
@@ -74,14 +74,14 @@ dependencies {
     // the runtime scope of the POM.
     runtimeOnly(libs.hikaricp) { transitive = false }
     runtimeOnly libs.postgresql
-    runtimeOnly group: "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion")
+    runtimeOnly libs.intermine.resources
     runtimeOnly libs.slf4j.reload4j
 
     bundled fileTree(dir: 'libs', include: '*.jar') // obo and bbop not available in the public maven repo
     // the patched antlr that intermine/libs holds (one copy for all builds); it is packed into this jar, so the bio
     // sources get it through bio-core and do not carry a copy of their own
     bundled files("${rootDir}/../intermine/libs/antlr-2.7.6-caching.jar")
-    testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion"), classifier: "testClasses"
+    testImplementation(variantOf(libs.intermine.integrate) { classifier "testClasses" })
     testImplementation group: "org.intermine", name: "bio-source-flymine-static", version: System.getProperty("flymineVersion"), transitive: false
     bioModel group: "org.intermine", name: "bio-source-flymine-static", version: System.getProperty("flymineVersion"), transitive: false
 }

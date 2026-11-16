@@ -1,5 +1,4 @@
 ext {
-    imVersion = libs.versions.intermine.get()
     taskGroup = "InterMine"
     minePropertyFileName = "testmodel.properties"
     minePropertyFile = "${System.env.HOME}/.intermine/$minePropertyFileName"
@@ -62,7 +61,7 @@ subprojects {
         api libs.ant
         api libs.reload4j
         api libs.slf4j.reload4j
-        commonResources group: "org.intermine", name: "intermine-resources", version: imVersion
+        commonResources libs.intermine.resources
     }
 
     // Both property files reach build/resources/main through processResources, so every task that reads that

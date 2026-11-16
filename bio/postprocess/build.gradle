@@ -16,21 +16,13 @@ buildscript {
             url = project.getProperty("intermine.maven.central")
         }
     }
-    // the version catalog (libs) is not available in buildscript {} on Gradle 7.6: the plugin version comes from the
-    // imVersion system property (gradle.properties), as for the deployer mines
     dependencies {
-        classpath group: 'org.intermine', name: 'plugin', version: System.getProperty("imVersion")
+        classpath libs.intermine.plugin
     }
 }
 
 // `centralBundle`: zip of all signed publications for the Maven Central Portal (docs/RELEASING.md)
 apply from: "${rootDir}/../../config/gradle/central-bundle.gradle"
-
-ext {
-    // set here to make available to individual bio-postprocesses
-    bioVersion = System.getProperty("bioVersion")
-    imVersion = System.getProperty("imVersion")
-}
 
 subprojects {
     group = 'org.intermine'
@@ -106,19 +98,19 @@ subprojects {
             exclude group: 'org.xerial.snappy'
             exclude group: 'commons-lang', module: 'commons-lang' // 2.6, for solrj's own legacy code that InterMine does not use
         } // same exclusions as intermine-api
-        implementation group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false
-        implementation group : "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
-        implementation group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
-        implementation group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
-        implementation group : "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion") // log4j
+        implementation(libs.bio.core) { transitive = false }
+        implementation libs.intermine.integrate
+        implementation libs.intermine.model
+        implementation libs.intermine.objectstore
+        implementation libs.intermine.resources // log4j
         implementation libs.commons.collections
         implementation libs.commons.lang3
         implementation libs.postgresql
 
         testImplementation libs.junit
-        testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
+        testImplementation libs.intermine.integrate
         testImplementation libs.xmlunit
-        mergeModel group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
+        mergeModel libs.intermine.objectstore
     }
 
     dbModelConfig {

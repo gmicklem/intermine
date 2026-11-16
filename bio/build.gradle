@@ -52,7 +52,7 @@ subprojects {
         // The Ant tasks of the webapp (loaded by name through the plugin's classpath): nothing compiles against them (checked
         // in im-ee7.63: bio, bio/core, bio/model, bio/tools, bio/webapp and bio/testresources compile with it moved to runtimeOnly),
         // so it is not on the compile classpath. runtimeOnly and implementation both give the runtime scope in the POM.
-        runtimeOnly group: "org.intermine", name: "intermine-webtasks", version: System.getProperty("imVersion")
+        runtimeOnly libs.intermine.webtasks
         testImplementation libs.opencsv
         // the InterMine jars come from build/libs without their POMs, so intermine-objectstore's run-time dependency
         // (DynamicBean, objects of more than one model class) is declared here

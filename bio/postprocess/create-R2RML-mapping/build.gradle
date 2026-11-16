@@ -16,10 +16,10 @@ repositories {
 }
 
 dependencies {
-    bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
-    implementation group: "org.intermine", name: "intermine-model", version: imVersion
-    implementation group: "org.intermine", name: "intermine-objectstore", version: imVersion
-    implementation group: "org.intermine", name: "intermine-api", version: imVersion
+    bioModel(libs.bio.model) { transitive = false }
+    implementation libs.intermine.model
+    implementation libs.intermine.objectstore
+    implementation libs.intermine.api
     implementation libs.jena.core
     runtimeOnly libs.jena.arq // Model.write(out, "turtle") goes through the RIOT writers only with jena-arq present
 }

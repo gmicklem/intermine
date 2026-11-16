@@ -10,11 +10,11 @@ sourceSets {
 }
 
 dependencies {
-    bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
-    testImplementation group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
-    implementation group: 'org.intermine', name: 'intermine-integrate', version: imVersion
-    implementation group: 'org.intermine', name: 'intermine-objectstore', version: imVersion
-    implementation group: 'org.intermine', name: 'intermine-webapp', version: imVersion, classifier: "classes"
+    bioModel(libs.bio.model) { transitive = false }
+    testImplementation(libs.bio.model) { transitive = false }
+    implementation libs.intermine.integrate
+    implementation libs.intermine.objectstore
+    implementation(variantOf(libs.intermine.webapp) { classifier "classes" })
 }
 
 processResources {

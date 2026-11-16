@@ -18,9 +18,9 @@ sourceSets {
 }
 
 dependencies {
-    api group: 'org.intermine', name: 'intermine-integrate', version: imVersion
-    runtimeOnly group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false //to read genomic_keyDefs.properties
-    bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
+    api libs.intermine.integrate
+    runtimeOnly(libs.bio.model) { transitive = false } //to read genomic_keyDefs.properties
+    bioModel(libs.bio.model) { transitive = false }
 }
 
 

@@ -10,9 +10,9 @@ sourceSets {
 }
 
 dependencies {
-    bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
-    implementation group: 'org.intermine', name: 'intermine-integrate', version: imVersion
-    implementation group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
+    bioModel(libs.bio.model) { transitive = false }
+    implementation libs.intermine.integrate
+    implementation(libs.bio.model) { transitive = false }
 }
 
 processResources {

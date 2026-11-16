@@ -50,7 +50,7 @@ export CENTRAL_PASSWORD='...'                                        # Portal to
 
 ### Version bump
 
-The version appears in these places; change all of them in one commit (`release: 6.0.0`). On `release/5.1.1-candidate` there is no version catalog: the version is `version '5.1.1'` in each of the `build.gradle` files below (`subprojects { }` block, or the top level in `plugin`), and `imVersion` in `testmine/build.gradle`, and it is already 5.1.1. On `maint-2026`:
+The version appears in these places; change all of them in one commit (`release: 6.0.0`). On `release/5.1.1-candidate` there is no version catalog: the version is `version '5.1.1'` in each of the `build.gradle` files below (`subprojects { }` block, or the top level in `plugin`), and `imVersion` in `testmine/build.gradle`, and it is already 5.1.1. On `maint-2026` the catalog is the only build-file edit:
 
 - `gradle/libs.versions.toml`: `intermine = "5.1.1"` in `[versions]`. `plugin`, `intermine`, `bio`, `bio/sources`, `bio/postprocess`, `bio/postprocess-test` and `testmine` all read it as `libs.versions.intermine` (the plugin too since im-89g.13, so no `build.gradle` has a version number of its own).
 - Nothing in the `gradle.properties.in` templates: `config/lib/install_intermine.py` writes `systemProp.imVersion` and `systemProp.bioVersion` of every generated `gradle.properties` from the `intermine` entry of `gradle/libs.versions.toml` (one version for all modules, so there is no separate `bio` entry). The generated files are git-ignored: regenerate them with `python3 -I config/lib/install_intermine.py` (or the gate) after the catalog edit, before building. (Before im-ee7.67 the six templates hard-coded the version and had to be edited with the catalog.)

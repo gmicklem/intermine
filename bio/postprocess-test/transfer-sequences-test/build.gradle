@@ -12,7 +12,7 @@ sourceSets {
 dependencies {
     bioModel group: 'org.intermine', name: 'bio-source-flymine-static', version: flymineVersion, transitive: false
     implementation group: 'org.intermine', name: 'bio-source-flymine-static', version: flymineVersion, transitive: false
-    implementation group: 'org.intermine', name: 'bio-postprocess-transfer-sequences', version: bioVersion
+    implementation libs.bio.postprocess.transfer.sequences
 }
 
 processResources {

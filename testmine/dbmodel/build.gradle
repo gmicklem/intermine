@@ -19,12 +19,12 @@ configurations {
 dependencies {
     // api: webapp compiles against this project (its classes, the generated testmodel classes and the
     // libraries they use). Nothing here is published.
-    api group: "org.intermine", name: "intermine-api", version: imVersion
-    api group: "org.intermine", name: "intermine-integrate", version: imVersion
-    api group: "org.intermine", name: "intermine-model", version: imVersion
-    api group: "org.intermine", name: "intermine-objectstore", version: imVersion
-    api group: "org.intermine", name: "intermine-pathquery", version: imVersion
-    api group: "org.intermine", name: "intermine-webtasks", version: imVersion
+    api libs.intermine.api
+    api libs.intermine.integrate
+    api libs.intermine.model
+    api libs.intermine.objectstore
+    api libs.intermine.pathquery
+    api libs.intermine.webtasks
     api libs.antlr
     api libs.commons.collections
     api libs.commons.io
@@ -35,7 +35,7 @@ dependencies {
     api libs.slf4j.reload4j
     api libs.lucene.snowball
     api libs.postgresql
-    testModelProps group: "org.intermine", name: "intermine-testresources", version: imVersion, transitive: false
+    testModelProps(libs.intermine.testresources) { transitive = false }
     // the InterMine jars come from build/libs without their POMs, so intermine-objectstore's run-time dependency
     // (DynamicBean, objects of more than one model class) is declared here
     api libs.byte.buddy

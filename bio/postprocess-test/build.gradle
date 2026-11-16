@@ -16,17 +16,13 @@ buildscript {
             url = project.getProperty("intermine.maven.central")
         }
     }
-    // the version catalog (libs) is not available in buildscript {} on Gradle 7.6: the plugin version comes from the
-    // imVersion system property (gradle.properties), as for the deployer mines
     dependencies {
-        classpath group: 'org.intermine', name: 'plugin', version: System.getProperty("imVersion")
+        classpath libs.intermine.plugin
     }
 }
 
 ext {
     // set here to make available to individual bio-postprocesses
-    bioVersion = System.getProperty("bioVersion")
-    imVersion = System.getProperty("imVersion")
     flymineVersion = System.getProperty("flymineVersion")
 }
 
@@ -91,26 +87,26 @@ subprojects {
 
     dependencies {
         implementation(libs.hikaricp) { transitive = false }
-        implementation group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false
-        implementation group : "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion") // log4j
+        implementation(libs.bio.core) { transitive = false }
+        implementation libs.intermine.resources // log4j
         implementation libs.commons.collections
         implementation libs.commons.io
         implementation libs.commons.lang3
-        implementation group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
-        implementation group: "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
+        implementation libs.intermine.objectstore
+        implementation libs.intermine.model
         implementation libs.reload4j
         implementation libs.slf4j.reload4j
         implementation libs.postgresql
         testImplementation libs.junit
-        testImplementation group: "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
+        testImplementation libs.intermine.integrate
         testImplementation libs.xmlunit
         // the InterMine jars come from build/libs without their POMs, so intermine-objectstore's run-time dependency
         // (DynamicBean, objects of more than one model class) is declared here
         testImplementation libs.byte.buddy
-        mergeModel group : "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
-        implementation group: 'org.intermine', name: 'bio-postprocess-create-chromosome-locations-and-lengths', version: bioVersion
-        testImplementation group: 'org.intermine', name: 'bio-postprocess-create-chromosome-locations-and-lengths', version: bioVersion
-        testImplementation group: 'org.intermine', name: 'bio-webapp', version: bioVersion
+        mergeModel libs.intermine.objectstore
+        implementation libs.bio.postprocess.create.chromosome.locations.and.lengths
+        testImplementation libs.bio.postprocess.create.chromosome.locations.and.lengths
+        testImplementation libs.bio.webapp
     }
 
     dbModelConfig {
