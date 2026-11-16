@@ -53,8 +53,6 @@ import org.intermine.webservice.server.query.result.PathQueryBuilder;
 public class QueryToListService extends AbstractQueryService
 {
 
-    private static final String TEMP = "_temp";
-
     protected final BagManager bagManager;
 
     /**
@@ -138,7 +136,7 @@ public class QueryToListService extends AbstractQueryService
         Query q = getQuery(pq, profile);
 
         String name = input.getListName();
-        String tempName = name + TEMP;
+        String tempName = input.getTemporaryListName();
 
         String viewPathString = pq.getView().get(0);
         Path viewPath = pq.makePath(viewPathString);
