@@ -63,4 +63,25 @@ public class PostgresDataOutputStreamTest extends TestCase {
             ioe.printStackTrace();
         }
     }
+
+    /**
+     * The bytes are UTF-8 whatever the platform's default charset is (im-jqz.62: the testmodel
+     * data has an en dash, which became a ? under LANG=C and broke the length that precedes it).
+     */
+    public void testWriteUTFIsUTF8WhateverTheDefaultCharset() throws IOException {
+        String input = "Robert\u2013 caf\u00e9 \ud835\udf05";
+        byte[] expected = input.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        PostgresByteArrayOutputStream baos = new PostgresByteArrayOutputStream();
+        PostgresDataOutputStream dos = new PostgresDataOutputStream(baos);
+        int written = dos.writeLargeUTF(input);
+        dos.flush();
+        dos.close();
+        byte[] output = baos.toByteArray();
+        assertEquals(expected.length + 4, written);
+        assertEquals(expected.length + 4, output.length);
+        assertEquals(expected.length, java.nio.ByteBuffer.wrap(output, 0, 4).getInt());
+        for (int i = 0; i < expected.length; i++) {
+            assertEquals("byte " + i, expected[i], output[i + 4]);
+        }
+    }
 }
