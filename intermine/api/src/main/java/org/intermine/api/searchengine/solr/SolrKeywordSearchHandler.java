@@ -266,6 +266,90 @@ public final class SolrKeywordSearchHandler implements KeywordSearchHandler
     }
 
 
+    /**
+     * Build the Solr filter queries for the selected facet values and the optional list of
+     * object ids. Facet selections are matched exactly against the string "facet_" copy of the
+     * field (the field the facet counts are computed on) as a quoted phrase, so values with
+     * spaces, colons, quotes, brackets etc. are not interpreted as query syntax.
+     *
+     * @param facets the configured facets; selections for any other field are ignored
+     * @param facetValues selected facet values, keyed by facet field name
+     * @param ids object ids to restrict the search to, may be null or empty
+     * @return filter queries, one per selected facet plus one for the ids if there are any
+     */
+    static List<String> buildFilterQueries(Vector<KeywordSearchFacetData> facets,
+            Map<String, String> facetValues, List<Integer> ids) {
+        List<String> filterQueries = new ArrayList<String>();
+
+        if (facetValues != null) {
+            for (Map.Entry<String, String> facetValue : facetValues.entrySet()) {
+                if (facetValue.getKey() == null || facetValue.getValue() == null
+                        || !isConfiguredFacet(facets, facetValue.getKey())) {
+                    continue;
+                }
+                filterQueries.add(facetFilterQuery(facetValue.getKey(), facetValue.getValue()));
+            }
+        }
+
+        //limiting the query based on search bag, the terms parser takes a list of exact values
+        //and has no limit on the number of terms
+        if (ids != null && !ids.isEmpty()) {
+            StringBuilder idFilter = new StringBuilder("{!terms f=id}");
+            boolean first = true;
+            for (Integer id : ids) {
+                if (!first) {
+                    idFilter.append(',');
+                }
+                idFilter.append(id.intValue());
+                first = false;
+            }
+            filterQueries.add(idFilter.toString());
+        }
+        return filterQueries;
+    }
+
+    private static boolean isConfiguredFacet(Vector<KeywordSearchFacetData> facets,
+            String field) {
+        if (facets != null) {
+            for (KeywordSearchFacetData facet : facets) {
+                if (field.equals(facet.getField())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The filter query selecting documents whose facet field has exactly the given value.
+     * @param field name of the facet field, without the "facet_" prefix
+     * @param value the selected value, any characters allowed
+     * @return filter query like facet_organism.shortName:"H. sapiens"
+     */
+    static String facetFilterQuery(String field, String value) {
+        return "facet_" + field + ":" + quotePhrase(value);
+    }
+
+    /**
+     * Quote a value as a Solr phrase. Inside a phrase only the double quote and the backslash
+     * are special, so those are backslash escaped.
+     * @param value the value
+     * @return the value in double quotes
+     */
+    static String quotePhrase(String value) {
+        StringBuilder sb = new StringBuilder(value.length() + 2);
+        sb.append('"');
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '"' || c == '\\') {
+                sb.append('\\');
+            }
+            sb.append(c);
+        }
+        sb.append('"');
+        return sb.toString();
+    }
+
     private QueryResponse performSearch(InterMineAPI im, String queryString, Map<String,
                                         String> facetValues, List<Integer> ids,
                                         int offSet, int rowSize) {
@@ -297,18 +381,8 @@ public final class SolrKeywordSearchHandler implements KeywordSearchHandler
                 newQuery.addFacetField("facet_" + keywordSearchFacetData.getField());
             }
 
-            // add faceting selections
-            for (Map.Entry<String, String> facetValue : facetValues.entrySet()) {
-                if (facetValue != null) {
-                    newQuery.addFilterQuery(facetValue.getKey() + ":" + facetValue.getValue());
-                }
-            }
-
-            //limiting the query based on search bag
-            if (ids != null && !ids.isEmpty()) {
-                for (int id : ids) {
-                    newQuery.addFilterQuery("id", Integer.toString(id));
-                }
+            for (String filterQuery : buildFilterQueries(facets, facetValues, ids)) {
+                newQuery.addFilterQuery(filterQuery);
             }
 
             String boostQuery = "";
