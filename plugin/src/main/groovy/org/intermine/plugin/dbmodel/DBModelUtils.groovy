@@ -18,6 +18,8 @@ import java.nio.file.StandardCopyOption
 class DBModelUtils {
     /** Plugin-internal configuration holding the intermine-api jar (userprofile model and keys). */
     static final String IM_API_JAR = "imApiJar"
+    /** Plugin-internal configuration holding commons-lang 2.6, which only the Torque classes of BuildDbTask need. */
+    static final String IM_TORQUE_RUNTIME = "imTorqueRuntime"
 
     Project project
 
@@ -40,6 +42,24 @@ class DBModelUtils {
         Configuration configuration = project.configurations.maybeCreate(name)
         configuration.canBeConsumed = false
         configuration.canBeResolved = true
+        configuration
+    }
+
+    /**
+     * The configuration IM_TORQUE_RUNTIME: commons-lang 2.6, for the vendored Torque jars of intermine-objectstore. Only
+     * BuildDbTask (the buildDB, buildUnitTestDB and integrate tasks, through createTables) loads a Torque class, so the
+     * jar is on that Ant task's classpath alone and never on a mine's compile or run time classpath (im-jqz.35). Created
+     * on first use, because a project that applies only the integrate plugin has no DBModelPlugin to create it.
+     */
+    static Configuration torqueRuntime(Project project) {
+        Configuration existing = project.configurations.findByName(IM_TORQUE_RUNTIME)
+        if (existing != null) {
+            return existing
+        }
+        Configuration configuration = resolvableConfiguration(project, IM_TORQUE_RUNTIME)
+        DBModelPlugin.addDependency(project, IM_TORQUE_RUNTIME) {
+            [group: "commons-lang", name: "commons-lang", version: "2.6", transitive: false]
+        }
         configuration
     }
 
@@ -309,6 +329,9 @@ log4j.appender.console.layout.ConversionPattern=%d{HH:mm:ss} %-5p %c{1} - %m%n
                 dirset(dir: buildResourcesMainDir) // intermine.properties
                 pathelement(path: DBModelUtils.buildDirectory(project).absolutePath)//to read the schema
                 pathelement(path: DBModelUtils.antClasspath(project).asPath)
+                // the vendored Torque jars of intermine-objectstore extend and call commons-lang 2 (SchemaType, TorqueException);
+                // only this task needs it, so it is not on the mine's own classpath
+                pathelement(path: DBModelUtils.torqueRuntime(project).asPath)
             }
         }
         ant.buildDB(osname: objectStoreName, model: modelName, schemafile: schemaFile, tempDir: tempDirectory)

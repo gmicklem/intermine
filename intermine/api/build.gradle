@@ -33,6 +33,7 @@ dependencies {
         exclude group: 'org.eclipse.jetty'
         exclude group: 'org.eclipse.jetty.http2'
         exclude group: 'org.xerial.snappy'
+        exclude group: 'commons-lang', module: 'commons-lang' // 2.6, for solrj's own legacy code that InterMine does not use
     }
     api libs.lucene.core
     implementation libs.lucene.snowball

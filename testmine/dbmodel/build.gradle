@@ -10,6 +10,13 @@ sourceSets {
 
 configurations {
     testModelProps
+    // commons-lang 2.6 for the vendored Torque jars of intermine-objectstore, which only BuildDbTask loads (buildDatabase
+    // below); not on the runtime classpath, so not in the testmine war
+    torqueRuntime {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
 
     all {
         exclude group: 'org.apache.logging.log4j'
@@ -17,6 +24,7 @@ configurations {
 }
 
 dependencies {
+    torqueRuntime libs.commons.lang
     // api: webapp compiles against this project (its classes, the generated testmodel classes and the
     // libraries they use). Nothing here is published.
     api group: "org.intermine", name: "intermine-api", version: imVersion
@@ -29,9 +37,6 @@ dependencies {
     api libs.commons.collections
     api libs.commons.io
     api libs.commons.lang3
-    // commons-lang 2.6: the bundled torque jars of intermine-objectstore (BuildDbTask, SqlGenerator) extend
-    // lang.enum.Enum and use lang.exception.NestableException; nothing in InterMine code imports it any more
-    api libs.commons.lang
     // the testmine war then has two jars for org.apache.commons.logging: this one and jcl-over-slf4j, which
     // solr-solrj brings. Both end in reload4j (commons-logging finds log4j 1.x itself, jcl-over-slf4j goes
     // through slf4j-reload4j), so which one the class loader finds first does not matter. jcl-over-slf4j is the one to
@@ -53,6 +58,7 @@ dependencies {
         exclude group: 'org.eclipse.jetty'
         exclude group: 'org.eclipse.jetty.http2'
         exclude group: 'org.xerial.snappy'
+        exclude group: 'commons-lang', module: 'commons-lang' // 2.6, for solrj's own legacy code that InterMine does not use
     } // same exclusions as intermine-api
 }
 
@@ -99,6 +105,7 @@ void buildDatabase(osname, model) {
     ant.taskdef(name: 'buildDB', classname: 'org.intermine.task.BuildDbTask') {
         classpath {
             pathelement(path: configurations.runtimeClasspath.asPath)
+            pathelement(path: configurations.torqueRuntime.asPath)
             dirset(dir: layout.buildDirectory.get().asFile) // intermine.properties, os.unittest-schema.xml
             dirset(dir: 'build/resources/main') // intermine.properties
         }

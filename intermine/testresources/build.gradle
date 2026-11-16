@@ -5,6 +5,13 @@ jar.enabled = false
 configurations {
     testArtifacts
     commonResources
+    // commons-lang 2.6 for the vendored Torque jars of intermine-objectstore, which only BuildDbTask loads (createTables below).
+    // Not on testRuntimeClasspath, so the tests of the other modules, which take this module's test artefacts, do not get it.
+    torqueRuntime {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
 }
 
 dependencies {
@@ -14,6 +21,7 @@ dependencies {
     testImplementation project(':intermine-api')
     testImplementation project(':intermine-objectstore')
     testImplementation libs.commons.lang3
+    torqueRuntime libs.commons.lang
 }
 
 void generateModel(model, destination, type) {
@@ -212,6 +220,7 @@ void createTables(osname, model) {
     ant.taskdef(name: 'buildDBUnittest', classname: 'org.intermine.task.BuildDbTask') {
         classpath {
             pathelement(path: configurations.testRuntimeClasspath.asPath)
+            pathelement(path: configurations.torqueRuntime.asPath)
             dirset(dir: 'build/') // testmodel classes and schemas
             dirset(dir: 'src/test/resources/') // testmodel classes and schemas
         }
@@ -224,6 +233,7 @@ void createTables(osname, model) {
     ant.taskdef(name: 'insertModel', classname: 'org.intermine.task.StoreMetadataTask') {
         classpath {
             pathelement(path: configurations.testRuntimeClasspath.asPath)
+            pathelement(path: configurations.torqueRuntime.asPath)
             dirset(dir: 'build/') // testmodel classes and schemas
             dirset(dir: 'src/test/resources/') // testmodel classes and schemas
         }
