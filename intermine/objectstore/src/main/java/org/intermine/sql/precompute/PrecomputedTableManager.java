@@ -10,6 +10,7 @@ package org.intermine.sql.precompute;
  *
  */
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
@@ -426,7 +427,7 @@ public class PrecomputedTableManager
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
-            md.update(simpleTable.getBytes());
+            md.update(simpleTable.getBytes(StandardCharsets.UTF_8));
             byte[] digest = md.digest();
             simpleTable = "";
             for (int i = 0; i < 16; i++) {
@@ -440,7 +441,7 @@ public class PrecomputedTableManager
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
-            md.update(simpleField.getBytes());
+            md.update(simpleField.getBytes(StandardCharsets.UTF_8));
             byte[] digest = md.digest();
             simpleField = "";
             for (int i = 0; i < 16; i++) {

@@ -10,6 +10,8 @@ package org.intermine.util;
  *
  */
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -43,11 +45,7 @@ public final class PasswordHasher
             SecureRandom sr = new SecureRandom();
             sr.nextBytes(salt);
             String saltString = Base64.encodeBytes(salt);
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update((saltString + password).getBytes());
-            byte[] digest = md.digest();
-            String hashString = Base64.encodeBytes(digest);
-            return saltString + hashString;
+            return saltString + digest(saltString, password, StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
@@ -61,17 +59,45 @@ public final class PasswordHasher
      * @return true if the password matches
      */
     public static boolean checkPassword(String password, String hash) {
+        return checkPassword(password, hash, Charset.defaultCharset());
+    }
+
+    /**
+     * The salted SHA-256 of a password, Base64 encoded.
+     */
+    private static String digest(String saltString, String password, Charset charset)
+        throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update((saltString + password).getBytes(charset));
+        return Base64.encodeBytes(md.digest());
+    }
+
+    /**
+     * Checks a password against a hash.  Hashes are made from UTF-8 bytes.  Before 2026 the
+     * password was converted to bytes with the platform's default charset, so a stored hash of a
+     * password with non-ASCII characters may have been made with a different charset (for ASCII
+     * passwords, which are nearly all of them, every charset gives the same bytes and the two
+     * agree).  To keep such users able to log in, if the UTF-8 hash does not match and the
+     * legacy charset differs, the hash is tried with the legacy charset too.
+     *
+     * @param password the given password
+     * @param hash the hashed password entry
+     * @param legacyCharset the charset old hashes may have been made with
+     * @return true if the password matches
+     */
+    static boolean checkPassword(String password, String hash, Charset legacyCharset) {
         if (password == null && hash == null) {
             return true;
         }
         try {
             if ((hash.length() == 88) && (hash.charAt(43) == '=') && (hash.charAt(87) == '=')) {
                 String saltString = hash.substring(0, 44);
-                MessageDigest md = MessageDigest.getInstance("SHA-256");
-                md.update((saltString + password).getBytes());
-                byte[] digest = md.digest();
-                String hashString = Base64.encodeBytes(digest);
-                if (hashString.equals(hash.substring(44))) {
+                String expected = hash.substring(44);
+                if (digest(saltString, password, StandardCharsets.UTF_8).equals(expected)) {
+                    return true;
+                }
+                if (!StandardCharsets.UTF_8.equals(legacyCharset)
+                        && digest(saltString, password, legacyCharset).equals(expected)) {
                     return true;
                 }
             } else {

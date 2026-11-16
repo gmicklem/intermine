@@ -1,0 +1,18 @@
+<model name="genesummaryatlas" package="org.intermine.model.genesummaryatlas">
+<class name="Organism" is-interface="true">
+    <attribute name="genus" type="java.lang.String"/>
+    <attribute name="shortName" type="java.lang.String"/>
+</class>
+<class name="Pathway" is-interface="true">
+    <attribute name="name" type="java.lang.String"/>
+</class>
+<class name="AtlasExpression" is-interface="true">
+    <attribute name="expression" type="java.lang.String"/>
+</class>
+<class name="Gene" is-interface="true">
+    <attribute name="primaryIdentifier" type="java.lang.String"/>
+    <reference name="organism" referenced-type="Organism"/>
+    <collection name="pathways" referenced-type="Pathway"/>
+    <collection name="atlasExpression" referenced-type="AtlasExpression"/>
+</class>
+</model>

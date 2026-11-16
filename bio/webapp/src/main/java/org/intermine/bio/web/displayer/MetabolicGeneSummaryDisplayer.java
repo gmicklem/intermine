@@ -23,6 +23,8 @@ import org.intermine.api.InterMineAPI;
 import org.intermine.api.query.PathQueryExecutor;
 import org.intermine.api.results.ExportResultsIterator;
 import org.intermine.api.results.ResultElement;
+import org.intermine.metadata.ClassDescriptor;
+import org.intermine.metadata.Model;
 import org.intermine.model.InterMineObject;
 import org.intermine.objectstore.ObjectStoreException;
 import org.intermine.pathquery.Constraints;
@@ -72,8 +74,8 @@ public class MetabolicGeneSummaryDisplayer extends ReportDisplayer
         summary.addCollectionCount("Gene Ontology", "&nbsp;",
                 goTermPathQuery(summary.getObjectId()), "GeneOntologyDisplayer");
 
-        // on sapien pages:
-        if (summary.isThisAHuman()) {
+        // on sapien pages (and only if the model has the expression data to show):
+        if (summary.isThisAHuman() && hasAtlasExpression(im.getModel())) {
             // ArrayExpress Gene Expression Tissues & Tissues
             ArrayList arr = new ArrayList();
             arr.add(this.arrayAtlasExpressionTissues(summary));
@@ -86,6 +88,18 @@ public class MetabolicGeneSummaryDisplayer extends ReportDisplayer
         request.setAttribute("summary", summary);
     }
 
+
+    /**
+     * Whether the Gene class of a model has the atlasExpression collection that the expression
+     * summary queries; mines without that data source (a model without it cannot run the
+     * queries) show the rest of the summary.
+     * @param model the data model
+     * @return true if Gene.atlasExpression is in the model
+     */
+    static boolean hasAtlasExpression(Model model) {
+        ClassDescriptor gene = model.getClassDescriptorByName("Gene");
+        return gene != null && gene.getFieldDescriptorByName("atlasExpression") != null;
+    }
 
     private Object arrayAtlasExpressionTissues(GeneSummary summary) {
         PathQuery query = new PathQuery(im.getModel());
@@ -264,6 +278,12 @@ public class MetabolicGeneSummaryDisplayer extends ReportDisplayer
         public void addCollectionCount(String key, String description, Object param,
                 String anchor) {
             if (param instanceof PathQuery) {
+                if (!((PathQuery) param).isValid()) {
+                    // the model of this mine does not have the paths (an optional data source)
+                    LOG.debug("Not showing " + key + ": the query is not valid for this model: "
+                            + ((PathQuery) param).verifyQuery());
+                    return;
+                }
                 try {
                     storage.put(key, createWrapper("integer", executor.count((PathQuery)
                             param), anchor, description, null));
