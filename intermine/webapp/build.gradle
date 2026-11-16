@@ -32,6 +32,7 @@ dependencies {
         exclude group: 'org.eclipse.jetty'
         exclude group: 'org.eclipse.jetty.http2'
         exclude group: 'org.xerial.snappy'
+        exclude group: 'commons-lang', module: 'commons-lang' // 2.6, for solrj's own legacy code that InterMine does not use
     } // same exclusions as intermine-api
     api libs.javax.mail
     // Struts 1.3.10 asks for antlr 2.7.2, which would sit in WEB-INF/lib next to the antlr 2.7.6 that every mine's

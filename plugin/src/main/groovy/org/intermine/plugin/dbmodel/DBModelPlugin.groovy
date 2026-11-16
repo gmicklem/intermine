@@ -50,6 +50,7 @@ class DBModelPlugin implements Plugin<Project> {
         addDependency(project, 'bioModelForSOOnly') {
             [group: "org.intermine", name: "bio-model", version: System.getProperty("bioVersion"), transitive: false]
         }
+        DBModelUtils.torqueRuntime(project)
         addDependency(project, IM_ANTLR) {
             [group: "org.antlr", name: "antlr-complete", version: "3.5.2", transitive: false]
         }

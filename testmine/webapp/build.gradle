@@ -133,6 +133,39 @@ task warTestModelWebApp(type: War) {
     webInf { from "${mergePropsDir}" }
 }
 
+// commons-lang 2.6 is no longer a library of a mine (im-jqz.35): InterMine's code uses commons-lang3, and the only code that
+// needed 2.6, the vendored Torque jars of BuildDbTask, gets it from the build's own classpath. This check makes `build`
+// fail when a dependency brings it back, whether through solr-solrj's POM or any other, into the war or into the runtime
+// classpath of this project (which holds the dbmodel and the InterMine jars).
+task checkNoCommonsLang2 {
+    group = 'verification'
+    description = "Fails if commons-lang:commons-lang (2.x) is in the war's WEB-INF/lib or on the runtime classpath"
+    dependsOn 'war', 'warTestModelWebApp'
+    def warFile = layout.buildDirectory.file('libs/webapp.war')
+    inputs.file(warFile)
+    inputs.files(configurations.runtimeClasspath)
+    doLast {
+        def offenders = []
+        new java.util.zip.ZipFile(warFile.get().asFile).withCloseable { zip ->
+            zip.entries().each { e ->
+                if (e.name ==~ /WEB-INF\/lib\/commons-lang-\d.*\.jar/) {
+                    offenders << e.name
+                }
+            }
+        }
+        configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each {
+            if (it.moduleVersion.id.group == 'commons-lang' && it.moduleVersion.id.name == 'commons-lang') {
+                offenders << "runtimeClasspath: ${it.moduleVersion.id}"
+            }
+        }
+        if (offenders) {
+            throw new GradleException("commons-lang 2 is back in the mine: ${offenders}. Exclude it where it comes from " +
+                    "(see docs/UPGRADING-build.md, 'commons-lang 2 is gone').")
+        }
+    }
+}
+tasks.named('check') { dependsOn 'checkNoCommonsLang2' }
+
 cargo {
     // change this to match your Tomcat major version (keep the x)
     containerId = 'tomcat9x'

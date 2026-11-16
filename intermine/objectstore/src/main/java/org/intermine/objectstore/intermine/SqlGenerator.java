@@ -38,10 +38,6 @@ import java.util.TreeSet;
 import java.util.WeakHashMap;
 
 import org.apache.log4j.Logger;
-import org.apache.torque.engine.database.model.Domain;
-import org.apache.torque.engine.database.model.SchemaType;
-import org.apache.torque.engine.platform.Platform;
-import org.apache.torque.engine.platform.PlatformFactory;
 import org.intermine.metadata.AttributeDescriptor;
 import org.intermine.metadata.ClassDescriptor;
 import org.intermine.metadata.CollectionDescriptor;
@@ -2400,18 +2396,46 @@ public final class SqlGenerator
             buffer.append("(");
             queryEvaluableToString(buffer, ((QueryCast) node).getValue(), q, state);
             buffer.append(")::");
-            String torqueTypeName = TorqueModelOutput.generateJdbcType(node.getType()
-                    .getName());
-            SchemaType torqueType = SchemaType.getEnum(torqueTypeName);
-            Platform torquePlatform = PlatformFactory.getPlatformFor(state.getDb().getPlatform()
-                    .toLowerCase());
-            Domain torqueDomain = torquePlatform.getDomainForSchemaType(torqueType);
-            buffer.append(torqueDomain.getSqlType());
+            buffer.append(castSqlType(TorqueModelOutput.generateJdbcType(node.getType()
+                    .getName())));
         } else if (node instanceof QueryForeignKey) {
             QueryForeignKey qor = (QueryForeignKey) node;
             buffer.append(state.getFieldToAlias(qor.getQueryClass()).get(qor.getFieldName()));
         } else {
             throw (new ObjectStoreException("Invalid QueryEvaluable: " + node));
+        }
+    }
+
+    /**
+     * The PostgreSQL type that a QueryCast to the given JDBC type name (the names of
+     * TorqueModelOutput.generateJdbcType) is written as. These are the types that Torque's
+     * PostgreSQL platform maps them to: the lookup went through the vendored Torque jar, which
+     * needed commons-lang 2 (SchemaType extends lang.enum.Enum) in every webapp. Only PostgreSQL
+     * is supported (Database.getVersion refuses any other platform).
+     *
+     * @param jdbcTypeName a name returned by TorqueModelOutput.generateJdbcType
+     * @return the SQL type to cast to
+     */
+    private static String castSqlType(String jdbcTypeName) {
+        switch (jdbcTypeName) {
+            case "SMALLINT":
+                return "INT2";
+            case "INTEGER":
+                return "INTEGER";
+            case "BIGINT":
+                return "INT8";
+            case "LONGVARCHAR":
+                return "TEXT";
+            case "BIT":
+                return "BOOLEAN";
+            case "REAL":
+                return "REAL";
+            case "DOUBLE":
+                return "DOUBLE PRECISION";
+            case "NUMERIC":
+                return "NUMERIC";
+            default:
+                throw new IllegalArgumentException("Cannot cast to the type " + jdbcTypeName);
         }
     }
 

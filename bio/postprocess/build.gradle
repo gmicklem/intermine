@@ -104,6 +104,7 @@ subprojects {
             exclude group: 'org.eclipse.jetty'
             exclude group: 'org.eclipse.jetty.http2'
             exclude group: 'org.xerial.snappy'
+            exclude group: 'commons-lang', module: 'commons-lang' // 2.6, for solrj's own legacy code that InterMine does not use
         } // same exclusions as intermine-api
         implementation group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false
         implementation group : "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
@@ -112,9 +113,6 @@ subprojects {
         implementation group : "org.intermine", name: "intermine-resources", version: System.getProperty("imVersion") // log4j
         implementation libs.commons.collections
         implementation libs.commons.lang3
-        // commons-lang 2.6: run time only, for the bundled torque jars of intermine-objectstore (they extend
-        // lang.enum.Enum and use lang.exception.NestableException); this build does not take objectstore's own dependencies
-        runtimeOnly libs.commons.lang
         implementation libs.postgresql
 
         testImplementation libs.junit

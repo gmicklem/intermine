@@ -45,9 +45,6 @@ dependencies {
     api group: "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")
     api group: "org.intermine", name: "intermine-objectstore", version: System.getProperty("imVersion")
     api libs.commons.lang3
-    // commons-lang 2.6: run time only, for the bundled torque jars of intermine-objectstore (they extend
-    // lang.enum.Enum and use lang.exception.NestableException); this build does not take objectstore's own dependencies
-    runtimeOnly libs.commons.lang
     api libs.reload4j
     implementation libs.slf4j.reload4j // logging binding (runtime scope in the POM)
 }
