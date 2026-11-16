@@ -57,6 +57,8 @@ public class PsiComplexesConverter extends BioFileConverter
     private static final Logger LOG = Logger.getLogger(PsiComplexesConverter.class);
     private static final String DATASET_TITLE = "IntAct Complexes";
     private static final String DATA_SOURCE_NAME = "EBI IntAct";
+    private static final String JAXB_NO_OPTIMIZE =
+        "com.sun.xml.bind.v2.bytecode.ClassTailor.noOptimize";
     private static final String COMPLEX_PROPERTIES = "complex-properties";
     private static final String INTERACTION_TYPE = "physical";
     private static final String DEFAULT_INTERACTOR_TYPE = "BioEntity";
@@ -107,6 +109,15 @@ public class PsiComplexesConverter extends BioFileConverter
      * {@inheritDoc}
      */
     public void process(Reader reader) throws Exception {
+        // jami-xml binds PSI-MI XML with its own JAXB (jaxb-impl 2.2.7). That release generates
+        // accessor classes in java.lang, which JDK 16+ refuses; without this property it stops with
+        // an ExceptionInInitializerError. Set before the first JAXB context is created. (Do not put
+        // a JAXB 2.3.x runtime on the class path to get around it: it takes over from jaxb-impl and
+        // binds none of the elements, so every complex arrives empty.)
+        if (System.getProperty(JAXB_NO_OPTIMIZE) == null) {
+            System.setProperty(JAXB_NO_OPTIMIZE, "true");
+        }
+
         // initialise default factories for reading and writing MITAB/PSI-MI XML files
         PsiJami.initialiseAllFactories();
 
