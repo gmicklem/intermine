@@ -85,10 +85,17 @@ public class DataTrackingTest extends TestCase {
         dt.setSource(new Integer(14), "name", source1);
         dt.flush();
         DataTracker dt2 = new DataTracker(DatabaseFactory.getDatabase("db.unittest"), 30, 10);
-        dt2.setSource(new Integer(14), "name", dt2.stringToSource("Source2"));
-        dt2.close();
+        try {
+            dt2.setSource(new Integer(14), "name", dt2.stringToSource("Source2"));
+        } finally {
+            dt2.close();
+        }
         dt2 = new DataTracker(DatabaseFactory.getDatabase("db.unittest"), 30, 10);
-        assertEquals(source2.getName(), dt2.getSource(new Integer(14), "name").getName());
+        try {
+            assertEquals(source2.getName(), dt2.getSource(new Integer(14), "name").getName());
+        } finally {
+            dt2.close();
+        }
     }
 
     // A failed flush must say what failed, must not forget the entries it could not store, and
