@@ -11,6 +11,8 @@ package org.intermine.api.profile;
  */
 
 import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,6 +41,7 @@ import org.intermine.model.testmodel.Department;
 import org.intermine.objectstore.ObjectStoreTestUtils;
 import org.intermine.objectstore.ObjectStoreWriter;
 import org.intermine.objectstore.ObjectStoreWriterFactory;
+import org.intermine.objectstore.intermine.ObjectStoreWriterInterMineImpl;
 import org.intermine.pathquery.PathQuery;
 
 /**
@@ -303,6 +306,60 @@ public class ProfileManagerTest extends InterMineAPITestCase
             assertNotNull(permission);
             assertTrue(permission.isRO());
             assertEquals(permission.getProfile().getUsername(), bobProfile.getUsername());
+        }
+    }
+
+    /**
+     * A saved bag that shares its id with a saved template (rows inserted with hardcoded ids)
+     * must not stop the profile from loading: the objectstore caches objects by id alone, so the
+     * bag query hands back the template, which used to end in a ClassCastException.
+     */
+    public void testProfileLoadsDespiteIdCollision() throws Exception {
+        Integer bobId = bobProfile.getUserId();
+        ObjectStoreWriterInterMineImpl w = (ObjectStoreWriterInterMineImpl) uosw;
+        Integer templateId = null;
+        Connection c = w.getConnection();
+        try {
+            ResultSet r = c.createStatement().executeQuery(
+                    "SELECT id FROM savedtemplatequery WHERE userprofileid = " + bobId);
+            assertTrue(r.next());
+            templateId = r.getInt(1);
+            c.createStatement().execute("INSERT INTO savedbag (id, osbid, type, name,"
+                    + " userprofileid, datecreated, intermine_state) VALUES (" + templateId
+                    + ", " + templateId + ", 'Department', 'colliding', " + bobId + ", "
+                    + System.currentTimeMillis() + ", 'CURRENT')");
+        } finally {
+            w.releaseConnection(c);
+        }
+        try {
+            uosw.flushObjectById();
+            pm.profileCache.remove(bobName);
+            // the template is in the objectstore's id cache when the bags are read
+            assertTrue(uosw.getObjectById(templateId, org.intermine.api.userprofile
+                    .SavedTemplateQuery.class)
+                    instanceof org.intermine.api.userprofile.SavedTemplateQuery);
+
+            Profile bob = pm.getProfile(bobName);
+
+            assertNotNull(bob);
+            assertTrue(bob.getSavedBags().containsKey("bag1"));
+            assertFalse(bob.getSavedBags().containsKey("colliding"));
+            assertTrue(bob.getSavedTemplates().containsKey("template"));
+            String message = pm.idCollisionMessage(templateId,
+                    org.intermine.api.userprofile.SavedBag.class,
+                    new org.intermine.api.userprofile.SavedTemplateQuery(),
+                    new org.intermine.api.userprofile.UserProfile());
+            assertTrue(message, message.contains("id " + templateId + " is used by a row of"
+                    + " table savedbag and a row of table savedtemplatequery"));
+        } finally {
+            c = w.getConnection();
+            try {
+                c.createStatement().execute("DELETE FROM savedbag WHERE name = 'colliding'");
+            } finally {
+                w.releaseConnection(c);
+            }
+            uosw.flushObjectById();
+            pm.profileCache.remove(bobName);
         }
     }
 }

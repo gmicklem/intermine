@@ -40,9 +40,11 @@ import org.intermine.api.config.ClassKeyHelper;
 import org.intermine.api.template.ApiTemplate;
 import org.intermine.api.util.TextUtil;
 import org.intermine.api.xml.SavedQueryBinding;
+import org.intermine.metadata.ClassDescriptor;
 import org.intermine.metadata.ConstraintOp;
 import org.intermine.metadata.FieldDescriptor;
 import org.intermine.metadata.Model;
+import org.intermine.model.FastPathObject;
 import org.intermine.model.InterMineObject;
 import org.intermine.api.userprofile.PermanentToken;
 import org.intermine.api.userprofile.SavedBag;
@@ -71,7 +73,9 @@ import org.intermine.objectstore.query.SimpleConstraint;
 import org.intermine.objectstore.query.QueryValue;
 import org.intermine.template.TemplateQuery;
 import org.intermine.template.xml.TemplateQueryBinding;
+import org.intermine.sql.DatabaseUtil;
 import org.intermine.util.CacheMap;
+import org.intermine.util.DynamicUtil;
 import org.intermine.util.PasswordHasher;
 import org.intermine.util.PropertiesUtil;
 
@@ -486,6 +490,11 @@ public class ProfileManager
                     for (Iterator<?> i = bags.iterator(); i.hasNext();) {
                         ResultsRow<?> row = (ResultsRow<?>) i.next();
                         Integer bagId = (Integer) row.get(0);
+                        if (!(row.get(1) instanceof SavedBag)) {
+                            LOG.error(idCollisionMessage(bagId, SavedBag.class, row.get(1),
+                                    userProfile));
+                            continue;
+                        }
                         SavedBag savedBag = (SavedBag) row.get(1);
                         String bagName = savedBag.getName();
                         if (StringUtils.isBlank(bagName)) {
@@ -523,7 +532,13 @@ public class ProfileManager
 
         Map<String, org.intermine.api.profile.SavedQuery> savedQueries =
             new HashMap<String, org.intermine.api.profile.SavedQuery>();
-        for (SavedQuery query : userProfile.getSavedQuerys()) {
+        for (Object o : userProfile.getSavedQuerys()) {
+            if (!(o instanceof SavedQuery)) {
+                LOG.error(idCollisionMessage(((InterMineObject) o).getId(), SavedQuery.class, o,
+                        userProfile));
+                continue;
+            }
+            SavedQuery query = (SavedQuery) o;
             try {
                 Reader r = new StringReader(query.getQuery());
                 Map<String, org.intermine.api.profile.SavedQuery> savedQueryMap =
@@ -551,7 +566,13 @@ public class ProfileManager
             }
         }
         Map<String, ApiTemplate> savedTemplates = new HashMap<String, ApiTemplate>();
-        for (SavedTemplateQuery template : userProfile.getSavedTemplateQuerys()) {
+        for (Object o : userProfile.getSavedTemplateQuerys()) {
+            if (!(o instanceof SavedTemplateQuery)) {
+                LOG.error(idCollisionMessage(((InterMineObject) o).getId(),
+                        SavedTemplateQuery.class, o, userProfile));
+                continue;
+            }
+            SavedTemplateQuery template = (SavedTemplateQuery) o;
             try {
                 StringReader sr = new StringReader(template.getTemplateQuery());
                 Map<String, TemplateQuery> templateMap =
@@ -582,6 +603,51 @@ public class ProfileManager
     }
 
 
+    private void deleteIfInstance(Object o, Class<? extends InterMineObject> expected,
+            UserProfile userProfile) throws ObjectStoreException {
+        if (expected.isInstance(o)) {
+            uosw.delete((InterMineObject) o);
+        } else {
+            LOG.error(idCollisionMessage(((InterMineObject) o).getId(), expected, o,
+                    userProfile));
+        }
+    }
+
+    /**
+     * Describes an object of the wrong class found while loading a user's saved bags, queries
+     * or templates. Ids are unique per objectstore and the objectstore caches objects by id
+     * alone, so this means that rows of two tables share an id: typically rows inserted with
+     * hardcoded ids (plain SQL) that the 'serial' sequence later handed out again.
+     *
+     * @param id the id
+     * @param expected the class that was expected
+     * @param found the object found under that id
+     * @param userProfile the user being loaded
+     * @return the message
+     */
+    String idCollisionMessage(Integer id, Class<? extends InterMineObject> expected,
+            Object found, UserProfile userProfile) {
+        String expectedTable = tableName(expected);
+        String foundTable = "no";
+        if (found instanceof FastPathObject) {
+            foundTable = tableName(DynamicUtil.getSimpleClass((FastPathObject) found));
+        } else if (found != null) {
+            foundTable = tableName(found.getClass());
+        }
+        return "Userprofile id collision: id " + id + " is used by a row of table "
+            + expectedTable + " and a row of table " + foundTable + ", which the objectstore"
+            + " cannot tell apart. Skipping that " + expectedTable + " row of user "
+            + userProfile.getUsername() + ". Repair the database by giving one of the two rows"
+            + " (and anything referring to it, e.g. bagvalues.savedbagid or tag rows) an id"
+            + " above every id in the userprofile database, then restart the webapp.";
+    }
+
+    private String tableName(Class<?> cls) {
+        ClassDescriptor cld = uosw.getModel().getClassDescriptorByName(cls.getName());
+        // as Postgres names it (DatabaseUtil gives the unquoted, mixed-case form)
+        return (cld == null) ? cls.getName() : DatabaseUtil.getTableName(cld).toLowerCase();
+    }
+
     /**
      * Return the TagManager for adding, removing and fetching Tags assigned to templates, bags
      * and classes.
@@ -604,12 +670,13 @@ public class ProfileManager
                 // delete all templates and queries in the database
                 // we're going to load the ones in memory into the database next
                 // this should be cleverer
-                for (Iterator i = userProfile.getSavedQuerys().iterator(); i.hasNext();) {
-                    uosw.delete((InterMineObject) i.next());
+                // (only objects of the expected class: after an id collision the collection
+                // can hold another user object, which must not be deleted in its place)
+                for (Object o : userProfile.getSavedQuerys()) {
+                    deleteIfInstance(o, SavedQuery.class, userProfile);
                 }
-                for (Iterator i = userProfile.getSavedTemplateQuerys().iterator();
-                        i.hasNext();) {
-                    uosw.delete((InterMineObject) i.next());
+                for (Object o : userProfile.getSavedTemplateQuerys()) {
+                    deleteIfInstance(o, SavedTemplateQuery.class, userProfile);
                 }
             } else {
                 throw new RuntimeException("Cannot save this profile: The UserProfile is null");
