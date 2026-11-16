@@ -14,7 +14,7 @@ How the unit tests and web service tests find their databases and settings, how 
   - `testmodel.properties`, from `config/testmodel.properties`
 
   `config/lib/install_intermine.py` writes them, replacing `PSQL_HOST`, `PSQL_USER` and `PSQL_PWD` with the environment variables of those names, and skips any file that already exists. If you change the test password, delete the files so that they are regenerated. `testmine/setup.sh` also writes `~/.intermine/testmodel.properties` (from `testmine/dbmodel/resources/testmodel.properties`) if it is missing.
-- **JDK 17** (or JDK 8, until 6.0.0 is released) and Python 3 (see [BUILDING.md](BUILDING.md)). The JDK that runs Gradle (`JAVA_HOME`) also runs the tests. On JDK 9 and later the test tasks get `--add-opens=java.base/java.lang=ALL-UNNAMED` from `config/gradle/java-target.gradle`; nothing to set. The wrapper downloads Gradle itself (8.14.6).
+- **JDK 17** (or JDK 8, until 6.0.0 is released) and Python 3 (see [BUILDING.md](BUILDING.md)). The JDK that runs Gradle (`JAVA_HOME`) also runs the tests. No JVM option is needed on any JDK (the `--add-opens=java.base/java.lang=ALL-UNNAMED` that the tests needed on JDK 16+ went with cglib in 6.0). The wrapper downloads Gradle itself (8.14.6).
 - For the web service tests only: Solr (`config/ci/init-solr-docker.sh`, which starts the official image in Docker), `wait-for-it`, and a checkout of a client (`imjs` with Node and `grunt`, or `intermine-ws-python`).
 
 ## How CI runs the tests
