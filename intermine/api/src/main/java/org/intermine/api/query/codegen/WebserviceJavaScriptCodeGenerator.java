@@ -58,14 +58,15 @@ public class WebserviceJavaScriptCodeGenerator implements WebserviceCodeGenerato
         }
 
         final String url = wsCodeGenInfo.getServiceBaseURL();
-        final String cdnLocation = wsCodeGenInfo.getProperty("head.cdn.location",
-                "http://cdn.intermine.org");
+        // The im-tables library is served by the mine itself (its vendor directory), which the
+        // generated code has to be able to reach anyway to run the query. No external CDN.
+        final String libraryRoot = url == null ? "" : url.replaceAll("/+$", "");
         final String json = query.getJson();
         final String token = wsCodeGenInfo.getUserToken();
 
         StringBuffer sb = new StringBuffer()
               .append(JSStrings.getString("PRELUDE"))
-              .append(String.format(JSStrings.getString("IMPORTS"), cdnLocation))
+              .append(String.format(JSStrings.getString("IMPORTS"), libraryRoot))
               .append(JSStrings.getString("PLACEHOLDER"))
               .append(JSStrings.getString("SCRIPT", new StringLiteral(url),
                   new StringLiteral(token), json));
