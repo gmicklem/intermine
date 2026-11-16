@@ -20,6 +20,7 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 
+import org.apache.commons.lang.StringUtils;
 import org.intermine.api.profile.BagValue;
 import org.intermine.api.profile.InterMineBag;
 import org.intermine.objectstore.ObjectStoreWriter;
@@ -75,7 +76,9 @@ public class InterMineBagBinding
             for (BagValue bagValues : keyFieldValues) {
                 writer.writeEmptyElement("bagValue");
                 writer.writeAttribute("value", bagValues.getValue());
-                writer.writeAttribute("extra", bagValues.getExtra());
+                // The extra value is null for lists whose type has no extra field value (or an
+                // object without one); XMLStreamWriter throws a NullPointerException on null.
+                writer.writeAttribute("extra", StringUtils.defaultString(bagValues.getExtra()));
             }
             writer.writeEndElement();
         } catch (XMLStreamException e) {
