@@ -124,6 +124,16 @@ In a project that applies the plugin (`bio/core`, `bio/model`, the `bio-source-*
 
 The Ant tasks that the plugin runs (`buildDB`, `integrate`, the post-processing, the model and key tasks) load InterMine's classes in an Ant class loader of their own, with the log4j 1 API (`reload4j`). Nothing on that classpath configures it (`intermine-resources` has only a `log4j2.properties`, which nothing reads), so until this was fixed every logger printed `log4j:WARN No appenders could be found` and the INFO messages of the converters and the data loader were lost. The plugin now writes `build/im/antLogging/log4j.properties` (a console appender on the task's standard output, which Gradle shows) and puts that directory on the classpath of every Ant task. The level follows Gradle's: INFO at the default level and with `-i`, WARN with `-q` and `-w`, and `org.intermine` at DEBUG with `-d`. A mine that has its own `log4j.properties` or `log4j.xml` in its resources keeps it (the plugin then writes none). The plugin also sets the system property `log4j.ignoreTCL=true` in the Gradle daemon, which only reload4j reads: Gradle's own class loader carries the log4j-over-slf4j classes (`ConsoleAppender`, `PatternLayout`), and without the property reload4j would take those for the classes that the configuration names and drop the appender. The file is not a task output: the level of a run must not make `buildDB` or `integrate` out of date.
 
+### Tests of the plugin
+
+`plugin/src/test/groovy` holds Gradle TestKit tests (JUnit 4): each test writes a small synthetic mine (a root project with `dbmodel` and `webapp` projects, laid out like a converted HumanMine) under `plugin/build/testkit/mines/<test>`, applies the plugin of this checkout to it (`GradleRunner.withPluginClasspath()`) and runs its tasks: `createSoModel` (the SO additions file, up to date on a second run, relative and absolute SO paths), `mergeProperties` with the mine's `copyMineProperties` and `copyDefaultInterMineProperties`, `:webapp:war` (the mine's files first, the bio-webapp files with the model's additions, no repeated entry, no `ant:ant` jar, a `duplicatesStrategy` of the mine kept, no `:dbmodel` task needed), `unwarBioWebApp` (no file of an earlier bio-webapp survives) and the reload4j logging of the Ant tasks. The mines resolve only from a file Maven repository that the test writes, with fake `intermine-resources`, `bio-webapp` and `bio-model` artifacts; the `bio-model` jar carries a stand-in for `SOToModelTask` (`plugin/src/testKitTasks`). The tests need neither network nor PostgreSQL nor the other builds, and take about 20 seconds:
+
+```bash
+cd plugin && ./gradlew test        # after install_intermine.py has written plugin/gradle.properties
+```
+
+The builds run in TestKit daemons with their own Gradle user home, `plugin/build/testkit/gradle`, on the JDK that runs the tests (8 or 17); they stop when the tests end. A failed test leaves its mine in `plugin/build/testkit/mines` and its output in the test report. `publishToMavenLocal` does not run the tests; `./gradlew build` does.
+
 ## Dependency versions: `gradle/libs.versions.toml`
 
 Every third-party library the module build files use is declared once in the version catalog `gradle/libs.versions.toml`. Each of the seven `settings.gradle` files loads it as `libs`, so a module declares a dependency as
@@ -185,7 +195,7 @@ jar {
 
 Other configurations you will meet are build-specific and not part of the Gradle standard set: `bioModel`, `mergeModel`, `commonResources`, `imWebApp`, `testModelProps` and `testArtifacts` (the test jar that `intermine-testresources` shares with the modules that test against it, used as `testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')`). The plugin creates `imApiJar` and `imAntlr` (renamed from `api` and `antlr`, which clash with the `java-library` and `antlr` plugins), `bioModel`, `bioModelForSOOnly`, `commonResources` and `mergeSource`, as resolvable-only configurations.
 
-The `plugin/` build itself uses `implementation gradleApi()` and `implementation localGroovy()`.
+The `plugin/` build itself uses `implementation gradleApi()` and `implementation localGroovy()`, and for its tests `gradleTestKit()` and `libs.junit` (see [Tests of the plugin](#tests-of-the-plugin)).
 
 ## Common commands
 

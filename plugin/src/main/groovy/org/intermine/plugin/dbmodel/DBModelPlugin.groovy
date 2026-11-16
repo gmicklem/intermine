@@ -228,6 +228,9 @@ class DBModelPlugin implements Plugin<Project> {
                         classpath {
                             pathelement(path: project.configurations.getByName("bioModelForSOOnly").asPath)
                             pathelement(location: DBModelUtils.antLoggingDir(project).absolutePath) // log4j.properties of the Ant tasks
+                            // the mine's own log4j.properties or log4j.xml, if it has one (then antLoggingDir has none); the
+                            // other Ant tasks reach build/resources/main through a dirset of the build directory
+                            pathelement(location: DBModelUtils.resourcesDir(project))
                             pathelement(path: DBModelUtils.antClasspath(project).asPath)
                         }
                     }

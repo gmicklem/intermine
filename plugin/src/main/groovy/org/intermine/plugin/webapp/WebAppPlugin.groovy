@@ -73,6 +73,11 @@ class WebAppPlugin implements Plugin<Project> {
                 String webPropertiesBuiltPath = config.propsDir + File.separator + "web.properties"
                 File webPropertiesBuilt = new File(webPropertiesBuiltPath)
                 Files.copy((new File(webPropertiesPath)).toPath(), webPropertiesBuilt.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                // a web.properties whose last line has no line break would run into the first key of intermine.properties
+                String webProperties = webPropertiesBuilt.text
+                if (!webProperties.isEmpty() && !webProperties.endsWith("\n") && !webProperties.endsWith("\r")) {
+                    webPropertiesBuilt.append("\n")
+                }
                 String interMinePropertiesPath = DBModelUtils.resourcesDir(project) + File.separator + "intermine.properties"
                 webPropertiesBuilt.append( (new File(interMinePropertiesPath)).getText())
             }
