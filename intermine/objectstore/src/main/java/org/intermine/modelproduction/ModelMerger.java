@@ -288,17 +288,23 @@ public final class ModelMerger
             supersStr = null;
         }
 
-        // merge the ontology terms
-        Set<String> mergedOntologyTerms = new HashSet<>();
-        if (original.getOntologyTerm() != null) {
-            mergedOntologyTerms.addAll(Arrays.asList(original.getOntologyTerm().split(",")));
+        // merge the ontology terms: ignore blank entries (an unset term merged with another one
+        // used to leave an empty term behind, which became the invalid IRI "<>" in RDF output)
+        Set<String> mergedOntologyTerms = new LinkedHashSet<>();
+        for (ClassDescriptor cd : Arrays.asList(original, merge)) {
+            if (cd.getOntologyTerm() != null) {
+                for (String term : cd.getOntologyTerm().split(",")) {
+                    if (StringUtils.isNotBlank(term)) {
+                        mergedOntologyTerms.add(term.trim());
+                    }
+                }
+            }
         }
-        if (merge.getOntologyTerm() != null) {
-            mergedOntologyTerms.addAll(Arrays.asList(merge.getOntologyTerm().split(",")));
-        }
+        String terms = mergedOntologyTerms.isEmpty() ? null
+                : StringUtils.join(mergedOntologyTerms, ",");
         return new ClassDescriptor(original.getName(), supersStr,
                 merge.isInterface(), attrs, refs, cols,
-                StringUtils.join(mergedOntologyTerms, ","));
+                terms);
     }
 
     /**
