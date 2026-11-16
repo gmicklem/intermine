@@ -28,7 +28,11 @@ dependencies {
     implementation group: 'org.apache.lucene', name: 'lucene-snowball', version: '3.0.2'
     implementation group: 'org.apache.lucene', name: 'lucene-highlighter', version: '3.0.2'
     api group: 'org.json', name: 'json', version: '20260814'
-    api group: "org.apache.jena", name: "apache-jena-libs", version: "3.16.0"
+    // Jena 3.17.0 is the last release that runs on Java 8. Only the RDF model API is called (see RDFHelper), so jena-core
+    // is the compile dependency; Model.write() uses the RIOT writers only when jena-arq is present, so the RDF output
+    // depends on it at run time (RDFSerialisationTest pins this). apache-jena-libs (TDB, TDB2, SHACL) is not used.
+    api group: 'org.apache.jena', name: 'jena-core', version: '3.17.0'
+    runtimeOnly group: 'org.apache.jena', name: 'jena-arq', version: '3.17.0'
     testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')
     testImplementation group: 'xmlunit', name: 'xmlunit', version: '1.0'
     testImplementation project(':intermine-objectstore').sourceSets.test.output
