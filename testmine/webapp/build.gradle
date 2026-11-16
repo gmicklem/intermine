@@ -175,6 +175,8 @@ task checkNoCommonsLang2 {
 }
 tasks.named('check') { dependsOn 'checkNoCommonsLang2' }
 
+def cargoConfigHome = layout.buildDirectory.dir("cargo/conf").get().asFile
+
 cargo {
     // change this to match your Tomcat major version (keep the x)
     containerId = 'tomcat9x'
@@ -188,6 +190,9 @@ cargo {
     }
 
     local {
+        // Cargo writes the Tomcat configuration (conf, logs, temp, webapps) to <java.io.tmpdir>/cargo/conf unless told
+        // otherwise, a path that every user and every build of the machine shares (im-ee7.44): one in the build directory
+        configHomeDir = cargoConfigHome
         installer {
             installConfiguration = configurations.tomcat
             downloadDir = layout.buildDirectory.dir("downloads").get().asFile
@@ -202,3 +207,18 @@ cargo {
 ['cargoRunLocal', 'cargoStartLocal'].each { name ->
     tasks.named(name) { dependsOn 'war', 'warTestModelWebApp' }
 }
+
+// gradle-cargo-plugin 2.9.0 runs `ant.mkdir(configHomeDir)` when the directory is missing, which Ant rejects ("The <mkdir> type
+// doesn't support nested text data"), so the directory has to exist when a local container task evaluates its properties
+tasks.register('createCargoConfigHome') {
+    description = "Creates build/cargo/conf, the Tomcat configuration directory of the Cargo tasks"
+    outputs.dir(cargoConfigHome)
+    doLast {
+        cargoConfigHome.mkdirs()
+    }
+}
+tasks.withType(com.bmuschko.gradle.cargo.tasks.local.LocalCargoContainerTask).configureEach {
+    dependsOn 'createCargoConfigHome'
+}
+// stopping needs no war, but Gradle 8 fails a task that has the war among the files it reads without any ordering
+tasks.named('cargoStopLocal') { mustRunAfter 'war', 'warTestModelWebApp' }
