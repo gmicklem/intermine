@@ -11,6 +11,8 @@ package org.intermine.dataloader;
  */
 
 import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 import junit.framework.TestCase;
 
@@ -30,12 +32,17 @@ public class DataTrackingTest extends TestCase {
     public void tearDown() throws Exception {
         try {
             dt.close();
+        } catch (Exception e) {
+            // a test may have left the tracker unusable; its connections are released anyway
+        } finally {
             Database db = DatabaseFactory.getDatabase("db.unittest");
             Connection c = db.getConnection();
-            c.setAutoCommit(true);
-            c.createStatement().execute("DROP TABLE tracker");
-            c.close();
-        } catch (Exception e) {
+            try {
+                c.setAutoCommit(true);
+                c.createStatement().execute("DROP TABLE IF EXISTS tracker");
+            } finally {
+                c.close();
+            }
         }
     }
 
@@ -82,5 +89,120 @@ public class DataTrackingTest extends TestCase {
         dt2.close();
         dt2 = new DataTracker(DatabaseFactory.getDatabase("db.unittest"), 30, 10);
         assertEquals(source2.getName(), dt2.getSource(new Integer(14), "name").getName());
+    }
+
+    // A failed flush must say what failed, must not forget the entries it could not store, and
+    // must not leave the tracker unusable for good.
+    public void testFailedFlushIsReportedAndRetried() throws Exception {
+        Database db = DatabaseFactory.getDatabase("db.unittest");
+        execute(db, "DROP TABLE tracker");
+        for (int i = 100; i < 105; i++) {
+            dt.clearObj(new Integer(i));
+            dt.setSource(new Integer(i), "name", source1);
+        }
+        try {
+            dt.flush();
+            fail("Expected the flush to fail while the tracker table is missing");
+        } catch (IllegalArgumentException e) {
+            assertNotNull(e.getMessage());
+            assertTrue(e.getMessage(), e.getMessage().contains("DataTracker"));
+            assertTrue(e.getCause() instanceof SQLException);
+        }
+        createTrackerTable(db);
+        // The failure was reported; the entries that could not be stored are still there
+        dt.flush();
+        assertStored(db, 100, 105);
+    }
+
+    // The background write of a batch fails: the failure is reported to the next caller (with a
+    // message and the SQLException as cause), the batch is kept, and the tracker works again.
+    public void testFailedBackgroundWriteIsReportedAndRecovered() throws Exception {
+        Database db = DatabaseFactory.getDatabase("db.unittest");
+        execute(db, "DROP TABLE tracker");
+        IllegalArgumentException reported = null;
+        int next = 100;
+        long deadline = System.currentTimeMillis() + 30000L;
+        // clearObj() does not read the (missing) tracker table
+        while (reported == null && System.currentTimeMillis() < deadline) {
+            try {
+                dt.clearObj(new Integer(next));
+                dt.setSource(new Integer(next), "name", source1);
+                next++;
+            } catch (IllegalArgumentException e) {
+                reported = e;
+            }
+            if (next >= 130 && reported == null) {
+                Thread.sleep(10);
+            }
+        }
+        assertNotNull("the failed background write was not reported", reported);
+        assertNotNull(reported.getMessage());
+        assertTrue(reported.getMessage(), reported.getMessage().contains("DataTracker"));
+        assertTrue(String.valueOf(reported.getCause()), reported.getCause() instanceof SQLException);
+
+        createTrackerTable(db);
+        // Reports of failures that happened before the table came back are given once each
+        boolean flushed = false;
+        for (int attempt = 0; attempt < 10 && !flushed; attempt++) {
+            try {
+                dt.flush();
+                flushed = true;
+            } catch (IllegalArgumentException e) {
+                assertNotNull(e.getMessage());
+            }
+        }
+        assertTrue("the tracker did not recover after the failed write", flushed);
+        assertStored(db, 100, next);
+    }
+
+    // A failed read cannot be recovered from, but it does say what failed.
+    public void testFailedReadHasMessage() throws Exception {
+        Database db = DatabaseFactory.getDatabase("db.unittest");
+        execute(db, "DROP TABLE tracker");
+        try {
+            dt.getSource(new Integer(4000), "name");
+            fail("Expected the read to fail while the tracker table is missing");
+        } catch (IllegalArgumentException e) {
+            assertNotNull(e.getMessage());
+            assertTrue(e.getCause() instanceof SQLException);
+        }
+        try {
+            dt.getSource(new Integer(4000), "name");
+            fail("Expected the tracker to stay unusable after a failed read");
+        } catch (IllegalArgumentException e) {
+            assertNotNull(e.getMessage());
+            assertTrue(e.getCause() instanceof SQLException);
+        }
+    }
+
+    private void execute(Database db, String sql) throws SQLException {
+        Connection c = db.getConnection();
+        try {
+            c.setAutoCommit(true);
+            Statement s = c.createStatement();
+            s.execute(sql);
+            s.close();
+        } finally {
+            c.close();
+        }
+    }
+
+    private void createTrackerTable(Database db) throws SQLException {
+        execute(db, "create table tracker (objectid int, fieldname text,"
+                + " sourcename text, version int)");
+        execute(db, "create index tracker_objectid on tracker (objectid)");
+    }
+
+    // Checks, through a second tracker, that ids from (inclusive) to to (exclusive) are stored
+    private void assertStored(Database db, int from, int to) throws Exception {
+        DataTracker check = new DataTracker(db, 30, 10);
+        try {
+            for (int i = from; i < to; i++) {
+                assertEquals("id " + i, source1.getName(),
+                        check.getSource(new Integer(i), "name").getName());
+            }
+        } finally {
+            check.close();
+        }
     }
 }
