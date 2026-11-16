@@ -39,6 +39,7 @@ import org.intermine.api.bag.BagQueryResult;
 import org.intermine.api.bag.BagQueryRunner;
 import org.intermine.api.profile.InterMineBag;
 import org.intermine.api.profile.Profile;
+import org.intermine.api.profile.ProfileAlreadyExistsException;
 import org.intermine.objectstore.ObjectStoreException;
 import org.intermine.webservice.server.exceptions.BadRequestException;
 import org.intermine.webservice.server.exceptions.ServiceException;
@@ -183,7 +184,13 @@ public class ListUploadService extends ListMakerService
         if (!input.getTags().isEmpty()) {
             im.getBagManager().addTagsToBag(input.getTags(), tempBag, profile);
         }
-        profile.renameBag(input.getTemporaryListName(), input.getListName());
+        try {
+            profile.renameBag(input.getTemporaryListName(), input.getListName());
+        } catch (ProfileAlreadyExistsException e) {
+            // another request created a list of this name while this one was matching
+            throw new BadRequestException("Attempt to overwrite an existing bag - name: '"
+                    + input.getListName() + "'");
+        }
     }
 
     /**
