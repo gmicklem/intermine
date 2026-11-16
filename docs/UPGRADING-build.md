@@ -30,7 +30,7 @@ HumanMine and FlyMine needed these three changes in their own build files, on ei
 
 This is the non-breaking release. This branch (the last Gradle 6.9.4 state; its plugin is compiled with Gradle 6.9.4) was checked in a mine on **Gradle 4.9**: the plugin loads, the build configures, and the tasks `tasks`, `createSoModel` and (in `webapp`) `mergeProperties` start. It was also checked on **Gradle 6.9.4**, with the changes below. Those checks do not cover the packaging and security fixes listed under "What else changes for a mine", which were added to the branch later; the only plugin change among them is that `DBModelPlugin` excludes `intermine.properties` from the jar of the mine's `dbmodel` project (`project.tasks.named('jar')`, available since Gradle 4.9), and it has not been run in a mine. Loading data, `buildDB` of a full mine and deploying to Tomcat were not run for this line, and this branch needs JDK 8.
 
-So nothing is required except `imVersion` and `bioVersion`, with one exception that does not depend on InterMine: a `webapp/build.gradle` that still has the `gretty` line (step 4) does not configure on any Gradle today, 4.9 included, because jcenter is gone. To move the mine to Gradle 6.9.4, which shows every deprecation that 8.14 will turn into an error:
+So nothing is required except `imVersion` and `bioVersion`, with one exception that does not depend on InterMine: a `webapp/build.gradle` that still has the `gretty` line (step 4) does not configure on any Gradle today, 4.9 included, because jcenter is gone. A mine that builds its war on this line also needs step 6 (`webXml`) and, on a fresh checkout, step 7 (run `copyWebappContent` once first). To move the mine to Gradle 6.9.4, which shows every deprecation that 8.14 will turn into an error:
 
 1. Set `imVersion` and `bioVersion` in the mine's `gradle.properties` to `5.1.1`.
 2. Update the wrapper: `./gradlew wrapper --gradle-version 6.9.4 --distribution-type bin`.
@@ -39,7 +39,29 @@ So nothing is required except `imVersion` and `bioVersion`, with one exception t
    - **Remove gretty** (what InterMine recommends): delete the `apply from` line and the `gretty { }` block of the same file. The `cargo` plugin does the deployment. Gretty was already dropped from testmine in InterMine's own `RELEASE_NOTES` because it does not work with Gradle 4.9, and the script is an unpinned remote file.
    - **Keep gretty**: gretty 2.0.0 itself is on Maven Central, only the script looks for it in jcenter. Save the script in the mine's repository (from a fixed commit of akhikhl/gretty, not `master`), change the `jcenter()` in its `buildscript { repositories { } }` to `mavenCentral()`, and point the `apply from:` at that copy. This was not tried here. Gretty 2.0.0 dates from the Gradle 4 era and is not known to work on Gradle 6.9.4 or 8.14, so it is a stop-gap for a mine that stays on Gradle 4.9; the 6.0.0 steps remove it.
 5. In `dbmodel/build.gradle`, make `soTermListFilePath` and `soAdditionFilePath` absolute (`"$rootDir/..."`, see "Three edits" above). The 5.1.1 plugin does not resolve them. It is not needed while the daemon happens to start in the mine's root, but it is cheap and it carries over to 6.0.0.
-6. Run `./gradlew --warning-mode all :dbmodel:tasks` to see the remaining deprecations. In the flymine smoke build on 6.9.4 they were:
+6. **Set `webXml` on the mine's war task** (a mine of this line composes its war in a `warWebApp` task of `webapp/build.gradle`; flymine `webapp/build.gradle:38-44`). Gradle's `War` task takes `WEB-INF/web.xml` through its own `webXml` property, not through the generic `from(...)` copy, and the mine's `warWebApp` never set it. In the testbed's build of the 5.1.1 line (Gradle 6.9.4) the war that came out had no `web.xml` at all: it deployed, Tomcat logged success, and every request returned 404 because no servlet mapping existed. The real file, with the struts and tiles additions of the mine's model merged in by `addStrutsConfig`, is `build/explodedWebApp/WEB-INF/web.xml`. Point `webXml` at it, **and** exclude it from the `from`, so that the war is not offered the entry twice (two overlapping `web.xml` entries, which `unzip` refuses as a possible zip bomb; the plugin of this branch sets `duplicatesStrategy = EXCLUDE`, which should also drop the second one, but that combination was not run, and the `exclude` is what was tested):
+
+   ```groovy
+   task warWebApp(type: War) {
+       dependsOn 'copyWebappContent'
+       description "Create the war from the build/explodedWebAppDir directory"
+       from "${explodedWebAppDir}"
+       exclude "WEB-INF/web.properties", "WEB-INF/web.xml"                 // was: exclude "WEB-INF/web.properties"
+       webXml = file("${explodedWebAppDir}/WEB-INF/web.xml")               // new
+       webInf { from "${mergePropsDir}" }
+   }
+   ```
+
+   This is on the 5.1.1 line only: the 6.0.0 plugin composes the war itself and sets `web.xml` (the maint-2026 guide, see [5.1.1 to 6.0.0](#511-to-600), has the steps), so the line goes away with the rest of `warWebApp`. It was not checked on Gradle 4.9.
+7. **The first `:webapp:war` of a fresh checkout fails** with `File .../build/explodedWebApp/WEB-INF/web.xml specified for property 'webXml' does not exist` (the `webXml` of step 6 is what makes it visible; without it the first war is built, with most of the bio-webapp content missing). The cause is the known first-run wipe of Gradle: `unwarBioWebApp` unpacks the `bio-webapp` war into `build/explodedWebApp`, and `copyWebappContent`, a `Copy` into the same directory, has no execution history yet. Gradle treats a task without history as the owner of nothing that exists in its output directory and removes it, so the copy deletes what the unwar had just written (2739 files down to 5, `web.xml` among them). Run the copy once on its own, first, so that it has a history, and then the war:
+
+   ```bash
+   ./gradlew :webapp:copyWebappContent
+   ./gradlew :webapp:war
+   ```
+
+   Every later run has the history and passes, which is why a build that was run by hand before never shows it; a script that builds the mine from a fresh checkout (CI) must run the first command once. With the history in place the war's own `unwarBioWebApp` and `copyWebappContent` sequence leaves both sets of files, the unpacked war overlaid with `src/main/webapp`. The 6.0 plugin composes the war from the outputs of the tasks that make each part (`unwarBioWebApp` is a Sync there, and `copyWebappContent` is gone), so a first run is no different from a later one and this note does not apply.
+8. Run `./gradlew --warning-mode all :dbmodel:tasks` to see the remaining deprecations. In the flymine smoke build on 6.9.4 they were:
 
 | Warning | Where (flymine copy) | Fix |
 |---|---|---|
@@ -62,7 +84,7 @@ These fixes are in the build files of this branch (the full list, for the releas
 - The plugin (`webapp`) changes every `War` task of the mine (`war` and the `warWebApp` that mines of this line compose their war with), whatever the build file says, once the mine's build files have run:
   - The jars of the legacy `ant:ant` coordinate are left out of the task's classpath, and the build prints `The war leaves out ant-1.6.5.jar (legacy groupId 'ant', ...)` when it does so. A mine of the 5.x line declares `compile('ant:ant:1.6.5')`, the 2005 Ant under the groupId Ant had before it moved to `org.apache.ant`; Gradle takes the two for different libraries, so no version conflict resolution joins them and `ant-1.6.5.jar` went to `WEB-INF/lib` next to `ant-1.7.0.jar`. Nothing at run time needs it. It stays on the mine's other classpaths (the Ant tasks of the build), so delete the `compile('ant:ant:1.6.5')` line from the root `build.gradle` when you can.
   - `duplicatesStrategy` is `EXCLUDE` (unless the mine's build file chose another one): a zip entry that the war would get twice is written once, the first one wins, and `unzip -Z1 webapp.war | sort | uniq -d` prints nothing. The first entry is `WEB-INF/lib` from the war's classpath, then the mine's own `src/main/webapp`, then `build/explodedWebApp` (bio-webapp unpacked by `unwarBioWebApp`, with the mine's `src/main/webapp` copied over it by `copyWebappContent`), so a file of the mine wins over the file of the same name in bio-webapp. Gradle 6 prints a deprecation warning for each duplicate path (`Copying or archiving duplicate paths with the default duplicates strategy has been deprecated`) and Gradle 7 fails on it, which is why the plugin sets the strategy. Two versions of one library are two file names and are not duplicates of the same entry; InterMine's own artifacts carry one version of each library, as the oltu note above says.
-  - Checked with HumanMine `master` (upstream) with the edits above and the `copyWebappContent`/`webXml` fixes, on Gradle 6.9.4 and on Gradle 4.9: 202 jars with `ant-1.6.5.jar`, `ant-1.7.0.jar` and the oltu 1.0.0 and 1.0.1 pairs and 63 duplicate entries before; 151 jars with one `ant-1.7.0.jar`, the oltu 1.0.2 pair and no duplicate entries after.
+  - Checked with HumanMine `master` (upstream) with the edits above (steps 6 and 7 for the war's `web.xml`: `webXml` on `warWebApp` and `copyWebappContent` run once first), on Gradle 6.9.4 and on Gradle 4.9: 202 jars with `ant-1.6.5.jar`, `ant-1.7.0.jar` and the oltu 1.0.0 and 1.0.1 pairs and 63 duplicate entries before; 151 jars with one `ant-1.7.0.jar`, the oltu 1.0.2 pair and no duplicate entries after.
 - The InterMine POMs are written by `maven-publish`, not by the `maven` plugin that 5.1.0 used. The scopes in the `bio-source-*` POMs changed with it, which matters to a mine's own bio-source project; see the next section.
 
 ## Dependency scopes in the bio-source POMs
