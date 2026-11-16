@@ -275,8 +275,8 @@ public class TransferSequencesProcessTest extends TestCase
 
         storedChromosome =
                 (Chromosome) DynamicUtil.createObject(Collections.singleton(Chromosome.class));
-        storedChromosome.setLength(new Integer(4000));
-        storedChromosome.setId(new Integer(101));
+        storedChromosome.setLength(Integer.valueOf(4000));
+        storedChromosome.setId(Integer.valueOf(101));
         storedChromosome.setPrimaryIdentifier("store_chromosome");
         toStore.add(storedChromosome);
 
@@ -379,8 +379,8 @@ public class TransferSequencesProcessTest extends TestCase
         loc.setLocatedOn(object);
         loc.setFeature(subject);
         loc.setStrand(strand);
-        loc.setStart(new Integer(start));
-        loc.setEnd(new Integer(end));
+        loc.setStart(Integer.valueOf(start));
+        loc.setEnd(Integer.valueOf(end));
         return loc;
     }
 }

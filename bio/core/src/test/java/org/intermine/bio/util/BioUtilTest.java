@@ -55,25 +55,25 @@ public class BioUtilTest extends TestCase
         storedOrganism1 = (Organism) DynamicUtil.createObject(Collections.singleton(Organism.class));
         storedOrganism1.setShortName("Homo sapiens");
         storedOrganism1.setTaxonId("9606");
-        storedOrganism1.setId(new Integer(2001));
+        storedOrganism1.setId(Integer.valueOf(2001));
         toStore.add(storedOrganism1);
 
         storedGene1 = (Gene) DynamicUtil.createObject(Collections.singleton(Gene.class));
         storedGene1.setPrimaryIdentifier("gene1");
         storedGene1.setOrganism(storedOrganism1);
-        storedGene1.setId(new Integer(3001));
+        storedGene1.setId(Integer.valueOf(3001));
         toStore.add(storedGene1);
 
         storedOrganism2 = (Organism) DynamicUtil.createObject(Collections.singleton(Organism.class));
         storedOrganism2.setShortName("Drosophila melanogaster");
         storedOrganism2.setTaxonId("7227");
-        storedOrganism2.setId(new Integer(2002));
+        storedOrganism2.setId(Integer.valueOf(2002));
         toStore.add(storedOrganism2);
 
         storedGene2 = (Gene) DynamicUtil.createObject(Collections.singleton(Gene.class));
         storedGene2.setPrimaryIdentifier("gene2");
         storedGene2.setOrganism(storedOrganism2);
-        storedGene2.setId(new Integer(3002));
+        storedGene2.setId(Integer.valueOf(3002));
         toStore.add(storedGene2);
 
         Iterator iter = toStore.iterator();

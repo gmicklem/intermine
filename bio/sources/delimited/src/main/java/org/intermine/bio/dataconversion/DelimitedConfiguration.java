@@ -85,7 +85,7 @@ public class DelimitedConfiguration
                 throw new IllegalArgumentException(message);
             }
 
-            columnFieldDescriptorMap.put(new Integer(keyColumnNumber), columnFD);
+            columnFieldDescriptorMap.put(Integer.valueOf(keyColumnNumber), columnFD);
         }
 
         Iterator classNameIter = getClassNames().iterator();
@@ -97,8 +97,8 @@ public class DelimitedConfiguration
 
             columnFieldDescriptorMap = classNameColumnFieldDescriptorMap.get(className);
             for (int columnNumber = 0; columnNumber < mapMax + 1; columnNumber++) {
-                FieldDescriptor columnFD =
-                        (FieldDescriptor) columnFieldDescriptorMap.get(new Integer(columnNumber));
+                FieldDescriptor columnFD = (FieldDescriptor) columnFieldDescriptorMap
+                        .get(Integer.valueOf(columnNumber));
 
                 columnFieldDescriptors.add(columnFD);
             }

@@ -36,47 +36,47 @@ public class CacheMapTest extends TestCase
     public void test2() throws Exception {
         CacheMap cm = new CacheMap();
 
-        cm.put(new Integer(5), new Integer(40));
-        cm.put(new Integer(763), new Integer(67));
-        cm.put(new Integer(2), null);
+        cm.put(Integer.valueOf(5), Integer.valueOf(40));
+        cm.put(Integer.valueOf(763), Integer.valueOf(67));
+        cm.put(Integer.valueOf(2), null);
 
-        assertEquals(new Integer(40), cm.get(new Integer(5)));
-        assertEquals(new Integer(67), cm.get(new Integer(763)));
-        assertNull(cm.get(new Integer(2)));
-        assertTrue(cm.containsKey(new Integer(5)));
-        assertTrue(cm.containsKey(new Integer(763)));
-        assertTrue(cm.containsKey(new Integer(2)));
+        assertEquals(Integer.valueOf(40), cm.get(Integer.valueOf(5)));
+        assertEquals(Integer.valueOf(67), cm.get(Integer.valueOf(763)));
+        assertNull(cm.get(Integer.valueOf(2)));
+        assertTrue(cm.containsKey(Integer.valueOf(5)));
+        assertTrue(cm.containsKey(Integer.valueOf(763)));
+        assertTrue(cm.containsKey(Integer.valueOf(2)));
 
-        assertNull(cm.remove(new Integer(3)));
-        assertEquals(new Integer(40), cm.get(new Integer(5)));
-        assertEquals(new Integer(67), cm.get(new Integer(763)));
-        assertNull(cm.get(new Integer(2)));
-        assertTrue(cm.containsKey(new Integer(5)));
-        assertTrue(cm.containsKey(new Integer(763)));
-        assertTrue(cm.containsKey(new Integer(2)));
+        assertNull(cm.remove(Integer.valueOf(3)));
+        assertEquals(Integer.valueOf(40), cm.get(Integer.valueOf(5)));
+        assertEquals(Integer.valueOf(67), cm.get(Integer.valueOf(763)));
+        assertNull(cm.get(Integer.valueOf(2)));
+        assertTrue(cm.containsKey(Integer.valueOf(5)));
+        assertTrue(cm.containsKey(Integer.valueOf(763)));
+        assertTrue(cm.containsKey(Integer.valueOf(2)));
 
-        assertEquals(new Integer(40), cm.remove(new Integer(5)));
-        assertNull(cm.get(new Integer(5)));
-        assertEquals(new Integer(67), cm.get(new Integer(763)));
-        assertNull(cm.get(new Integer(2)));
-        assertFalse(cm.containsKey(new Integer(5)));
-        assertTrue(cm.containsKey(new Integer(763)));
-        assertTrue(cm.containsKey(new Integer(2)));
+        assertEquals(Integer.valueOf(40), cm.remove(Integer.valueOf(5)));
+        assertNull(cm.get(Integer.valueOf(5)));
+        assertEquals(Integer.valueOf(67), cm.get(Integer.valueOf(763)));
+        assertNull(cm.get(Integer.valueOf(2)));
+        assertFalse(cm.containsKey(Integer.valueOf(5)));
+        assertTrue(cm.containsKey(Integer.valueOf(763)));
+        assertTrue(cm.containsKey(Integer.valueOf(2)));
 
-        assertEquals(new Integer(67), cm.remove(new Integer(763)));
-        assertNull(cm.get(new Integer(5)));
-        assertNull(cm.get(new Integer(763)));
-        assertNull(cm.get(new Integer(2)));
-        assertFalse(cm.containsKey(new Integer(5)));
-        assertFalse(cm.containsKey(new Integer(763)));
-        assertTrue(cm.containsKey(new Integer(2)));
+        assertEquals(Integer.valueOf(67), cm.remove(Integer.valueOf(763)));
+        assertNull(cm.get(Integer.valueOf(5)));
+        assertNull(cm.get(Integer.valueOf(763)));
+        assertNull(cm.get(Integer.valueOf(2)));
+        assertFalse(cm.containsKey(Integer.valueOf(5)));
+        assertFalse(cm.containsKey(Integer.valueOf(763)));
+        assertTrue(cm.containsKey(Integer.valueOf(2)));
 
-        assertNull(cm.remove(new Integer(2)));
-        assertNull(cm.get(new Integer(5)));
-        assertNull(cm.get(new Integer(763)));
-        assertNull(cm.get(new Integer(2)));
-        assertFalse(cm.containsKey(new Integer(5)));
-        assertFalse(cm.containsKey(new Integer(763)));
-        assertFalse(cm.containsKey(new Integer(2)));
+        assertNull(cm.remove(Integer.valueOf(2)));
+        assertNull(cm.get(Integer.valueOf(5)));
+        assertNull(cm.get(Integer.valueOf(763)));
+        assertNull(cm.get(Integer.valueOf(2)));
+        assertFalse(cm.containsKey(Integer.valueOf(5)));
+        assertFalse(cm.containsKey(Integer.valueOf(763)));
+        assertFalse(cm.containsKey(Integer.valueOf(2)));
     }
 }

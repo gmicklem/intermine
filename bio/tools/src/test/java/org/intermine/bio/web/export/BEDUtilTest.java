@@ -30,12 +30,12 @@ public class BEDUtilTest extends TestCase
         exon.setPrimaryIdentifier("exon1");
         exon.setScore(0.9);
 
-        exonLocation.setStart(new Integer(200));
-        exonLocation.setEnd(new Integer(300));
+        exonLocation.setStart(Integer.valueOf(200));
+        exonLocation.setEnd(Integer.valueOf(300));
         exonLocation.setStrand("-1");
 
         chromosome.setPrimaryIdentifier("4");
-        chromosome.setLength(new Integer(1000));
+        chromosome.setLength(Integer.valueOf(1000));
     }
 
 

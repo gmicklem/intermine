@@ -191,8 +191,8 @@ public class MakeSpanningLocationsProcess extends PostProcessor
                 Location newLocation =
                         (Location) DynamicUtil.createObject(Collections.singleton(Location.class));
 
-                newLocation.setStart(new Integer(parentObjectSimpleLoc.getStart()));
-                newLocation.setEnd(new Integer(parentObjectSimpleLoc.getEnd()));
+                newLocation.setStart(Integer.valueOf(parentObjectSimpleLoc.getStart()));
+                newLocation.setEnd(Integer.valueOf(parentObjectSimpleLoc.getEnd()));
                 newLocation.setStrand(parentObjectSimpleLoc.getStrand());
                 newLocation.setFeature(parentObject);
                 newLocation.setLocatedOn(locatedOnObject);

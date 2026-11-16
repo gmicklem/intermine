@@ -206,12 +206,12 @@ public class DynamicUtilTest extends TestCase
         // primitives that were never set are 0, as with a plain object
         assertEquals(0, ((Broke) c).getDebt());
         assertEquals(0, c.getVatNumber());
-        c.setId(new Integer(17));
+        c.setId(Integer.valueOf(17));
         c.setName("Wotsit");
         ((Broke) c).setDebt(40);
         assertEquals("Broke,Company [debt=\"40\", id=\"17\", name=\"Wotsit\"]", c.toString());
         Company same = (Company) DynamicUtil.createObject(classes);
-        same.setId(new Integer(17));
+        same.setId(Integer.valueOf(17));
         assertEquals(c, same);
         assertEquals(c.hashCode(), same.hashCode());
         assertEquals("Wotsit", c.getFieldValue("name"));
@@ -311,6 +311,6 @@ public class DynamicUtilTest extends TestCase
     public void testGetNullPrimitives() throws Exception {
         Company c = (Company) DynamicUtil.createObject(Collections.singleton(Company.class));
         assertEquals(0, c.getVatNumber());
-        assertEquals(new Integer(0), c.getFieldValue("vatNumber"));
+        assertEquals(Integer.valueOf(0), c.getFieldValue("vatNumber"));
     }
 }

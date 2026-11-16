@@ -45,10 +45,10 @@ public class AgeSeniorityLdr implements DataSetLdr {
             Manager manager = (Manager) row.get(0);
             List<Object> rowList = new LinkedList<Object>();
             List<Double> point = new LinkedList<Double>();
-            rowList.add(new Double(manager.getAge()));
-            point.add(new Double(manager.getAge()));
-            rowList.add(new Double(manager.getSeniority()));
-            point.add(new Double(manager.getSeniority()));
+            rowList.add(Double.valueOf(manager.getAge()));
+            point.add(Double.valueOf(manager.getAge()));
+            rowList.add(Double.valueOf(manager.getSeniority()));
+            point.add(Double.valueOf(manager.getSeniority()));
             points.add(point);
             resultTable.add(rowList);
             total++;

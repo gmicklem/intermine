@@ -254,7 +254,7 @@ public class FlyBaseProcessor extends SequenceProcessor
             while (res.next()) {
                 int featureId = res.getInt("feature_id");
                 int cvtermId = res.getInt("cvterm_id");
-                retVal.put(new Integer(featureId), new Integer(cvtermId));
+                retVal.put(Integer.valueOf(featureId), Integer.valueOf(cvtermId));
             }
         } catch (SQLException e) {
             throw new RuntimeException("problem while reading chromosome_structure_variation "
@@ -967,10 +967,10 @@ public class FlyBaseProcessor extends SequenceProcessor
         ResultSet res = getInteractionResultSet(connection);
 
         while (res.next()) {
-            Integer featureId = new Integer(res.getInt("feature_id"));
-            Integer otherFeatureId = new Integer(res.getInt("other_feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
+            Integer otherFeatureId = Integer.valueOf(res.getInt("other_feature_id"));
             String pubTitle = res.getString("pub_title");
-            Integer pubmedId = new Integer(res.getInt("pubmed_id"));
+            Integer pubmedId = Integer.valueOf(res.getInt("pubmed_id"));
             FeatureData featureData = getFeatureMap().get(featureId);
             FeatureData otherFeatureData = getFeatureMap().get(otherFeatureId);
             String licence = getChadoDBConverter().getLicence();
@@ -1044,7 +1044,7 @@ public class FlyBaseProcessor extends SequenceProcessor
         throws SQLException, ObjectStoreException {
         ResultSet res = getDeletionLocationResultSet(connection);
         while (res.next()) {
-            Integer delId = new Integer(res.getInt("deletion_feature_id"));
+            Integer delId = Integer.valueOf(res.getInt("deletion_feature_id"));
 
             FeatureData delFeatureData = getFeatureMap().get(delId);
             if (delFeatureData == null) {
@@ -1064,7 +1064,7 @@ public class FlyBaseProcessor extends SequenceProcessor
             if (StringUtils.isEmpty(startString) || StringUtils.isEmpty(endString)) {
                 continue;
             }
-            Integer organismId = new Integer(res.getInt("deletion_organism_id"));
+            Integer organismId = Integer.valueOf(res.getInt("deletion_organism_id"));
             int start = Integer.parseInt(startString);
             int end = Integer.parseInt(endString);
             int strand = Integer.parseInt(strandString);
@@ -1130,8 +1130,8 @@ public class FlyBaseProcessor extends SequenceProcessor
         ResultSet res = getIndelResultSet(connection);
         int featureWarnings = 0;
         while (res.next()) {
-            Integer delId = new Integer(res.getInt("deletion_feature_id"));
-            Integer insId = new Integer(res.getInt("insertion_feature_id"));
+            Integer delId = Integer.valueOf(res.getInt("deletion_feature_id"));
+            Integer insId = Integer.valueOf(res.getInt("insertion_feature_id"));
             String breakType = res.getString("breakpoint_type");
             Reference reference = new Reference();
             if ("bk1".equals(breakType)) {
@@ -1198,13 +1198,14 @@ public class FlyBaseProcessor extends SequenceProcessor
 
             // make sure both are relevant features. e.g. we do not load golden paths
             // but they have insertions. See #1052
-            FeatureData subFeatureData = getFeatureMap().get(new Integer(subId));
+            FeatureData subFeatureData = getFeatureMap().get(Integer.valueOf(subId));
             if (subFeatureData != null) {
                 // this is a hack - we should make sure that we only query for features that are in
                 // the feature map, ie. those for the current organism
                 String taxonId = subFeatureData.getOrganismData().getTaxonId();
 
-                makeAndStoreLocation(new Integer(chrId), subFeatureData, start, end, 1, taxonId);
+                makeAndStoreLocation(Integer.valueOf(chrId), subFeatureData, start, end, 1,
+                        taxonId);
             }
         }
     }
@@ -1226,10 +1227,10 @@ public class FlyBaseProcessor extends SequenceProcessor
         Map<Integer, List<String>> annotationPubMap = makeAnnotationPubMap(connection);
         ResultSet res = getAllelePropResultSet(connection);
         while (res.next()) {
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
             String value = res.getString("value");
             String propType = res.getString("type_name");
-            Integer featurePropId = new Integer(res.getInt("featureprop_id"));
+            Integer featurePropId = Integer.valueOf(res.getInt("featureprop_id"));
 
             if (features.get(featureId) == null) {
                 continue;
@@ -1275,8 +1276,8 @@ public class FlyBaseProcessor extends SequenceProcessor
         ResultSet res = getAlleleCVTermsResultSet(connection);
     RESULTS:
         while (res.next()) {
-            Integer featureId = new Integer(res.getInt("feature_id"));
-            Integer cvtermId = new Integer(res.getInt("cvterm_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
+            Integer cvtermId = Integer.valueOf(res.getInt("cvterm_id"));
 
             ChadoCVTerm cvterm = flyBaseMiscCv.getByChadoId(cvtermId);
             if (cvterm == null) {
@@ -1334,10 +1335,10 @@ public class FlyBaseProcessor extends SequenceProcessor
 
         ResultSet res = getAllelePropPubResultSet(connection);
         while (res.next()) {
-            Integer featurePropId = new Integer(res.getInt("featureprop_id"));
+            Integer featurePropId = Integer.valueOf(res.getInt("featureprop_id"));
             String pubDbId = res.getString("pub_db_identifier");
 
-            Integer n = new Integer(Integer.parseInt(pubDbId));
+            Integer n = Integer.valueOf(Integer.parseInt(pubDbId));
             String pubicationItemIdentifier = makePublication(n);
 
             if (!retMap.containsKey(featurePropId)) {

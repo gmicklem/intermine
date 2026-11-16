@@ -221,7 +221,7 @@ public class ChadoDBConverter extends BioDBConverter
                          + " genus: " + genus + " abbreviation: " + abbreviation);
             }
 
-            retMap.put(od, new Integer(organismId));
+            retMap.put(od, Integer.valueOf(organismId));
         }
 
         return retMap;

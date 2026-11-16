@@ -80,8 +80,8 @@ public class FullTimeLdr implements DataSetLdr
             int[] vals = resultMap.get(depName);
             List<Object> row = new LinkedList<Object>();
             row.add(depName);
-            row.add(new Double(0 - vals[0]));
-            row.add(new Double(0 + vals[1]));
+            row.add(Double.valueOf(0 - vals[0]));
+            row.add(Double.valueOf(0 + vals[1]));
             resultTable.add(row);
         }
 

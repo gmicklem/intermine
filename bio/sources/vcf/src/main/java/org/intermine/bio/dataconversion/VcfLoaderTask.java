@@ -237,7 +237,7 @@ public class VcfLoaderTask extends FileDirectDataLoaderTask
         final int length = 1;
         Location location = getDirectDataLoader().createObject(
                 org.intermine.model.bio.Location.class);
-        int start = new Integer(pos);
+        int start = Integer.valueOf(pos);
         int end = start + length;
         if (start < end) {
             location.setStart(start);

@@ -65,12 +65,12 @@ public class Protein2iprConverterTest extends ItemsTestCase
     private void createProtein() throws ObjectStoreException {
 
         Organism organism = (Organism) DynamicUtil.createObject(Collections.singleton(Organism.class));
-        organism.setId(new Integer(102));
+        organism.setId(Integer.valueOf(102));
         organism.setTaxonId("7227");
         osw.store(organism);
 
         Protein protein = (Protein) DynamicUtil.createObject(Collections.singleton(Protein.class));
-        protein.setId(new Integer(101));
+        protein.setId(Integer.valueOf(101));
         protein.setPrimaryAccession("P02833");
         protein.setOrganism(organism);
         osw.store(protein);

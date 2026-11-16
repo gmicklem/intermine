@@ -186,7 +186,7 @@ public class XmlDataLoaderTest extends TestCase
              fakeId++;
              Object obj = iter.next();
              Method setter = TypeUtil.getSetter(obj.getClass(), "id");
-             setter.invoke(obj, new Object[] {new Integer(fakeId)});
+             setter.invoke(obj, new Object[] {Integer.valueOf(fakeId)});
          }
      }
 

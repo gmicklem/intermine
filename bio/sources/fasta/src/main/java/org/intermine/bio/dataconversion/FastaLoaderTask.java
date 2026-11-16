@@ -342,7 +342,7 @@ public class FastaLoaderTask extends FileDirectDataLoaderTask
         }
         imo.setOrganism(organism);
         try {
-            imo.setFieldValue("length", new Integer(flymineSequence.getLength()));
+            imo.setFieldValue("length", Integer.valueOf(flymineSequence.getLength()));
         } catch (Exception e) {
             throw new IllegalArgumentException("Error setting: " + className + ".length to: "
                     + flymineSequence.getLength() + ". Does the attribute exist?");

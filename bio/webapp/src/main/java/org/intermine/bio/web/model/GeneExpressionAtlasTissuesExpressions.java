@@ -160,7 +160,7 @@ public class GeneExpressionAtlasTissuesExpressions
         }
 
         private void updateTStatistic(String tStatistic) {
-            Float f = new Float(tStatistic);
+            Float f = Float.valueOf(tStatistic);
             if (f > this.tStatistic) {
                 this.tStatistic = f;
             }

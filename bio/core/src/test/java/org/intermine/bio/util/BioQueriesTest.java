@@ -130,12 +130,12 @@ public class BioQueriesTest extends TestCase
 
         storedChromosome = (Chromosome) DynamicUtil.createObject(Collections.singleton(Chromosome.class));
         storedChromosome.setPrimaryIdentifier("X");
-        storedChromosome.setId(new Integer(1001));
+        storedChromosome.setId(Integer.valueOf(1001));
         toStore.add(storedChromosome);
 
         storedGene1 = (Gene) DynamicUtil.createObject(Collections.singleton(Gene.class));
         storedGene1.setPrimaryIdentifier("gene1");
-        storedGene1.setId(new Integer(2001));
+        storedGene1.setId(Integer.valueOf(2001));
         toStore.add(storedGene1);
 
         storedLocation1 = createLocation(storedChromosome, storedGene1, "1", 1, 2001, 3001);
@@ -143,7 +143,7 @@ public class BioQueriesTest extends TestCase
 
         storedGene2 = (Gene) DynamicUtil.createObject(Collections.singleton(Gene.class));
         storedGene2.setPrimaryIdentifier("gene2");
-        storedGene2.setId(new Integer(2002));
+        storedGene2.setId(Integer.valueOf(2002));
         toStore.add(storedGene2);
 
         storedLocation2 = createLocation(storedChromosome, storedGene2, "0", 2, 2002, 3002);
@@ -161,8 +161,8 @@ public class BioQueriesTest extends TestCase
         loc.setLocatedOn(object);
         loc.setFeature(subject);
         loc.setStrand(strand);
-        loc.setStart(new Integer(start));
-        loc.setEnd(new Integer(end));
+        loc.setStart(Integer.valueOf(start));
+        loc.setEnd(Integer.valueOf(end));
         loc.setId(id);
         return loc;
     }

@@ -66,7 +66,7 @@ public class StockProcessor extends ChadoProcessor
         Integer lastFeatureId = null;
         List<Item> stocks = new ArrayList<Item>();
         while (res.next()) {
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
             if (lastFeatureId != null && !featureId.equals(lastFeatureId)) {
                 storeStocks(features, lastFeatureId, stocks);
                 stocks = new ArrayList<Item>();
@@ -80,7 +80,7 @@ public class StockProcessor extends ChadoProcessor
             String stockDescription = res.getString("stock_description");
             String stockCenterUniquename = res.getString("stock_center_uniquename");
             String stockType = res.getString("stock_type_name");
-            Integer organismId = new Integer(res.getInt("stock_organism_id"));
+            Integer organismId = Integer.valueOf(res.getInt("stock_organism_id"));
             OrganismData organismData =
                 getChadoDBConverter().getChadoIdToOrgDataMap().get(organismId);
             if (organismData == null) {

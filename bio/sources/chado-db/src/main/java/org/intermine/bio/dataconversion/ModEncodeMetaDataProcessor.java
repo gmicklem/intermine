@@ -343,7 +343,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
 
         ResultSet res = getDeleted(connection);
         while (res.next()) {
-            Integer submissionId = new Integer(res.getInt("experiment_id"));
+            Integer submissionId = Integer.valueOf(res.getInt("experiment_id"));
             String value = res.getString("value");
             deletedSubMap.put(submissionId, value);
         }
@@ -494,8 +494,8 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         bT = System.currentTimeMillis();     // to monitor time spent in the process
         ResultSet res = getDataFeature(connection, dataIdTable);
         while (res.next()) {
-            Integer dataId = new Integer(res.getInt("data_id"));
-            Integer featureId = new Integer(res.getInt("feature_id"));
+            Integer dataId = Integer.valueOf(res.getInt("data_id"));
+            Integer featureId = Integer.valueOf(res.getInt("feature_id"));
 
             FeatureData featureData = featureMap.get(featureId);
             if (featureData == null) {
@@ -611,16 +611,16 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         ResultSet res = getDAG(connection);
         AppliedProtocol node = new AppliedProtocol();
         AppliedData branch = null;
-        Integer count = new Integer(0);
-        Integer actualSubmissionId = new Integer(0);  // to store the experiment id (see below)
-        Integer previousAppliedProtocolId = new Integer(0);
+        Integer count = Integer.valueOf(0);
+        Integer actualSubmissionId = Integer.valueOf(0);  // to store the experiment id (see below)
+        Integer previousAppliedProtocolId = Integer.valueOf(0);
         boolean isADeletedSub = false;
 
         while (res.next()) {
-            Integer submissionId = new Integer(res.getInt("experiment_id"));
-            Integer protocolId = new Integer(res.getInt("protocol_id"));
-            Integer appliedProtocolId = new Integer(res.getInt("applied_protocol_id"));
-            Integer dataId = new Integer(res.getInt("data_id"));
+            Integer submissionId = Integer.valueOf(res.getInt("experiment_id"));
+            Integer protocolId = Integer.valueOf(res.getInt("protocol_id"));
+            Integer appliedProtocolId = Integer.valueOf(res.getInt("applied_protocol_id"));
+            Integer dataId = Integer.valueOf(res.getInt("data_id"));
             String direction = res.getString("direction");
 
             LOG.debug("DAG: " + submissionId + " p:" + protocolId + " ap:" + appliedProtocolId
@@ -949,7 +949,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
 
         ResultSet res = getSubmissionOrganism(connection);
         while (res.next()) {
-            Integer submissionId = new Integer(res.getInt("experiment_id"));
+            Integer submissionId = Integer.valueOf(res.getInt("experiment_id"));
             if (deletedSubMap.containsKey(submissionId)) {
                 continue;
             }
@@ -1003,7 +1003,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
 
         ResultSet res = getProjects(connection);
         while (res.next()) {
-            Integer submissionId = new Integer(res.getInt("experiment_id"));
+            Integer submissionId = Integer.valueOf(res.getInt("experiment_id"));
             String value = res.getString("value");
             if (deletedSubMap.containsKey(submissionId)) {
                 continue;
@@ -1069,7 +1069,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
 
         ResultSet res = getLabs(connection);
         while (res.next()) {
-            Integer submissionId = new Integer(res.getInt("experiment_id"));
+            Integer submissionId = Integer.valueOf(res.getInt("experiment_id"));
             String value = res.getString("value");
             if (deletedSubMap.containsKey(submissionId)) {
                 continue;
@@ -1136,7 +1136,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         ResultSet res = getExperimentTitles(connection);
         Map<String, String> expProMap = new HashMap<String, String>();
         while (res.next()) {
-            Integer submissionId = new Integer(res.getInt("experiment_id"));
+            Integer submissionId = Integer.valueOf(res.getInt("experiment_id"));
             if (deletedSubMap.containsKey(submissionId)) {
                 continue;
             }
@@ -1257,7 +1257,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         ResultSet res = getSubmissions(connection);
         int count = 0;
         while (res.next()) {
-            Integer submissionId = new Integer(res.getInt("experiment_id"));
+            Integer submissionId = Integer.valueOf(res.getInt("experiment_id"));
             if (deletedSubMap.containsKey(submissionId)) {
                 continue;
             }
@@ -1334,7 +1334,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         ResultSet res = getExperimentProperties(connection);
         int count = 0;
         while (res.next()) {
-            Integer submissionId = new Integer(res.getInt("experiment_id"));
+            Integer submissionId = Integer.valueOf(res.getInt("experiment_id"));
             if (deletedSubMap.containsKey(submissionId)) {
                 continue;
             }
@@ -1441,12 +1441,12 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         String name = null;
 
         while (res.next()) {
-            Integer submissionId = new Integer(res.getInt("experiment_id"));
+            Integer submissionId = Integer.valueOf(res.getInt("experiment_id"));
             if (deletedSubMap.containsKey(submissionId)) {
                 continue;
             }
 
-            Integer rank = new Integer(res.getInt("rank"));
+            Integer rank = Integer.valueOf(res.getInt("rank"));
             String  value = res.getString("value");
 
             // the data is alternating between EF types and names, in order.
@@ -1516,7 +1516,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         ResultSet res = getProtocols(connection);
         int count = 0;
         while (res.next()) {
-            Integer protocolChadoId = new Integer(res.getInt("protocol_id"));
+            Integer protocolChadoId = Integer.valueOf(res.getInt("protocol_id"));
             String name = res.getString("name");
             String description = res.getString("description");
             String wikiLink = res.getString("accession");
@@ -1572,7 +1572,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         ResultSet res = getProtocolAttributes(connection);
         int count = 0;
         while (res.next()) {
-            Integer protocolId = new Integer(res.getInt("protocol_id"));
+            Integer protocolId = Integer.valueOf(res.getInt("protocol_id"));
             String heading = res.getString("heading");
             String value = res.getString("value");
             String fieldName = FIELD_NAME_MAP.get(heading);
@@ -1624,9 +1624,9 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         int count = 0;
         boolean isADeletedSub = false;
         while (res.next()) {
-            Integer appliedProtocolId = new Integer(res.getInt("applied_protocol_id"));
-            Integer protocolId = new Integer(res.getInt("protocol_id"));
-            Integer submissionId = new Integer(res.getInt("experiment_id"));
+            Integer appliedProtocolId = Integer.valueOf(res.getInt("applied_protocol_id"));
+            Integer protocolId = Integer.valueOf(res.getInt("protocol_id"));
+            Integer submissionId = Integer.valueOf(res.getInt("experiment_id"));
             // the results are ordered, first ap have a subId
             // if we find a deleted sub, we know that subsequent records with null
             // subId belongs to the deleted sub
@@ -1717,7 +1717,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         ResultSet res = getAppliedData(connection);
         int count = 0;
         while (res.next()) {
-            Integer dataId = new Integer(res.getInt("data_id"));
+            Integer dataId = Integer.valueOf(res.getInt("data_id"));
             // check if not belonging to a deleted sub
             Integer submissionId = dataSubmissionMap.get(dataId);
             if (submissionId == null || deletedSubMap.containsKey(submissionId)) {
@@ -1873,7 +1873,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         String value = null;
         String type = null;
         while (res.next()) {
-            Integer dataId = new Integer(res.getInt("data_id"));
+            Integer dataId = Integer.valueOf(res.getInt("data_id"));
             // check if not belonging to a deleted sub
             // better way?
             Integer submissionId = dataSubmissionMap.get(dataId);
@@ -1956,7 +1956,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         ResultSet res = getAppliedDataAttributes(connection);
         int count = 0;
         while (res.next()) {
-            Integer dataId = new Integer(res.getInt("data_id"));
+            Integer dataId = Integer.valueOf(res.getInt("data_id"));
 
             // check if not belonging to a deleted sub
             // better way?
@@ -2040,7 +2040,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         writeHeader(comma, writer);
 
         SubmissionProperty buildSubProperty = null;
-        Integer lastDataId = new Integer(-1);
+        Integer lastDataId = Integer.valueOf(-1);
         Map<String, SubmissionProperty> props = new HashMap<String, SubmissionProperty>();
 
         Map<Integer, Map<String, List<SubmissionProperty>>> subToTypes =
@@ -2049,7 +2049,7 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         submissionRefs = new HashMap<Integer, List<SubmissionReference>>();
 
         while (res.next()) {
-            Integer dataId = new Integer(res.getInt("data_id"));
+            Integer dataId = Integer.valueOf(res.getInt("data_id"));
             String dataHeading  = res.getString("data_heading");
             String dataName = res.getString("data_name");
             String wikiPageUrl  = res.getString("data_value");
@@ -2495,8 +2495,8 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
 
         ResultSet res = getAppliedDataCharacteristics(connection);
 
-        Integer lastAttDbXref = new Integer(-1);
-        Integer lastDataId = new Integer(-1);
+        Integer lastAttDbXref = Integer.valueOf(-1);
+        Integer lastDataId = Integer.valueOf(-1);
 
         Map<Integer, SubmissionProperty> createdProps = new HashMap<Integer, SubmissionProperty>();
         SubmissionProperty buildSubProperty = null;
@@ -2505,11 +2505,11 @@ public class ModEncodeMetaDataProcessor extends ChadoProcessor
         Integer previousSubId = null;
 
         while (res.next()) {
-            Integer dataId = new Integer(res.getInt("data_id"));
+            Integer dataId = Integer.valueOf(res.getInt("data_id"));
             String attHeading = res.getString("att_heading");
             String attName = res.getString("att_name");
             String attValue = res.getString("att_value");
-            Integer attDbxref = new Integer(res.getInt("att_dbxref"));
+            Integer attDbxref = Integer.valueOf(res.getInt("att_dbxref"));
             int attRank = res.getInt("att_rank");
 
             currentSubId = dataSubmissionMap.get(dataId);

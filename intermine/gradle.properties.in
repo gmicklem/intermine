@@ -1,15 +1,17 @@
 systemProp.imVersion=5.1.1
 systemProp.bioVersion=5.1.1
 
+# NOT obsolete (im-ee7.43 tried to remove it): the unit tests of intermine-api read the XML that XMLOutputFactory writes, and
+# without this line five of them fail (InterMineBagBindingTest x3, SavedQueryBindingTest, XMLReadTest: the marshalled text is
+# empty). Presumably the Woodstox that solr-solrj brings is picked instead of the JDK's writer (see #1889 and
+# global.web.properties, which sets the same for the web application).
 systemProp.javax.xml.stream.XMLOutputFactory = com.sun.xml.internal.stream.XMLOutputFactoryImpl
-
 
 # Install from internet or local Sonatype Nexus repo
 intermine.maven.central=@@im_central_url@@
 intermine.maven.clojars=@@im_clojars_url@@
 intermine.maven.ebi=@@im_ebi_url@@
 intermine.maven.plugins=@@im_plugins_url@@
-
 
 # Where to find the Intermine plugin locally on file system
 intermine.plugin.repo=file://@@im_checkout@@/plugin/build/libs

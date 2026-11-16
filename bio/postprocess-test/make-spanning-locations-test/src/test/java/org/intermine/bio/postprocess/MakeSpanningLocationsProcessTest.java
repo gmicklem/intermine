@@ -75,8 +75,8 @@ public class MakeSpanningLocationsProcessTest extends TestCase
         Chromosome chr =
                 (Chromosome) DynamicUtil.createObject(Collections.singleton(Chromosome.class));
         chr.setPrimaryIdentifier("X");
-        chr.setLength(new Integer(1000));
-        chr.setId(new Integer(101));
+        chr.setLength(Integer.valueOf(1000));
+        chr.setId(Integer.valueOf(101));
 
         Set<InterMineObject> toStore = new HashSet<InterMineObject>();
 
@@ -114,21 +114,21 @@ public class MakeSpanningLocationsProcessTest extends TestCase
             int exonId = exonInfo[i][0];
             int start = exonInfo[i][1];
             int end = exonInfo[i][2];
-            exons[i].setId(new Integer(exonId));
-            exons[i].setLength(new Integer(end - start + 1));
+            exons[i].setId(Integer.valueOf(exonId));
+            exons[i].setLength(Integer.valueOf(end - start + 1));
             exons[i].setChromosome(chr);
             exonLocs[i] = createLocation(chr, exons[i], "1", start, end, Location.class);
-            exonLocs[i].setId(new Integer(1000 + exonId));
+            exonLocs[i].setId(Integer.valueOf(1000 + exonId));
         }
 
         ReversePrimer rp =
                 (ReversePrimer) DynamicUtil.createObject(Collections.singleton(ReversePrimer.class));
-        rp.setId(new Integer(3000));
-        rp.setLength(new Integer(100));
+        rp.setId(Integer.valueOf(3000));
+        rp.setLength(Integer.valueOf(100));
         rp.setChromosome(chr);
 
         Location rpLoc = createLocation(chr, rp, "1", 1, 100, Location.class);
-        rpLoc.setId(new Integer(3001));
+        rpLoc.setId(Integer.valueOf(3001));
 
         toStore.add(rp);
         toStore.add(rpLoc);
@@ -143,31 +143,31 @@ public class MakeSpanningLocationsProcessTest extends TestCase
 
     public void testCreateSpanningLocations() throws Exception {
         Exon exon1 = (Exon) DynamicUtil.createObject(Collections.singleton(Exon.class));
-        exon1.setId(new Integer(107));
+        exon1.setId(Integer.valueOf(107));
         Exon exon2 = (Exon) DynamicUtil.createObject(Collections.singleton(Exon.class));
-        exon2.setId(new Integer(108));
+        exon2.setId(Integer.valueOf(108));
         Exon exon3 = (Exon) DynamicUtil.createObject(Collections.singleton(Exon.class));
-        exon3.setId(new Integer(109));
+        exon3.setId(Integer.valueOf(109));
 
         Location exon1OnChr = createLocation(getChromosome(), exon1, "1", 51, 100, Location.class);
-        exon1OnChr.setId(new Integer(1010));
+        exon1OnChr.setId(Integer.valueOf(1010));
         Location exon2OnChr = createLocation(getChromosome(), exon2, "1", 201, 250, Location.class);
-        exon2OnChr.setId(new Integer(1011));
+        exon2OnChr.setId(Integer.valueOf(1011));
         Location exon3OnChr = createLocation(getChromosome(), exon3, "1", 201, 400, Location.class);
-        exon3OnChr.setId(new Integer(1012));
+        exon3OnChr.setId(Integer.valueOf(1012));
 
         Transcript trans1 =
                 (Transcript) DynamicUtil.createObject(Collections.singleton(Transcript.class));
-        trans1.setId(new Integer(201));
+        trans1.setId(Integer.valueOf(201));
 
         Transcript trans2 =
                 (Transcript) DynamicUtil.createObject(Collections.singleton(Transcript.class));
-        trans2.setId(new Integer(202));
+        trans2.setId(Integer.valueOf(202));
 
         Location trans2OnChr = createLocation(getChromosome(), trans2, "1", 61, 300, Location.class);
 
         Gene gene = (Gene) DynamicUtil.createObject(Collections.singleton(Gene.class));
-        gene.setId(new Integer(301));
+        gene.setId(Integer.valueOf(301));
 
         exon1.setTranscripts(new HashSet<Transcript>(Arrays.asList(new Transcript [] {trans1})));
         exon2.setTranscripts(new HashSet<Transcript>(Arrays.asList(new Transcript [] {trans1})));
@@ -195,21 +195,21 @@ public class MakeSpanningLocationsProcessTest extends TestCase
         cl.createSpanningLocations("Gene", "Transcript", "transcripts");
 
         ObjectStore os = osw.getObjectStore();
-        Transcript resTrans1 = (Transcript) os.getObjectById(new Integer(201));
+        Transcript resTrans1 = (Transcript) os.getObjectById(Integer.valueOf(201));
 
         Assert.assertEquals(1, resTrans1.getLocations().size());
         Location resTrans1Location = (Location) resTrans1.getLocations().iterator().next();
         Assert.assertEquals(51, resTrans1Location.getStart().intValue());
         Assert.assertEquals(250, resTrans1Location.getEnd().intValue());
 
-        Transcript resTrans2 = (Transcript) os.getObjectById(new Integer(202));
+        Transcript resTrans2 = (Transcript) os.getObjectById(Integer.valueOf(202));
 
         Assert.assertEquals(1, resTrans2.getLocations().size());
         Location resTrans2Location = (Location) resTrans2.getLocations().iterator().next();
         Assert.assertEquals(61, resTrans2Location.getStart().intValue());
         Assert.assertEquals(300, resTrans2Location.getEnd().intValue());
 
-        Gene resGene = (Gene) os.getObjectById(new Integer(301));
+        Gene resGene = (Gene) os.getObjectById(Integer.valueOf(301));
         Assert.assertEquals(1, resGene.getLocations().size());
         Location resGeneLocation = (Location) resGene.getLocations().iterator().next();
         Assert.assertEquals(51, resGeneLocation.getStart().intValue());
@@ -222,8 +222,8 @@ public class MakeSpanningLocationsProcessTest extends TestCase
         loc.setLocatedOn(object);
         loc.setFeature(subject);
         loc.setStrand(strand);
-        loc.setStart(new Integer(start));
-        loc.setEnd(new Integer(end));
+        loc.setStart(Integer.valueOf(start));
+        loc.setEnd(Integer.valueOf(end));
         loc.setStrand(strand);
         return loc;
     }
@@ -232,8 +232,8 @@ public class MakeSpanningLocationsProcessTest extends TestCase
         if (chromosome == null) {
             chromosome = (Chromosome) DynamicUtil.createObject(Collections.singleton(Chromosome.class));
             chromosome.setPrimaryIdentifier("X");
-            chromosome.setLength(new Integer(10000));
-            chromosome.setId(new Integer(101));
+            chromosome.setLength(Integer.valueOf(10000));
+            chromosome.setId(Integer.valueOf(101));
         }
         return chromosome;
     }
