@@ -135,7 +135,7 @@ implementation(libs.hikaricp) { transitive = false }    // options go in a closu
 
 The `[versions]` table holds one entry per library, or per family that is released together (`jackson`, `struts`, `lucene`, `jena`, `biojava`, `jami`, `jaxb`); `[libraries]` maps the alias to the Maven coordinate and a `version.ref`. The InterMine release itself (`intermine`) and the Checkstyle version (`checkstyle`) are in the same table.
 
-To change a version, edit its line in `[versions]` and nothing else; every module that uses the library follows. To add a library, add a `[versions]` entry and a `[libraries]` entry (aliases are lower case; dashes become dots in the accessor, so `struts-core` is `libs.struts.core`), then use `libs.<alias>` in the module. One catalog entry means one version for the whole tree: if two modules need different versions of a library, add a second alias with its own `[versions]` entry and a comment saying why (as `jami-v3` does for `bio/sources/psi-complexes`).
+To change a version, edit its line in `[versions]` and nothing else; every module that uses the library follows. To add a library, add a `[versions]` entry and a `[libraries]` entry (aliases are lower case; dashes become dots in the accessor, so `struts-core` is `libs.struts.core`), then use `libs.<alias>` in the module. One catalog entry means one version for the whole tree: if two modules need different versions of a library, add a second alias with its own `[versions]` entry and a comment saying why (as `jami-complexes` does for `bio/sources/psi-complexes`).
 
 Outside the catalog:
 
