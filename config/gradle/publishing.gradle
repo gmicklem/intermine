@@ -43,9 +43,9 @@ afterEvaluate {
                 from components.java
 
                 def key = { dep -> "${dep.group ?: project.group}:${dep.name}".toString() }
-                // what the module declares for compile scope (apiElements): `compile` is the legacy name, removed in Gradle 7
-                def compileDeclared = ['api', 'compile'].collect { project.configurations.findByName(it) }.findAll { it != null }
-                        .collectMany { it.dependencies.collect(key) } as Set
+                // what the module declares for compile scope (apiElements); only modules with the java-library plugin have `api`
+                def apiConfiguration = project.configurations.findByName('api')
+                def compileDeclared = (apiConfiguration == null ? [] : apiConfiguration.dependencies.collect(key)) as Set
 
                 // a module whose `jar` task is disabled names the task that builds its main jar instead (testresources)
                 if (project.hasProperty('imMainJarTask')) {
@@ -64,27 +64,12 @@ afterEvaluate {
                     // (for a project dependency, name is the project name, which is the artifactId it publishes under)
                     def provided = (project.configurations.providedCompile.allDependencies +
                             project.configurations.providedRuntime.allDependencies).collect(key) as Set
-                    // a dependency that is also declared as api/compile (a newer version of a provided one) stays compile
+                    // a dependency that is also declared as api (a newer version of a provided one) stays compile
                     provided.removeAll(compileDeclared)
                     pom.withXml {
                         asNode().dependencies.dependency.each { node ->
                             if (provided.contains("${node.groupId.text()}:${node.artifactId.text()}".toString())) {
                                 node.scope*.value = 'provided'
-                            }
-                        }
-                    }
-                }
-
-                // Transitional, while modules still declare the legacy `runtime` configuration (removed in Gradle 7): the java
-                // plugin of Gradle 6 lets apiElements extend `runtime`, so such dependencies would be published with compile
-                // scope instead of runtime. Put them back, unless the module also declares them as api/compile.
-                def legacyRuntime = project.configurations.findByName('runtime')
-                if (legacyRuntime != null) {
-                    def runtimeOnly = legacyRuntime.dependencies.collect(key).findAll { !compileDeclared.contains(it) } as Set
-                    pom.withXml {
-                        asNode().dependencies.dependency.each { node ->
-                            if (runtimeOnly.contains("${node.groupId.text()}:${node.artifactId.text()}".toString())) {
-                                node.scope*.value = 'runtime'
                             }
                         }
                     }
