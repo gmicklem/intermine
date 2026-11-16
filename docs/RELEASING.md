@@ -62,8 +62,17 @@ Check that nothing was missed: `grep -rn "5\.1\.1" --include=*.gradle --include=
 ### Changelog and tag
 
 1. Add the section for the new version at the top of `RELEASE_NOTES` (same format as the `InterMine 5.1.0 (August 2022)` entry: one line per issue).
-2. Run the full gate (below) on the commit that will be released.
-3. Tag the release commit `intermine-X.Y.Z` (for example `intermine-5.1.1`) and push the tag. Older releases use the same naming (`intermine-5.1.0`).
+2. Run the EL sweep on the commit that will be released, with the `el-api.jar` and `jasper-el.jar` of the newest Tomcat 9 that the release should support. It must print `failures=0`; a Java keyword as an EL property name (`widget.class`, `dec.boolean`) breaks pages on current Tomcat although the build and the unit tests pass. The tool and its README are in `reference/jsp-el/` of https://github.com/gmicklem/intermine-planning; the commands are in [UPGRADING-build.md](UPGRADING-build.md#tomcat-rejects-java-keywords-as-el-property-names):
+
+```bash
+CP=/path/to/tomcat/lib/el-api.jar:/path/to/tomcat/lib/jasper-el.jar
+javac -cp $CP -d /tmp/elsweep/out ElSweep.java
+java -cp /tmp/elsweep/out:$CP ElSweep intermine/webapp/src bio/webapp/src
+```
+
+3. Check that no asset is loaded from `cdn.intermine.org` (gone): `grep -rn cdn.intermine.org intermine/webapp/src/main intermine/api/src/main bio/webapp/src/main` must print nothing once im-jqz.43 is in the release.
+4. Run the full gate (below) on the commit that will be released.
+5. Tag the release commit `intermine-X.Y.Z` (for example `intermine-5.1.1`) and push the tag. Older releases use the same naming (`intermine-5.1.0`).
 
 ## 2. Build and verify locally
 
