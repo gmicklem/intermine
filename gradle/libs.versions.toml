@@ -61,7 +61,9 @@ je = "4.0.92"
 # is parsed or stored. jena-core is the compile dependency; jena-arq (RIOT) must stay on the run-time classpath because
 # with it Model.write() goes through the RIOT writers (N-Triples/Turtle output differs without it). apache-jena-libs
 # (TDB, TDB2, SHACL, RDF connection) is not used and no longer pulled in.
-jena = "3.16.0"
+# 3.17.0 is the last Jena release that runs on Java 8 (4.x needs 11, 5.x needs 17); moving on is a 6.0 item together with
+# the Java 17 baseline (jena-core < 4.2.0 has CVE-2021-39239, an XXE in the RDF/XML parser, which InterMine never calls).
+jena = "3.17.0"
 json = "20260814"
 jsonassert = "1.2.3"
 jsp-api = "2.3.1"
