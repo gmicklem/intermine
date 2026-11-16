@@ -64,6 +64,7 @@ public class PsiComplexesConverter extends BioFileConverter
     private static final String DEFAULT_INTERACTOR_TYPE = "BioEntity";
     // TODO put this in config file instead
     private static final String PROTEIN = "MI:0326";
+    private static final String SMALL_MOLECULE = "MI:0328";
     private static final String BINDING_SITE = "binding region";
     private static final String DIRECT_BINDING = "direct binding";
     private static final String GENE_ONTOLOGY = "go";
@@ -78,6 +79,8 @@ public class PsiComplexesConverter extends BioFileConverter
     // accession to stored object ID
     private Map<String, String> interactors = new HashMap<String, String>();
     private Map<String, String> publications = new HashMap<String, String>();
+    // names of the small molecules, from the ChEBI REST API
+    private ChebiNameLookup chebi = new ChebiNameLookup();
 
     // See #1168
     static {
@@ -103,6 +106,20 @@ public class PsiComplexesConverter extends BioFileConverter
      */
     public void setComplexesSource(String identifierSource) {
         xrefDatabase = identifierSource;
+    }
+
+    /**
+     * Sets the ChEBI REST API that gives small molecules their names. The default is
+     * https://www.ebi.ac.uk/chebi/backend/api/public/compound/ ; the compound's accession and a
+     * slash are added to it (CHEBI:15377/). An empty value switches the lookup off, for a load
+     * that has no network: the small molecules then have no name. If ChEBI cannot be reached
+     * the names are left out and the load goes on (project.xml property chebi.url).
+     *
+     * @param url the URL of the compound endpoint
+     */
+    public void setChebiUrl(String url) {
+        chebi = new ChebiNameLookup(url, ChebiNameLookup.CONNECT_TIMEOUT,
+                ChebiNameLookup.READ_TIMEOUT);
     }
 
     /**
@@ -379,6 +396,11 @@ public class PsiComplexesConverter extends BioFileConverter
             protein.setAttribute("primaryIdentifier", primaryIdentifier);
             if (PROTEIN.equals(typeTermIdentifier)) {
                 protein.setAttribute("primaryAccession", accession);
+            } else if (SMALL_MOLECULE.equals(typeTermIdentifier)) {
+                String smallMolecule = chebi.getName(primaryIdentifier);
+                if (StringUtils.isNotEmpty(smallMolecule)) {
+                    protein.setAttribute("name", smallMolecule);
+                }
             }
             Organism organism = participant.getOrganism();
             if (organism != null) {

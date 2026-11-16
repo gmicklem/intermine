@@ -26,6 +26,8 @@ dependencies {
     implementation libs.jami.complexes.core
     implementation libs.jami.mitab
     implementation libs.jami.xml
+    // reads the ChEBI REST API's answers (the same Jackson as the isa source)
+    implementation libs.jackson.databind
     bioModel group: 'org.intermine', name: 'bio-model', version: bioVersion, transitive: false
 }
 
