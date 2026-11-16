@@ -247,7 +247,11 @@ class DBModelUtils {
 
     protected createTables = { objectStoreName, modelName ->
         String schemaFile = objectStoreName + "-schema.xml"
-        String tempDirectory = DBModelUtils.buildFile(project, "tmp").absolutePath
+        // BuildDbTask empties its tempDir first: not build/tmp itself, which holds Gradle's own task state
+        // (build/tmp/compileJava, build/tmp/jar), or every compileJava and jar re-runs after buildDB/buildUnitTestDB
+        File tempDir = DBModelUtils.buildFile(project, "tmp/intermine-buildDB")
+        tempDir.mkdirs() // it must exist
+        String tempDirectory = tempDir.absolutePath
         System.out.println("Creating tables in objectstore ${objectStoreName} with schema ${schemaFile}")
 
         def ant = new AntBuilder()
