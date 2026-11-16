@@ -94,6 +94,7 @@ public class SavedQueryRetrievalService extends JSONService
                         writer, version);
             }
             writer.writeEndElement();
+            writer.flush();
         } catch (XMLStreamException e) {
             throw new ServiceException("Serialization error.", e);
         }

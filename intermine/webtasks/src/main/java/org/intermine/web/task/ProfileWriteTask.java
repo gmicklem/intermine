@@ -95,6 +95,7 @@ public class ProfileWriteTask extends Task
 
             XMLStreamWriter writer = factory.createXMLStreamWriter(fw);
             ProfileManagerBinding.marshal(pm, writer);
+            writer.flush();
         } catch (Exception e) {
             throw new BuildException(e);
         } finally {

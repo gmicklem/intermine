@@ -55,6 +55,7 @@ public class PathQueryBinding
         try {
             XMLStreamWriter writer = factory.createXMLStreamWriter(sw);
             marshal(query, queryName, modelName, writer, version);
+            writer.flush();
         } catch (XMLStreamException e) {
             throw new RuntimeException(e);
         }

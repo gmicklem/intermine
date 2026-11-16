@@ -316,6 +316,7 @@ public class QueryUploadService extends WebService
                     writer.writeEndElement();
                 }
                 writer.writeEndElement();
+                writer.flush();
             } catch (XMLStreamException e) {
                 throw new ServiceException(e);
             }

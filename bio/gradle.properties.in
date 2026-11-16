@@ -1,5 +1,6 @@
-systemProp.imVersion=5.1.1
-systemProp.bioVersion=5.1.1
+# the version of the InterMine release: filled in by config/lib/install_intermine.py from gradle/libs.versions.toml
+systemProp.imVersion=@@im_version@@
+systemProp.bioVersion=@@bio_version@@
 
 # some unit tests need additional classes that aren't in the core model.
 # we use flymine's model. don't touch!

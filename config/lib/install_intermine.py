@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import glob
 import os
 from pathlib import Path
+import re
 from subprocess import run
 import sys
 from typing import Any, Optional
@@ -28,6 +29,29 @@ GRADLE_DISTRIBUTION_SHA256 = {
     "gradle-8.14.6-bin.zip":
         "7988ed071b2a07900e2ec715fca15c6ab72bce6db433af301fa7fa7e9407bd24",
 }
+
+
+def read_catalog_versions(catalog: str) -> dict[str, str]:
+    """The `[versions]` table of a Gradle version catalog (a TOML file).
+
+    Only the plain `name = "value"` entries are read; that is all `[versions]` of
+    gradle/libs.versions.toml holds. tomllib would do it, but it needs Python 3.11 and
+    this script runs on 3.10.
+    """
+    versions: dict[str, str] = {}
+    in_versions = False
+    with open(catalog) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("["):
+                in_versions = line == "[versions]"
+                continue
+            if not in_versions:
+                continue
+            match = re.fullmatch(r'([A-Za-z0-9_.-]+)\s*=\s*"([^"]*)"\s*(#.*)?', line)
+            if match:
+                versions[match.group(1)] = match.group(2)
+    return versions
 
 
 @dataclass
@@ -63,8 +87,26 @@ class IntermineBuilder:
         self.copy_test_properties()
         self.gradle_install_modules()
 
+    def intermine_version(self) -> str:
+        """The InterMine release that this checkout builds, from the version catalog.
+
+        gradle/libs.versions.toml is the one place to change it for a release: the build
+        files read `libs.versions.intermine`, and the generated gradle.properties get it as
+        `systemProp.imVersion` and `systemProp.bioVersion` (the modules of one release all
+        share one version, so there is no separate bio entry).
+        """
+        catalog = os.path.join(self.checkout, "gradle", "libs.versions.toml")
+        versions = read_catalog_versions(catalog)
+        if "intermine" not in versions:
+            print(f"No `intermine` entry in [versions] of {catalog}")
+            sys.exit(EXIT_FAILURE)
+        return versions["intermine"]
+
     def create_gradle_properties(self) -> None:
+        version = self.intermine_version()
         replacement_dict = {
+            "im_version": version,
+            "bio_version": version,
             "im_checkout": self.checkout,
             "im_central_url": self.central_url,
             "im_clojars_url": self.clojars_url,
