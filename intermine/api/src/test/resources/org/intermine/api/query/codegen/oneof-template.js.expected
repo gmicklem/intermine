@@ -6,6 +6,7 @@
 -- it into any webpage.
 -->
 <link rel="stylesheet" type="text/css" href="TEST_SERVICE_ROOT/vendor/js/intermine/im-tables/2.2.0-beta/main.sandboxed.css">
+<link rel="stylesheet" type="text/css" href="TEST_SERVICE_ROOT/css/im-tables-fonts.css">
 <script charset="UTF-8" type="text/javascript" src="TEST_SERVICE_ROOT/vendor/js/intermine/im-tables/2.2.0-beta/imtables.js"></script>
 <!-- A place holder element in your page to hold the table -->
 <div id="query-container">

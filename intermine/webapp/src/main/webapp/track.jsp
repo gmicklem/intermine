@@ -14,22 +14,20 @@
 <link rel="stylesheet" href="css/resultstables.css" type="text/css" />
 <link rel="stylesheet" href="css/toolbar.css" type="text/css" media="screen" title="Toolbar Style" charset="utf-8"/>
 <link rel="stylesheet" href="css/tracks.css" type="text/css" />
-<script type='text/javascript' src='https://www.google.com/jsapi'></script>
 <script type='text/javascript' src='js/track.js'></script>
-    <script type='text/javascript'>
-    google.load('visualization', '1', {'packages':['annotatedtimeline']});
-    google.setOnLoadCallback(function() {drawTimeChart('${id}', '${title}');});
+<script type='text/javascript'>
+    jQuery(function() {
+        drawTimeChart('${id}', '${title}');
 
-    if ('${id}' != 'login') { //login tracks only annotatedtimeline chart
-        google.load('visualization', '1', {packages:['table']});
-      if('${id}' == 'template') {
-        google.load("visualization", "1", {packages:["corechart"]});
-        google.setOnLoadCallback(function() {drawPieAndTableChart("LASTMONTH", '${id}','${mainColumn}');});
-      } else {
-        google.setOnLoadCallback(function() {drawTableChart("LASTMONTH", '${id}','${mainColumn}');});
-      }
-    }
-   </script>
+        if ('${id}' != 'login') { //login tracks only the time chart
+            if ('${id}' == 'template') {
+                drawPieAndTableChart("LASTMONTH", '${id}', '${mainColumn}');
+            } else {
+                drawTableChart("LASTMONTH", '${id}', '${mainColumn}');
+            }
+        }
+    });
+</script>
 
 <div class="body">
 
