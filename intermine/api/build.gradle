@@ -28,7 +28,9 @@ dependencies {
     implementation libs.lucene.snowball
     implementation libs.lucene.highlighter
     api libs.json
-    api libs.jena.libs
+    api libs.jena.core
+    // Model.write() uses the RIOT writers only when jena-arq is present, so the RDF output depends on it at run time
+    runtimeOnly libs.jena.arq
     testImplementation project(path: ':intermine-testresources', configuration: 'testArtifacts')
     testImplementation libs.xmlunit
     testImplementation project(':intermine-objectstore').sourceSets.test.output
