@@ -99,7 +99,12 @@ subprojects {
         implementation libs.reload4j
         implementation libs.slf4j.reload4j
         implementation libs.ant
-        implementation libs.solr.solrj
+        implementation(libs.solr.solrj) {
+            exclude group: 'io.netty'
+            exclude group: 'org.eclipse.jetty'
+            exclude group: 'org.eclipse.jetty.http2'
+            exclude group: 'org.xerial.snappy'
+        } // same exclusions as intermine-api
         implementation group: 'org.intermine', name: 'bio-core', version: System.getProperty("bioVersion"), transitive: false
         implementation group : "org.intermine", name: "intermine-integrate", version: System.getProperty("imVersion")
         implementation group : "org.intermine", name: "intermine-model", version: System.getProperty("imVersion")

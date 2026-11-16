@@ -56,18 +56,34 @@ javax-mail = "1.4"
 javax-servlet-api = "3.1.0"
 jaxb-api = "2.3.1"
 je = "4.0.92"
-jena = "3.16.0"
+# Jena: only the RDF model API (org.apache.jena.rdf.model, org.apache.jena.vocabulary) is called, to build a Model and
+# write it as RDF/XML, N-Triples or Turtle (RDFHelper, RDFProcessor, RDFOutput, RDFObject, R2RMLMappingProcess); nothing
+# is parsed or stored. jena-core is the compile dependency; jena-arq (RIOT) must stay on the run-time classpath because
+# with it Model.write() goes through the RIOT writers (N-Triples/Turtle output differs without it). apache-jena-libs
+# (TDB, TDB2, SHACL, RDF connection) is not used and no longer pulled in.
+# 3.17.0 is the last Jena release that runs on Java 8 (4.x needs 11, 5.x needs 17); moving on is a 6.0 item together with
+# the Java 17 baseline (jena-core < 4.2.0 has CVE-2021-39239, an XXE in the RDF/XML parser, which InterMine never calls).
+jena = "3.17.0"
 json = "20260814"
 jsonassert = "1.2.3"
 jsp-api = "2.3.1"
 jstl = "1.2"
 junit = "4.13.2"
+# Lucene 3 is live code, not a leftover of the Solr switch: SearchRepository builds an in-memory (RAMDirectory) index
+# of a user's saved lists and templates and SearchResults/AjaxServices.filterWebSearchables query it (the filter box
+# and tag filter of "My lists" and "Templates"; tags:x OR tags:y syntax, snowball stemming, highlighting). The
+# keyword search, quick search, facets and autocomplete go through Solr instead. 3.0.2 has no advisory; moving to
+# a Lucene 8/9 API (or dropping Lucene for plain Java matching) is a rewrite of those two classes, not a version bump.
 lucene = "3.0.2"
 oltu-client = "1.0.2"
 opencsv = "2.4"
 postgresql = "42.7.14"
 reload4j = "1.2.22"
 slf4j = "1.7.36"
+# SolrJ follows the major version of the Solr server the mines run (the testbed and CI use 8.x); 8.11.4 is the last 8.x
+# release (Maven Central lists no 8.11.5), and SolrJ 9 against a Solr 8 server is not supported, so a move to 9 goes with
+# the Solr server upgrade (6.x/7.0 item). Only HttpSolrClient, SolrQuery and the schema requests are used; see
+# intermine/api/build.gradle for the transitive jars that are excluded and for the ones that cannot be (zookeeper).
 solr = "8.11.4"
 struts = "1.3.10"
 taglibs-string = "1.1.0"
@@ -111,8 +127,8 @@ javax-mail = { module = "javax.mail:mail", version.ref = "javax-mail" }
 javax-servlet-api = { module = "javax.servlet:javax.servlet-api", version.ref = "javax-servlet-api" }
 jaxb-api = { module = "javax.xml.bind:jaxb-api", version.ref = "jaxb-api" }
 je = { module = "com.sleepycat:je", version.ref = "je" }
+jena-arq = { module = "org.apache.jena:jena-arq", version.ref = "jena" }
 jena-core = { module = "org.apache.jena:jena-core", version.ref = "jena" }
-jena-libs = { module = "org.apache.jena:apache-jena-libs", version.ref = "jena" }
 json = { module = "org.json:json", version.ref = "json" }
 jsonassert = { module = "org.skyscreamer:jsonassert", version.ref = "jsonassert" }
 jsp-api = { module = "javax.servlet.jsp:javax.servlet.jsp-api", version.ref = "jsp-api" }

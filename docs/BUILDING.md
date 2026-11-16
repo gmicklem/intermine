@@ -137,6 +137,12 @@ The `[versions]` table holds one entry per library, or per family that is releas
 
 To change a version, edit its line in `[versions]` and nothing else; every module that uses the library follows. To add a library, add a `[versions]` entry and a `[libraries]` entry (aliases are lower case; dashes become dots in the accessor, so `struts-core` is `libs.struts.core`), then use `libs.<alias>` in the module. One catalog entry means one version for the whole tree: if two modules need different versions of a library, add a second alias with its own `[versions]` entry and a comment saying why (as `jami-complexes` does for `bio/sources/psi-complexes`).
 
+Version stances recorded in the catalog comments:
+
+- `jena` is 3.17.0, the last release that runs on Java 8 (4.x needs Java 11, 5.x Java 17). Only the RDF model API is used, to write RDF, so `jena-core` is the compile dependency and `jena-arq` is a run-time one: with it on the class path `Model.write()` uses the RIOT writers, and the N-Triples and Turtle text differ without it (`RDFSerialisationTest` pins the output). RIOT's start-up also needs `libthrift` and `commons-compress` even for write-only use, so they cannot be excluded.
+- `solr` is 8.11.4, the last 8.x. SolrJ follows the Solr server's major version, and a SolrJ 9 client is not supported against a Solr 8 server, so the move to 9 is part of the Solr server upgrade. `solr-solrj` is declared with its Netty, Jetty and Snappy dependencies excluded (never loaded: only `HttpSolrClient` is used); `zookeeper` must stay, because the javabin decoder calls a class in it.
+- `lucene` stays at 3.0.2: it still serves the in-memory search over a user's lists and templates (`SearchRepository`, `SearchResults`). Keyword search, autocomplete and facets are Solr.
+
 Outside the catalog:
 
 - `buildscript { }` blocks keep literal coordinates (they could not see `libs` on Gradle 7.6; on 8.14 they can, so this is a possible clean-up), for example the Cargo plugin in `testmine/webapp/build.gradle` and the InterMine `plugin` classpath in `bio/core` and `bio/model`. Change those by hand.
