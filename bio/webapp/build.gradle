@@ -72,7 +72,9 @@ dependencies {
     imWebApp group: "org.intermine", name: "intermine-webapp", version: System.getProperty("imVersion"), transitive: false, ext: "war"
 }
 
-task unwarIMWebApp(type: Copy) {
+// A Sync, not a Copy: a Copy leaves the files of an earlier intermine-webapp war in the directory (and the war below
+// takes the whole directory), so a JSP or jar that a new intermine-webapp no longer has stayed in bio-webapp.
+task unwarIMWebApp(type: Sync) {
     description = "Unwar intermine-webapp under the build/explodedWebAppDir directory"
     from { zipTree(configurations.imWebApp.singleFile) }
     into explodedWebAppDir
