@@ -65,6 +65,29 @@ public class ModelMergerTest extends TestCase
         assertEquals(refs, copy);
     }
 
+    private String mergedTerm(String originalTerm, String mergeTerm) throws Exception {
+        String cls = "<class name=\"A\" is-interface=\"true\"%s></class>";
+        String o = originalTerm == null ? "" : " term=\"" + originalTerm + "\"";
+        String m = mergeTerm == null ? "" : " term=\"" + mergeTerm + "\"";
+        Model model = parser.process(new StringReader("<model name=\"testmodel\" package=\"\">"
+                + String.format(cls, o) + "</model>"));
+        ClassDescriptor merged = ModelMerger.mergeClass(model.getClassDescriptorByName("A"),
+                parseClass(String.format(cls, m), ""), model, Collections.EMPTY_SET);
+        return merged.getOntologyTerm();
+    }
+
+    public void testMergeClassTermsIgnoresBlanks() throws Exception {
+        // the terms used to merge to "" (GOTerm) and ",http://..." (Pathway), invalid IRIs in RDF
+        assertNull(mergedTerm(null, null));
+        assertNull(mergedTerm("", null));
+        assertNull(mergedTerm(null, ""));
+        assertEquals("http://x.org/T_1", mergedTerm(null, "http://x.org/T_1"));
+        assertEquals("http://x.org/T_1", mergedTerm("", "http://x.org/T_1"));
+        assertEquals("http://x.org/T_1", mergedTerm("http://x.org/T_1", ""));
+        assertEquals("http://x.org/A,http://x.org/B", mergedTerm("http://x.org/A", "http://x.org/B"));
+        assertEquals("http://x.org/A", mergedTerm("http://x.org/A", "http://x.org/A"));
+    }
+
     public void testMergeClass() throws Exception {
         String modelStr = "<class name=\"org.intermine.model.testmodel.Department\" is-interface=\"false\"></class>";
         String addition = "<class name=\"org.intermine.model.testmodel.Department\" is-interface=\"true\"></class>";
