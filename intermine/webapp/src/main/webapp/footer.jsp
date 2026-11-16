@@ -36,7 +36,7 @@
     </a>
   </div>
     <div class="mobile-app">
-        <p>Have you tried our InterMine mobile apps?</p>
+        <p>Have you tried our InterMine mobile app?</p>
         <div>
         <a href="https://itunes.apple.com/us/app/intermine-gene-search/id1271710231?mt=8" target="_blank">
           <img src="images/apple-app-store.svg" class="ios">
