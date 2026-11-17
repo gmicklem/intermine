@@ -1,38 +1,55 @@
 ---
 # yamllint disable rule:line-length
+# When this workflow runs, and why (dependency maintenance, bead im-8dd.10):
+#   - pull_request (any branch): gates every pull request, in particular Renovate's dependency
+#     bumps (renovate/* branches), so a bump is merged or automerged only when the full suite (about 45 minutes) is green.
+#   - push to maint-2026, maint/** and release/**: a result for every merge into those branches.
+#   - schedule: weekly, Monday 05:00 UTC, just before Renovate's "before 6am on Monday" window
+#     (UK time), so the branch heads Renovate bumps have a fresh result.
+#   - workflow_dispatch: by hand, `gh workflow run im-build.yml --ref <branch>`.
+# paths-ignore: a change that touches only documentation or bot configuration does not start the run.
+# Push and pull_request use the same list, written out twice (no YAML anchors). The earlier push trigger
+# (a path allow-list, "paths:", and no branch list) never started a run on this fork, although dozens
+# of pushes to maint-2026 and release/* changed matching files; the sibling forks that trigger on push
+# without a path filter do run. No secrets are used, so a run from a Renovate branch of this
+# repository needs nothing the push run does not.
 name: InterMine CI
 # yamllint disable-line rule:truthy
 on:
   push:
-    paths:
-      - .github/workflows/im-build.yml
-      - 'bio/**'
-      - 'config/**'
+    branches:
+      - maint-2026
+      - 'maint/**'
+      - 'release/**'
+    paths-ignore:
+      - '**/*.md'
       - 'docs/**'
-      - 'gradle/**'
-      - 'intermine/**'
-      - 'plugin/**'
-      - 'testmine/**'
+      - 'LICENSE*'
+      - 'renovate.json'
+      - '.github/renovate.json*'
+      - '.github/dependabot.yml'
+      - '.github/ISSUE_TEMPLATE/**'
   pull_request:
-    paths:
-      - .github/workflows/im-build.yml
-      - 'bio/**'
-      - 'config/**'
+    paths-ignore:
+      - '**/*.md'
       - 'docs/**'
-      - 'gradle/**'
-      - 'intermine/**'
-      - 'plugin/**'
-      - 'testmine/**'
+      - 'LICENSE*'
+      - 'renovate.json'
+      - '.github/renovate.json*'
+      - '.github/dependabot.yml'
+      - '.github/ISSUE_TEMPLATE/**'
+  schedule:
+    - cron: '0 5 * * 1'
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# A newer push to the same branch or pull request makes the older run
-# pointless. Never cancel runs on dev or master, so every merge keeps a result.
+# A newer push to the same branch or pull request makes the older run pointless
+# (one group per pull request, as the registry's ci.yml does).
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/dev' && github.ref != 'refs/heads/master' }}
+  cancel-in-progress: true
 
 env:
   SOLR_VERSION: 8.6.2
