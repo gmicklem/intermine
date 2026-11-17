@@ -96,3 +96,5 @@ jobs:
             **/build/reports/doclint-throws/*.txt
           if-no-files-found: ignore
           retention-days: 14
+
+# ci-trigger-test: temporary line to exercise the pull_request trigger (to be reverted)
