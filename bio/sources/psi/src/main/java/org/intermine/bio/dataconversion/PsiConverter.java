@@ -78,7 +78,9 @@ public class PsiConverter extends BioFileConverter
      */
     public PsiConverter(ItemWriter writer, Model model) {
         super(writer, model, "IntAct", "IntAct molecular interactions",
-                "https://www.apache.org/licenses/LICENSE-2.0");
+                // IntAct data are CC BY 4.0 (Apache 2.0 is for IntAct's software only), see
+                // https://www.ebi.ac.uk/intact/about#license_privacy
+                "https://creativecommons.org/licenses/by/4.0/");
         readConfig();
         try {
             termId = getTerm(BINDING_SITE);
