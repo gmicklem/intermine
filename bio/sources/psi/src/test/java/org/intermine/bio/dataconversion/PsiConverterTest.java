@@ -80,6 +80,22 @@ public class PsiConverterTest extends ItemsTestCase
         assertEquals(expected, actual);
     }
 
+    /**
+     * IntAct states its data (PSI-MI XML, MITAB, ...) are CC BY 4.0; Apache 2.0 covers only its
+     * software (https://www.ebi.ac.uk/intact/about#license_privacy, read 18 Nov 2026).
+     */
+    public void testLicence() throws Exception {
+        processIntactFixture();
+
+        String licence = null;
+        for (org.intermine.xml.full.Item item : itemWriter.getItems()) {
+            if ("DataSet".equals(item.getClassName())) {
+                licence = item.getAttribute("licence").getValue();
+            }
+        }
+        assertEquals("https://creativecommons.org/licenses/by/4.0/", licence);
+    }
+
     private void processIntactFixture() throws Exception {
         converter.setIntactOrganisms("9606");
         converter.rslv.addResolverEntry("9606", "ENSG00000003400",
