@@ -78,7 +78,9 @@ public class PsiConverter extends BioFileConverter
      */
     public PsiConverter(ItemWriter writer, Model model) {
         super(writer, model, "IntAct", "IntAct molecular interactions",
-                "https://www.apache.org/licenses/LICENSE-2.0");
+                // IntAct data are CC BY 4.0 (Apache 2.0 is for IntAct's software only), see
+                // https://www.ebi.ac.uk/intact/about#license_privacy
+                "https://creativecommons.org/licenses/by/4.0/");
         readConfig();
         try {
             termId = getTerm(BINDING_SITE);
@@ -235,8 +237,13 @@ public class PsiConverter extends BioFileConverter
                     comment.setAttribute("type", name);
                     attName = "experimentAttribute";
                 }
-            // <hostOrganismList><hostOrganism ncbiTaxId="9534"><names><fullName>
-            } else if ("hostOrganism".equals(qName)) {
+            // <experimentDescription><hostOrganismList><hostOrganism ncbiTaxId="9534"><names>
+            // <fullName>
+            // (attName is reset by every start tag, so mark the fullName itself; participants
+            // have their own hostOrganismList, which is not the experiment's host)
+            } else if ("fullName".equals(qName) && "names".equals(stack.peek())
+                            && stack.search("hostOrganism") == 2
+                            && stack.search("experimentDescription") == 4) {
                 attName = "hostOrganism";
             //<interactionDetectionMethod><xref><primaryRef>
             } else if ("primaryRef".equals(qName) && "xref".equals(stack.peek())

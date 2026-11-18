@@ -163,6 +163,8 @@ public class GoConverter extends BioFileConverter
     static {
         WITH_TYPES.put("FB", "Gene");
         WITH_TYPES.put("UniProt", "Protein");
+        // GAF 2.x writes UniProtKB:ACC
+        WITH_TYPES.put("UniProtKB", "Protein");
     }
 
     // read config file that has specific settings for each organism, key is taxon id
@@ -460,7 +462,7 @@ public class GoConverter extends BioFileConverter
 
                         // if a UniProt protein it may be from a different organism
                         // also FlyBase may be from a different Drosophila species
-                        if ("UniProt".equals(prefix)) {
+                        if ("UniProt".equals(prefix) || "UniProtKB".equals(prefix)) {
                             productIdentifier = newProduct(value, className,
                                     organism, false, null);
                         } else if ("FB".equals(prefix)) {

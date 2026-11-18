@@ -17,7 +17,7 @@
 </item>
 <item id="2_1" class="DataSet">
 <attribute name="name" value="IntAct molecular interactions"/>
-<attribute name="licence" value="https://www.apache.org/licenses/LICENSE-2.0"/>
+<attribute name="licence" value="https://creativecommons.org/licenses/by/4.0/"/>
 <reference name="dataSource" ref_id="1_1"/>
 </item>
 <item id="3_1" class="InteractionTerm">
@@ -84,6 +84,7 @@
 </item>
 <item id="4_1" class="InteractionExperiment">
 <attribute name="description" value="Interaction of Alzheimer's beta -amyloid precursor family proteins with scaffold proteins of the JNK signaling cascade."/>
+<attribute name="hostOrganism" value="Cercopithecus aethiops simian cells transformed with SV40"/>
 <attribute name="name" value="taru-2002-3"/>
 <reference name="publication" ref_id="5_1"/>
 <collection name="interactionDetectionMethods"><reference ref_id="3_2"/></collection>

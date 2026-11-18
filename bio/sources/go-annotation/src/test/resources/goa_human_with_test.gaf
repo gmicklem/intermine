@@ -1,0 +1,15 @@
+!gaf-version: 2.2
+!generated-by: GOC
+!date-generated: 2026-05-21T08:10
+!generated-by: GOC
+!date-generated: 2026-05-20T11:45
+!generated-by: UniProt
+!date-generated: 2026-04-30 09:29
+!generated-by: PANTHER
+!date-generated: 2026-01-05
+UniProtKB	A0A024RBG1	NUDT4B	enables	GO:0005515	PMID:33961781	IPI	UniProtKB:Q8NFP7	F	Diphosphoinositol polyphosphate phosphohydrolase NUDT4B	NUDT4B	protein	taxon:9606	20260425	IntAct		UniProtKB:A0A024RBG1
+UniProtKB	A0A0U1RQF7	DPEP2NB	enables	GO:0005515	PMID:32296183	IPI	UniProtKB:P41271-2	F	DPEP2 neighbor protein	DPEP2NB	protein	taxon:9606	20260425	IntAct		UniProtKB:A0A0U1RQF7
+UniProtKB	A0A0K2S4Q6	CD300H	enables	GO:0005515	PMID:26221034	IPI	UniProtKB:O43914|UniProtKB:Q9UBK5	F	Protein CD300H	CD300H	protein	taxon:9606	20160428	UniProt		UniProtKB:A0A0K2S4Q6
+UniProtKB	A0A024RBG1	NUDT4B	located_in	GO:0005737	GO_REF:0000044	IEA	UniProtKB-SubCell:SL-0086	C	Diphosphoinositol polyphosphate phosphohydrolase NUDT4B	NUDT4B	protein	taxon:9606	20260428	UniProt		UniProtKB:A0A024RBG1
+UniProtKB	A6ND01	IZUMO1R	enables	GO:0038023	GO_REF:0000024	ISS	MGI:MGI:1929185	F	Sperm-egg fusion protein Juno	IZUMO1R|FOLR4|JUNO	protein	taxon:9606	20241022	UniProt	part_of(GO:0035036),occurs_in(CL:0000023),occurs_in(GO:0005886)	UniProtKB:A6ND01
+UniProtKB	A0A075B6H7	IGKV3-7	located_in	GO:0005576	PMID:20176268	NAS		C	Probable non-functional immunoglobulin kappa variable 3-7	IGKV3-7	protein	taxon:9606	20240313	UniProt		UniProtKB:A0A075B6H7

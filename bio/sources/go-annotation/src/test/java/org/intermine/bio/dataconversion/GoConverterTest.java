@@ -14,10 +14,15 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.intermine.dataconversion.ItemsTestCase;
 import org.intermine.dataconversion.MockItemWriter;
@@ -101,4 +106,69 @@ public class GoConverterTest extends ItemsTestCase
                 organism)));
     }
 
+    /**
+     * GAF 2.2 writes UniProtKB:ACC in column 8 (With/From). Each such entry should become a
+     * Protein (primaryAccession ACC) in GOEvidence.with; other prefixes stay text only.
+     * Rows cut from goa_human.gaf of 2026-05-21, see goa_human_with_test.README.
+     */
+    public void testWithUniProtKB() throws Exception {
+        Reader reader = new InputStreamReader(
+                getClass().getClassLoader().getResourceAsStream("goa_human_with_test.gaf"));
+        converter.process(reader);
+        converter.close();
+
+        Map<String, Set<String>> expected = new HashMap<String, Set<String>>();
+        expected.put("UniProtKB:Q8NFP7", new TreeSet<String>(Arrays.asList("Q8NFP7")));
+        expected.put("UniProtKB:P41271-2", new TreeSet<String>(Arrays.asList("P41271-2")));
+        expected.put("UniProtKB:O43914|UniProtKB:Q9UBK5",
+                new TreeSet<String>(Arrays.asList("O43914", "Q9UBK5")));
+        expected.put("UniProtKB-SubCell:SL-0086", new TreeSet<String>());
+        expected.put("MGI:MGI:1929185", new TreeSet<String>());
+
+        assertEquals(expected, withAccessions(writer.getItems()));
+    }
+
+    /**
+     * The older spelling UniProt:ACC must still make a with Protein.
+     */
+    public void testCreateWithObjectsUniProt() throws Exception {
+        ItemFactory tgtItemFactory = new ItemFactory(Model.getInstanceByName("genomic"));
+        Item organism = tgtItemFactory.makeItem("3_1", "Organism", "");
+        organism.setAttribute("taxonId", "9606");
+        converter.initialiseMapsForFile();
+        List<String> with = converter.createWithObjects("UniProt:P12345", organism);
+        assertEquals(1, with.size());
+        Item protein = null;
+        for (Item item : writer.getItems()) {
+            if (item.getIdentifier().equals(with.get(0))) {
+                protein = item;
+            }
+        }
+        assertEquals("Protein", protein.getClassName());
+        assertEquals("P12345", protein.getAttribute("primaryAccession").getValue());
+    }
+
+    // withText of each GOEvidence -> primaryAccessions of the Proteins in its with collection
+    private Map<String, Set<String>> withAccessions(Set<Item> items) {
+        Map<String, Item> byId = new HashMap<String, Item>();
+        for (Item item : items) {
+            byId.put(item.getIdentifier(), item);
+        }
+        Map<String, Set<String>> result = new HashMap<String, Set<String>>();
+        for (Item item : items) {
+            if (!"GOEvidence".equals(item.getClassName()) || !item.hasAttribute("withText")) {
+                continue;
+            }
+            Set<String> accessions = new TreeSet<String>();
+            if (item.hasCollection("with")) {
+                for (String refId : item.getCollection("with").getRefIds()) {
+                    Item with = byId.get(refId);
+                    assertEquals("Protein", with.getClassName());
+                    accessions.add(with.getAttribute("primaryAccession").getValue());
+                }
+            }
+            result.put(item.getAttribute("withText").getValue(), accessions);
+        }
+        return result;
+    }
 }
