@@ -1,0 +1,9 @@
+goa_human_with_test.gaf: six rows cut unchanged from the human GO annotation file, with its header
+lines (GAF 2.2), for GoConverterTest.testWithUniProtKB.
+
+Source:    https://current.geneontology.org/annotations/goa_human.gaf.gz
+Release:   !date-generated: 2026-05-21T08:10 (file Last-Modified 2026-05-28), copy of 18 Nov 2026
+Licence:   CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ (Gene Ontology Consortium, GOA)
+
+Rows chosen for their column 8 (With/From): one UniProtKB accession, one UniProtKB isoform,
+two UniProtKB accessions joined by '|', a UniProtKB-SubCell term, an MGI id and an empty cell.
