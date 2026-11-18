@@ -1,0 +1,16 @@
+intact_host_organism_test.xml: a cut of IntAct PSI-MI 2.5 XML for PsiConverterTest.testHostOrganism
+and testLicence.
+
+Source:    https://ftp.ebi.ac.uk/pub/databases/intact/current/psi25/species/human.zip
+           (member human_38.xml, third <entry>), file Last-Modified 2026-10-24,
+           <source releaseDate="2026-10-24+01:00">, zip sha256
+           d8b69fb7a2b4c1ca668c153e8e942f5a5fe322a3c8e5308a1cdaee89f95b9e55, copy of 18 Nov 2026
+Licence:   CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ (IntAct, EMBL-EBI; see
+           https://www.ebi.ac.uk/intact/about#license_privacy)
+
+Kept verbatim: the entrySet start tag, the entry's <source>, two experimentDescriptions
+(wang-2011-4, host ncbiTaxId -1 "In vitro"; wang-2011-5, host 9606 "Homo sapiens HEK293T
+embryonic kidney cell"), the interaction casp10-riok3 of each, and their two interactors (CASP10,
+RIOK3). In the second interaction the participants carry their own hostOrganismList
+("Escherichia coli (strain K12)", "Homo sapiens"), which must not replace the experiment's host.
+Everything else in the entry is left out.
