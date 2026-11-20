@@ -626,7 +626,7 @@ public class GoConverter extends BioFileConverter
         } else if ("PINC".equalsIgnoreCase(sourceCode)) {
             title = "Proteome Inc.";
         } else if ("Pfam".equalsIgnoreCase(sourceCode)) {
-            title = "PFAM"; // to merge with interpro
+            title = "Pfam"; // as interpro, protein2ipr and UniProt name it
         }
         return title;
     }

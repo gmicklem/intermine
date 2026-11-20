@@ -51,7 +51,9 @@ public class PsiConverter extends BioFileConverter
 {
     private static final Logger LOG = Logger.getLogger(PsiConverter.class);
     private static final String PROP_FILE = "psi-intact_config.properties";
-    private Map<String, String> pubs = new HashMap<String, String>();
+    // PubMed id -> the experiments' Publication item, stored with the first experiment that is
+    private Map<String, Item> pubs = new HashMap<String, Item>();
+    private Set<String> storedPubs = new HashSet<String>();
     private Map<String, Object> experimentNames = new HashMap<String, Object>();
     private Map<String, String> terms = new HashMap<String, String>();
     private Map<String, String> regions = new HashMap<String, String>();
@@ -532,6 +534,9 @@ public class PsiConverter extends BioFileConverter
                     if (eh.comments != null && !eh.comments.isEmpty()) {
                         eh.experiment.setCollection("comments", eh.comments);
                     }
+                    if (eh.publication != null && storedPubs.add(eh.publication.getIdentifier())) {
+                        store(eh.publication);
+                    }
                     store(eh.experiment);
                     eh.isStored = true;
                 }
@@ -730,21 +735,16 @@ public class PsiConverter extends BioFileConverter
             return itemId;
         }
 
-        private String getPub(String pubMedId)
-            throws SAXException {
-            String itemId = pubs.get(pubMedId);
-            if (itemId == null) {
-                Item pub = createItem("Publication");
+        // the Publication item of a PubMed id; it is stored with the experiment that cites it
+        // (storeAll), so a paper whose experiments have no kept interaction is not written
+        private Item getPub(String pubMedId) {
+            Item pub = pubs.get(pubMedId);
+            if (pub == null) {
+                pub = createItem("Publication");
                 pub.setAttribute("pubMedId", pubMedId);
-                itemId = pub.getIdentifier();
-                pubs.put(pubMedId, itemId);
-                try {
-                    store(pub);
-                } catch (ObjectStoreException e) {
-                    throw new SAXException(e);
-                }
+                pubs.put(pubMedId, pub);
             }
-            return itemId;
+            return pub;
         }
 
         private ExperimentHolder getExperiment(String name) {
@@ -1058,6 +1058,7 @@ public class PsiConverter extends BioFileConverter
             @SuppressWarnings("unused")
             private String name, description;
             private Item experiment;
+            private Item publication;
             private List<String> comments = new ArrayList<String>();
             private boolean isStored = false;
 
@@ -1092,8 +1093,8 @@ public class PsiConverter extends BioFileConverter
             protected void setPublication(String pubMedId)
                 throws SAXException {
                 if (StringUtil.allDigits(pubMedId)) {
-                    String pubRefId = getPub(pubMedId);
-                    experiment.setReference("publication", pubRefId);
+                    publication = getPub(pubMedId);
+                    experiment.setReference("publication", publication.getIdentifier());
                 }
             }
 

@@ -148,6 +148,19 @@ public class GoConverterTest extends ItemsTestCase
         assertEquals("P12345", protein.getAttribute("primaryAccession").getValue());
     }
 
+    /**
+     * A "Pfam:..." reference names the DataSource "Pfam", as Pfam, UniProt's dbxref.txt, protein2ipr
+     * and the InterPro converter spell it (decision of Gos Micklem, 20 Nov 2026); it was "PFAM".
+     */
+    public void testPfamDataSourceName() throws Exception {
+        java.lang.reflect.Method m = GoConverter.class.getDeclaredMethod("getDataSourceCodeName",
+                String.class);
+        m.setAccessible(true);
+        assertEquals("Pfam", m.invoke(converter, "Pfam"));
+        assertEquals("Pfam", m.invoke(converter, "PFAM"));
+        assertEquals("UniProt", m.invoke(converter, "UniProtKB"));
+    }
+
     // withText of each GOEvidence -> primaryAccessions of the Proteins in its with collection
     private Map<String, Set<String>> withAccessions(Set<Item> items) {
         Map<String, Item> byId = new HashMap<String, Item>();
