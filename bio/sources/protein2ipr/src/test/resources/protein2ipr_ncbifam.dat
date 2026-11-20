@@ -1,0 +1,12 @@
+# Rows for A0A009PJF4 cut on 2026-11-20 from the first 400 kB of
+# https://ftp.ebi.ac.uk/pub/databases/interpro/current_release/protein2ipr.dat.gz (InterPro, CC0).
+# The NF033085 row is the NCBIfam signature that made the converter throw "Unknown DB found".
+# The last two rows are SYNTHETIC (same layout): ANF00001 is an AntiFam accession, XYZ00001 an unknown prefix.
+A0A009PJF4	IPR001466	Beta-lactamase-related	PF00144	36	380
+A0A009PJF4	IPR001586	Beta-lactamase, class-C active site	PS00336	84	91
+A0A009PJF4	IPR012338	Beta-lactamase/transpeptidase-like	G3DSA:3.40.710.10	23	383
+A0A009PJF4	IPR012338	Beta-lactamase/transpeptidase-like	SSF56601	29	381
+A0A009PJF4	IPR050491	Beta-lactamase AmpC-like	PTHR46825	29	375
+A0A009PJF4	IPR058136	Beta-lactamase AmpC	NF033085	30	381
+A0A009PJF4	IPR000001	Synthetic AntiFam row	ANF00001	1	10
+A0A009PJF4	IPR000002	Synthetic unknown-prefix row	XYZ00001	11	20
