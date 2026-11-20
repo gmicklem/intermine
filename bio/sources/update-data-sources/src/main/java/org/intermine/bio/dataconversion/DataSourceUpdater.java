@@ -110,7 +110,10 @@ public class DataSourceUpdater extends Task
             ItemFactory itemFactory = new ItemFactory(os.getModel(), "-1_");
             writer.write(FullRenderer.getHeader() + "\n");
 
-            // write the relevant data sources to file
+            // write the relevant data sources to file; one Publication per PubMed id, however
+            // many databases cite it: the file is one load, and the loader does not merge two
+            // items of one load that share a key
+            Map<String, Item> publications = new HashMap<String, Item>();
             for (DataSourceHolder holder : allDataSources.values()) {
                 Item datasource = itemFactory.makeItemForClass("DataSource");
                 datasource.setAttribute("name", holder.name);
@@ -121,10 +124,13 @@ public class DataSourceUpdater extends Task
                     datasource.setAttribute("url", holder.url);
                 }
                 if (holder.pubMedId != null) {
-                    Item publication = itemFactory.makeItemForClass("Publication");
-                    publication.setAttribute("pubMedId", holder.pubMedId);
-                    writer.write(FullRenderer.render(publication));
-
+                    Item publication = publications.get(holder.pubMedId);
+                    if (publication == null) {
+                        publication = itemFactory.makeItemForClass("Publication");
+                        publication.setAttribute("pubMedId", holder.pubMedId);
+                        publications.put(holder.pubMedId, publication);
+                        writer.write(FullRenderer.render(publication));
+                    }
                     datasource.addToCollection("publications", publication);
                 }
                 writer.write(FullRenderer.render(datasource));
