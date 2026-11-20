@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -117,19 +118,71 @@ public class DataSourceUpdaterTest extends ItemsTestCase
         assertEquals("pubMedId", keys.getProperty("Publication.key_pubmed").trim());
     }
 
+    /**
+     * Two databases of dbxref.txt may cite one paper (release 2026_04: NDEx and CIViC both give
+     * PubMed=28138153). The file is loaded in one go, and the loader does not merge two items of
+     * the same load that share a key, so the updater must write one Publication per PubMed id
+     * and point both DataSources at it: two items made two Publications with one pubMedId, and
+     * update-publications then stopped on an item that matched both.
+     */
+    public void testOnePublicationPerPubMedIdWhenTwoDatabasesCiteIt() throws Exception {
+        DataSourceUpdater converter = new TestDataSourceUpdater("NDEx", "CIViC");
+        File temp = File.createTempFile("DataSourceUpdater", ".tmp");
+        temp.deleteOnExit();
+        converter.setOutputFile(temp.getPath());
+        File dbrefs = File.createTempFile("dbxrefs", "");
+        dbrefs.deleteOnExit();
+        java.io.Writer w = new java.io.FileWriter(dbrefs);
+        w.write("AC    : DB-0247\n"
+                + "Abbrev: CIViC\n"
+                + "Name  : Clinical Interpretation of Variants in Cancer\n"
+                + "Ref   : Nat. Genet. 49:170-174(2017); PubMed=28138153; DOI=10.1038/ng.3774;\n"
+                + "Server: https://civicdb.org/\n"
+                + "\n"
+                + "AC    : DB-0245\n"
+                + "Abbrev: NDEx\n"
+                + "Name  : The NDEx Project\n"
+                + "Ref   : Nat. Genet. 49:170-174(2017); PubMed=28138153; DOI=10.1038/ng.3774;\n"
+                + "Server: https://www.ndexbio.org/\n");
+        w.close();
+        converter.setDataSourceFile(dbrefs.getPath());
+        converter.execute();
+
+        Collection<org.intermine.xml.full.Item> items = FullParser.parse(new FileInputStream(temp));
+        Map<String, String> pubIdByPubMedId = new HashMap<String, String>();
+        int publications = 0;
+        Set<String> cited = new HashSet<String>();
+        for (org.intermine.xml.full.Item item : items) {
+            if ("Publication".equals(item.getClassName())) {
+                publications++;
+                pubIdByPubMedId.put(item.getAttribute("pubMedId").getValue(), item.getIdentifier());
+            } else if ("DataSource".equals(item.getClassName())) {
+                cited.addAll(item.getCollection("publications").getRefIds());
+            }
+        }
+        assertEquals("one Publication item for PubMed=28138153", 1, publications);
+        assertEquals(new HashSet<String>(Collections.singleton(pubIdByPubMedId.get("28138153"))),
+                cited);
+    }
+
     class TestDataSourceUpdater extends DataSourceUpdater
     {
-        public TestDataSourceUpdater() {
+        private final Set<String> names = new HashSet<String>();
+
+        public TestDataSourceUpdater(String... names) {
             super();
             setOsAlias("os.bio-test");
             setOutputFile("TestDataSourceUpdater_dummy");
+            if (names.length == 0) {
+                this.names.add("InterPro");
+                this.names.add("UniProt");
+            } else {
+                this.names.addAll(java.util.Arrays.asList(names));
+            }
         }
 
         protected Set getDataSources(ObjectStore os) {
-            Set set = new HashSet();
-            set.add("InterPro");
-            set.add("UniProt");
-            return set;
+            return new HashSet<String>(names);
         }
     }
 }

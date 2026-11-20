@@ -96,6 +96,53 @@ public class PsiConverterTest extends ItemsTestCase
         assertEquals("https://creativecommons.org/licenses/by/4.0/", licence);
     }
 
+    /**
+     * An experiment's bibref is written as a Publication only with the experiment, and an
+     * experiment only when one of its interactions is kept. Here the entry keeps its two
+     * experiments but none of its interactions (what a gene-panel cut of IntAct's file leaves),
+     * so no experiment and no Publication are written: the paper stood in the mine with nothing
+     * citing it (62 such PubMed ids on the 20 Nov 2026 HumanMine testbed).
+     */
+    public void testNoPublicationForAnExperimentThatIsNotStored() throws Exception {
+        converter.setIntactOrganisms("9606");
+        java.util.Scanner s = new java.util.Scanner(getClass().getClassLoader()
+                .getResourceAsStream("intact_host_organism_test.xml"), "UTF-8").useDelimiter("\\A");
+        String xml = s.next();
+        s.close();
+        xml = xml.replaceAll("(?s)<interactionList>.*</interactionList>", "");
+        assertTrue(xml.contains("<bibref>"));
+        converter.process(new java.io.StringReader(xml));
+        converter.close();
+
+        for (org.intermine.xml.full.Item item : itemWriter.getItems()) {
+            assertFalse("unexpected " + item.getClassName(),
+                    "InteractionExperiment".equals(item.getClassName())
+                    || "Publication".equals(item.getClassName()));
+        }
+    }
+
+    /**
+     * When the experiments are stored, their one paper is written once and both cite it.
+     */
+    public void testPublicationOfStoredExperiments() throws Exception {
+        processIntactFixture();
+
+        String pubId = null;
+        int pubs = 0;
+        Set<String> cited = new java.util.HashSet<String>();
+        for (org.intermine.xml.full.Item item : itemWriter.getItems()) {
+            if ("Publication".equals(item.getClassName())) {
+                pubs++;
+                pubId = item.getIdentifier();
+                assertEquals("21988832", item.getAttribute("pubMedId").getValue());
+            } else if ("InteractionExperiment".equals(item.getClassName())) {
+                cited.add(item.getReference("publication").getRefId());
+            }
+        }
+        assertEquals(1, pubs);
+        assertEquals(new java.util.HashSet<String>(Collections.singleton(pubId)), cited);
+    }
+
     private void processIntactFixture() throws Exception {
         converter.setIntactOrganisms("9606");
         converter.rslv.addResolverEntry("9606", "ENSG00000003400",
