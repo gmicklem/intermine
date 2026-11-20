@@ -119,6 +119,7 @@ public class Protein2iprConverter extends BioFileConverter
         Iterator<String[]> iterator = FormattedTextParser.parseTabDelimitedReader(reader);
         int count = 0;
         int skipped = 0;
+        int skippedUnknown = 0;
         while (iterator.hasNext()) {
             String[] cols = iterator.next();
             if (proteinIds.contains(cols[0])) {
@@ -129,12 +130,20 @@ public class Protein2iprConverter extends BioFileConverter
                 String start = cols[4];
                 String end = cols[5];
 
+                String database = getSource(proteinDomainIdentifier);
+                if (database == null) {
+                    // an unknown member database must not abort a load of many hours: warn once
+                    // per prefix, count and skip the row
+                    skippedUnknown++;
+                    continue;
+                }
+
                 String proteinRefId = getProtein(proteinAccession);
                 String proteinDomainRefId = getProteinDomain(interproIdentifier);
                 Item proteinDomainRegion = createItem("ProteinDomainRegion");
 
                 proteinDomainRegion.setAttribute("identifier", proteinDomainIdentifier);
-                proteinDomainRegion.setAttribute("database", getSource(proteinDomainIdentifier));
+                proteinDomainRegion.setAttribute("database", database);
                 proteinDomainRegion.setAttribute("start", start);
                 proteinDomainRegion.setAttribute("end", end);
                 proteinDomainRegion.setReference("protein", proteinRefId);
@@ -148,6 +157,7 @@ public class Protein2iprConverter extends BioFileConverter
 
         LOG.info("Number of processed lines: " + count);
         LOG.info("Number of skipped lines: " + skipped);
+        LOG.info("Number of lines skipped for an unknown signature database: " + skippedUnknown);
     }
 
     private String getProtein(String identifier) throws ObjectStoreException {
@@ -174,6 +184,17 @@ public class Protein2iprConverter extends BioFileConverter
         return refId;
     }
 
+    /**
+     * The InterPro member database of a signature accession, from the accession's prefix, or null
+     * when the prefix is not known (a warning is logged once per prefix). The member databases
+     * InterPro lists today (https://www.ebi.ac.uk/interpro/api/entry/, 20 Nov 2026) are CATH-Gene3D
+     * (G3DSA), CDD (cd), HAMAP (MF_), NCBIfam (NF; it also holds the former TIGRFAMs, TIGR),
+     * PANTHER (PTHR), Pfam (PF), PIRSF, PRINTS (PR), PROSITE patterns and profiles (PS), SFLD,
+     * SMART (SM), SUPERFAMILY (SSF) and AntiFam (ANF). ProDom (PD) is no longer a member database
+     * but is kept for older files.
+     * @param dbId the signature accession, such as PF00046 or NF033085
+     * @return the database name, or null if the prefix is unknown
+     */
     private String getSource(String dbId) {
         String dbName = null;
         if (dbId.startsWith("PF")) {
@@ -194,6 +215,10 @@ public class Protein2iprConverter extends BioFileConverter
             dbName = "Gene3D";
         } else if (dbId.startsWith("TIGR")) {
             dbName = "TIGRFAMs";
+        } else if (dbId.startsWith("NF")) {
+            dbName = "NCBIfam";
+        } else if (dbId.startsWith("ANF")) {
+            dbName = "AntiFam";
         } else if (dbId.startsWith("PD")) {
             dbName = "ProDom";
         } else if (dbId.startsWith("PIRSF")) {
@@ -203,10 +228,16 @@ public class Protein2iprConverter extends BioFileConverter
         } else if (dbId.startsWith("cd")) {
             dbName = "Conserved Domain Database";
         } else {
-            throw new RuntimeException("Unknown DB found. ID: " + dbId);
+            String prefix = dbId.replaceFirst("[^A-Za-z_].*$", "");
+            if (unknownPrefixes.add(prefix)) {
+                LOG.warn("Unknown signature database prefix '" + prefix + "' (first seen in "
+                        + dbId + "): rows with this prefix are skipped");
+            }
         }
         return dbName;
     }
+
+    private Set<String> unknownPrefixes = new HashSet<String>();
 
     private String osAlias = null;
 
