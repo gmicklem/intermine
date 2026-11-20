@@ -13,6 +13,7 @@ package org.intermine.bio.dataconversion;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.activation.DataSource;
@@ -67,6 +69,52 @@ public class DataSourceUpdaterTest extends ItemsTestCase
         Collection actual = FullParser.parse(new FileInputStream(temp));
 
         Assert.assertEquals(expected, new HashSet(actual));
+    }
+
+    /**
+     * Every kind of item the updater writes needs a primary key in update-data-sources_keys.properties,
+     * made of attributes the item has: without a Publication key each run adds the papers the mine
+     * already holds a second time.
+     */
+    public void testEveryWrittenItemHasAKey() throws Exception {
+        DataSourceUpdater converter = new TestDataSourceUpdater();
+        File temp = File.createTempFile("DataSourceUpdater", ".tmp");
+        temp.deleteOnExit();
+        converter.setOutputFile(temp.getPath());
+        File dbrefs = File.createTempFile("dbxrefs", "");
+        FileOutputStream out = new FileOutputStream(dbrefs);
+        IOUtils.copy(getClass().getClassLoader().getResourceAsStream("dbxref.txt"), out);
+        out.close();
+        dbrefs.deleteOnExit();
+        converter.setDataSourceFile(dbrefs.getPath());
+        converter.execute();
+
+        Properties keys = new Properties();
+        InputStream in = getClass().getClassLoader()
+                .getResourceAsStream("update-data-sources_keys.properties");
+        assertNotNull("update-data-sources_keys.properties not found", in);
+        keys.load(in);
+        in.close();
+
+        Collection<org.intermine.xml.full.Item> items = FullParser.parse(new FileInputStream(temp));
+        Set<String> classes = new HashSet<String>();
+        for (org.intermine.xml.full.Item item : items) {
+            classes.add(item.getClassName());
+            boolean keyed = false;
+            for (String name : keys.stringPropertyNames()) {
+                if (name.startsWith(item.getClassName() + ".key_")) {
+                    keyed = true;
+                    for (String field : keys.getProperty(name).split(",")) {
+                        assertNotNull(item.getClassName() + " has no attribute " + field.trim()
+                                + " for key " + name, item.getAttribute(field.trim()));
+                    }
+                }
+            }
+            assertTrue("no primary key for " + item.getClassName(), keyed);
+        }
+        assertTrue(classes.contains("Publication"));
+        assertTrue(classes.contains("DataSource"));
+        assertEquals("pubMedId", keys.getProperty("Publication.key_pubmed").trim());
     }
 
     class TestDataSourceUpdater extends DataSourceUpdater
