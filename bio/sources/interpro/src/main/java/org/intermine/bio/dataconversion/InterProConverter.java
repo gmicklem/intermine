@@ -37,6 +37,21 @@ public class InterProConverter extends BioFileConverter
     private Map<String, Item> proteinDomains = new HashMap<String, Item>();
 
     /**
+     * The DataSource name of a member database, from the db attribute of interpro.xml's
+     * member_list. "PFAM" is written "Pfam", as Pfam, UniProt (dbxref.txt), protein2ipr and the
+     * GO annotation files spell it, so that the mine has one Pfam DataSource; the other names
+     * are kept as the file gives them.
+     * @param db the db attribute
+     * @return the DataSource name
+     */
+    static String memberDatabaseName(String db) {
+        if ("PFAM".equalsIgnoreCase(db)) {
+            return "Pfam";
+        }
+        return db;
+    }
+
+    /**
      * Constructor
      * @param writer the ItemWriter used to handle the resultant items
      * @param model the Model
@@ -116,7 +131,7 @@ public class InterProConverter extends BioFileConverter
             } else if ("db_xref".equals(qName) && "member_list".equals(stack.peek())) {
                 String dbkey = attrs.getValue("dbkey");
 //                String name = attrs.getValue("name");
-                String db = attrs.getValue("db");
+                String db = memberDatabaseName(attrs.getValue("db"));
                 try {
                     Item item = createCrossReference(proteinDomain.getIdentifier(), dbkey,
                             db, false);
