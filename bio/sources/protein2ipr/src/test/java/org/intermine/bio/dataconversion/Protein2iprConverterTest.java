@@ -16,6 +16,7 @@ import java.io.Reader;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.intermine.dataconversion.ItemsTestCase;
@@ -111,6 +112,44 @@ public class Protein2iprConverterTest extends ItemsTestCase
         Set<org.intermine.xml.full.Item> expected = readItemSet("Protein2iprConverterTest_tgt.xml");
 
         assertEquals(expected, itemWriter.getItems());
+    }
+
+    /**
+     * NCBIfam (NF...) and AntiFam (ANF...) signatures are loaded under their own database names;
+     * a row with a prefix the converter does not know is skipped, not fatal.
+     */
+    public void testNcbifamAntifamAndUnknownPrefix() throws Exception {
+        Protein protein = (Protein) DynamicUtil.createObject(Collections.singleton(Protein.class));
+        protein.setId(Integer.valueOf(103));
+        protein.setPrimaryAccession("A0A009PJF4");
+        protein.setOrganism((Organism) osw.getObjectStore().getObjectById(Integer.valueOf(102)));
+        osw.store(protein);
+
+        String file = "protein2ipr_ncbifam.dat";
+        Reader reader = new InputStreamReader(getClass().getClassLoader()
+                                            .getResourceAsStream(file));
+        converter.setCurrentFile(new File(file));
+        converter.setProtein2iprOrganisms("7227");
+        converter.process(reader);
+        converter.close();
+
+        Map<String, String> databases = new HashMap<String, String>();
+        for (org.intermine.xml.full.Item item : itemWriter.getItems()) {
+            if ("ProteinDomainRegion".equals(item.getClassName())) {
+                databases.put(item.getAttribute("identifier").getValue(),
+                        item.getAttribute("database").getValue());
+            }
+        }
+        assertEquals("NCBIfam", databases.get("NF033085"));
+        assertEquals("AntiFam", databases.get("ANF00001"));
+        assertEquals("Pfam", databases.get("PF00144"));
+        assertEquals("PROSITE", databases.get("PS00336"));
+        assertEquals("Gene3D", databases.get("G3DSA:3.40.710.10"));
+        assertEquals("SUPERFAMILY", databases.get("SSF56601"));
+        assertEquals("PANTHER", databases.get("PTHR46825"));
+        assertFalse("row with an unknown prefix must be skipped",
+                databases.containsKey("XYZ00001"));
+        assertEquals(7, databases.size());
     }
 
     public void testProcessNoOrganismSet() throws Exception {
