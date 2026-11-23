@@ -927,10 +927,8 @@ InterMine 1.6 (Halloween 2015)
 #1067 - More queries link in summary area on http://www.flymine.org/ fails
 #1065 - FlyMine: flyfish failed on dull pointer exception
 #1063 - FASTA: error loading locations
-#1058 - Esyn: change to use pipe delimiter
 #1053 - Simple objects fail to show in results tables with outer joins
 #1051 - Cytoscape network viewer - upgrade
-#1049 - Add a nicer error if EsyN network to large to load.
 #1035 - VCF data parser for InterMine
 #1032 - CORS issue - www.humanmine.org and humanmine.org
 #1024 - HumanMine config - remove bad paths
@@ -955,7 +953,7 @@ InterMine 1.5.6
 
 InterMine 1.5.5
 
-Minor fixes, plus new esyN displayer.
+Minor fixes.
 
 #1027 - Outer joins break the results table
 #1020 - Manage columns labels gone
