@@ -156,7 +156,7 @@ public final class BagHelper
     }
 
     /**
-     * Used by esyn tool
+     * Returns one attribute of every object in a bag as a comma-separated string.
      *
      * @param bag the bag
      * @param os  the object store
